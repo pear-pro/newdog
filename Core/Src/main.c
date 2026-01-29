@@ -27,6 +27,7 @@
 #include "motor.h"
 #include "motors.h"
 #include "motor_feedback.h"
+#include "gait.h"
 
 /* USER CODE END Includes */
 
