@@ -1,0 +1,50 @@
+build
+mx.scratch
+!.settings
+
+# Build outputs
+build/
+cmake/build/
+cmake-build-*/
+
+# IDE/Tooling
+.vscode/
+.clangd/
+.idea/
+
+# STM32CubeMX
+*.ioc
+*.mxproject
+.mxproject
+mx.scratch
+
+# Keil/MDK-ARM
+MDK-ARM/
+*.uvoptx
+*.uvprojx
+*.uvguix
+*.uvgui
+*.uvgui.*
+*.bak
+*.dep
+*.lst
+*.map
+*.o
+*.obj
+*.su
+*.axf
+*.elf
+*.hex
+*.bin
+
+# GCC/Clang outputs
+*.d
+*.a
+*.s
+*.i
+*.out
+
+# OS junk
+Thumbs.db
+Desktop.ini
+.DS_Store
