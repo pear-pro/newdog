@@ -38,7 +38,6 @@ mx.scratch
 # GCC/Clang outputs
 *.d
 *.a
-*.s
 *.i
 *.out
 
