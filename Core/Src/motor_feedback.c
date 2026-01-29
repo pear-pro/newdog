@@ -15,7 +15,7 @@ Motor_Feedback_t motor_fb[MOTOR_NUM];
 
 
 
-/* -------- çŽ¯å½¢ç¼“å†²åŒº -------- */
+/* -------- çŽ?å½¢ç¼“å†²åŒº -------- */
 #define RX_BUF_SIZE 128
 
 static uint8_t rx_buf[RX_BUF_SIZE];
@@ -70,10 +70,10 @@ void Motor_Feedback_TimeoutTask(void)
 
 void Motor_Feedback_Process(void)
 {
-    while (rx_tail != rx_head)
+    while (rx_tail != rx_head)// »º³åÇøÓÐÎ´´¦Àí×Ö½ÚÊ±Ñ­»·
     {
-        uint8_t b = rx_buf[rx_tail++];
-        if (rx_tail >= RX_BUF_SIZE)
+        uint8_t b = rx_buf[rx_tail++]; // È¡³öÒ»¸ö×Ö½Ú
+        if (rx_tail >= RX_BUF_SIZE) //Ö¸ÕëÑ­»·
             rx_tail = 0;
 
         switch (state)
@@ -81,7 +81,7 @@ void Motor_Feedback_Process(void)
         case 0: // HEAD1
             if (b == 0xFD)
             {
-                frame[0] = b;
+                frame[0] = b; // Ö¡Í·´íÎó£¬ÖØÖÃ×´Ì¬
                 idx = 1;
                 state = 1;
             }
@@ -116,8 +116,8 @@ void Motor_Feedback_Process(void)
     }
 }
 
-/* -------- çœŸæ­£çš„åè®®è§£æž -------- */
-//motor_fb[0] -> ID = 0 çš„ç”µæœº           motor_fb[1] -> ID = 1 çš„ç”µæœº
+/* -------- çœŸæ?£çš„åè??è§£æž -------- */
+//motor_fb[0] -> ID = 0 çš„ç”µæœ?           motor_fb[1] -> ID = 1 çš„ç”µæœ?
 static void Motor_ParseFrame(uint8_t *f)
 {
     /* CRC æ ¡éªŒ 0~13 */

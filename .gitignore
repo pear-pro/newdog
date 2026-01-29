@@ -34,7 +34,7 @@ mx.scratch
 *.elf
 *.hex
 *.bin
-
+*.crf
 # GCC/Clang outputs
 *.d
 *.a
