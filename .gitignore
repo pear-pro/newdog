@@ -13,18 +13,16 @@ cmake-build-*/
 .idea/
 
 # STM32CubeMX
-*.ioc
 *.mxproject
 .mxproject
 mx.scratch
 
 # Keil/MDK-ARM
-MDK-ARM/
 *.uvoptx
-*.uvprojx
 *.uvguix
 *.uvgui
 *.uvgui.*
+*.uvguix.*
 *.bak
 *.dep
 *.lst
