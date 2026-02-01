@@ -27,6 +27,7 @@
 #include "motor.h"
 #include "kinematic.h"
 #include "global_var.h"
+#include "remote_control.h"
 
 /* USER CODE END Includes */
 
@@ -100,10 +101,6 @@ hposition4 : hmotor7(α) , hmotor8(β)
 extern volatile uint8_t RS485_RxBuf[16];
 extern volatile uint8_t Receive_OK;
 
-int move_state = 0; // 运动状态
-float height = 30.0f;      // 支撑高度
-float step_height = 10.0f; // 摆动高度
-float stride = 10.0f;      // 步幅
 
 /* USER CODE END PV */
 
@@ -155,6 +152,8 @@ int main(void)
   MX_UART7_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  remote_control_init(); // 初始化遥控器
 
 //  初始化电机结构体,角度环控制只需要初始化kp和kw
     Motor_Init(&hmotor1, &huart6, 1);

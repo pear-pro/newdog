@@ -12,6 +12,8 @@
 "1\usart.o"
 "1\stm32f4xx_it.o"
 "1\stm32f4xx_hal_msp.o"
+"1\bsp_rc.o"
+"1\remote_control.o"
 "1\stm32f4xx_hal_uart.o"
 "1\stm32f4xx_hal_rcc.o"
 "1\stm32f4xx_hal_rcc_ex.o"
