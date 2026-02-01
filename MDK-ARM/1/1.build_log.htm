@@ -27,14 +27,12 @@ Project File Date:  02/01/2026
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 6 (build 750)', folder: 'E:\Keil5 C51\ARM\ARMCC\Bin'
 Build target '1'
-assembling startup_stm32f427xx.s...
-compiling stm32f4xx_it.c...
-../Core/Src/stm32f4xx_it.c(228): warning:  #223-D: function "USART1_IRQHandlerCallBack" declared implicitly
-  	USART1_IRQHandlerCallBack();
-../Core/Src/stm32f4xx_it.c: 1 warning, 0 errors
-compiling usart.c...
+compiling remote_control.c...
+../Core/Inc/debug_uart.h(34): warning:  #1-D: last line of file ends without a newline
+  #endif /* __DEBUG_UART_H */
+..\Core\Src\remote_control.c: 1 warning, 0 errors
 linking...
-Program Size: Code=22074 RO-data=1326 RW-data=48 ZI-data=2696  
+Program Size: Code=24002 RO-data=1326 RW-data=48 ZI-data=2712  
 FromELF: creating hex file...
 "1\1.axf" - 0 Error(s), 1 Warning(s).
 
@@ -59,7 +57,7 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE:5.4.0
       Include file:  CMSIS\Core\Include\tz_context.h
-Build Time Elapsed:  00:00:04
+Build Time Elapsed:  00:00:03
 </pre>
 </body>
 </html>

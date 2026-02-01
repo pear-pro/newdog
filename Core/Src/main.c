@@ -222,9 +222,7 @@ int main(void)
                 - 传入height决定支撑腿高度，step_height决定抬起高度
     */
     
-    move_state = 1; 
-	height = 25;
-	stride = 10;
+
 
     switch (move_state)
     {

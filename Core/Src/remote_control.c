@@ -1,6 +1,7 @@
 #include "remote_control.h"
 #include "main.h"
 #include "math_utils.h"
+#include "debug_uart.h"
 
 int move_state = 0; // 运动状态
 float height = 30.0f;      // 支撑高度
@@ -179,9 +180,47 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf, RC_ctrl_t *rc_ctrl)
     rc_ctrl->rc.ch[3] -= RC_CH_VALUE_OFFSET;
     rc_ctrl->rc.ch[4] -= RC_CH_VALUE_OFFSET;
 
-    stride = rc_ctrl->rc.ch[1] / 10.0f + 10.0f;
+    float a=rc_ctrl->rc.ch[0];
+
+  if (rc_ctrl->rc.ch[0]>100||rc_ctrl->rc.ch[0]<-100)
+    {
+        if (rc_ctrl->rc.ch[0]>100) 
+        {
+          move_state=3;
+          stride = math_normalize_rangef(rc_ctrl->rc.ch[0] / 10.0f + 10.0f, 10.0f, 76.0f, 0.0f, 36.0f);
+
+        
+        }
+        if(rc_ctrl->rc.ch[0]<-100)
+        {
+          move_state=4;
+          stride = math_normalize_rangef(-rc_ctrl->rc.ch[0] / 10.0f + 10.0f, 10.0f, 76.0f, 0.0f, 36.0f);
+
+        }
+  
+  }
+  else {
+        if(rc_ctrl->rc.ch[1] > 0)
+    {
+        move_state = 1; // 前进
+        stride = math_normalize_rangef(rc_ctrl->rc.ch[1] / 10.0f + 10.0f, 10.0f, 76.0f, 0.0f, 36.0f);
+    }
+        else if (rc_ctrl->rc.ch[1]<0)
+    {
+        move_state = 2; // 后退
+        stride = math_normalize_rangef(- rc_ctrl->rc.ch[1] / 10.0f + 10.0f, 10.0f, 76.0f, 0.0f, 16.0f);
+    }
+        else {
+        move_state = 0; // 停止
+        stride = 0.0f;
+    }
+  
+  }
+
+
     height = rc_ctrl->rc.ch[3] / 10.0f + 30.0f;
     step_height = rc_ctrl->rc.ch[3] / 10.0f + 10.0f;
-
+    float num[]={a,height, step_height, stride, move_state};
+    Vofa_JustFloat(num, 5);
 
 }
