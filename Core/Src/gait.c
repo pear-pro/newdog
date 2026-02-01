@@ -75,6 +75,12 @@ void motion_Backward(float height, float step_height, float stride)
 
         hposition1.B_y  = phaseState.ySwing;
         hposition1.B_x  =  phaseState.xSwing; 
+        hposition2.B_y  = phaseState.ySupport;
+        hposition2.B_x  =  phaseState.xSupport; 
+        hposition3.B_y  = phaseState.ySwing;
+        hposition3.B_x  =  phaseState.xSwing; 
+        hposition4.B_y  = phaseState.ySupport;
+        hposition4.B_x  =  phaseState.xSupport; 
     }
     else if (tau > 0.5f && tau <= 1.0f)
     {
@@ -82,25 +88,86 @@ void motion_Backward(float height, float step_height, float stride)
 
         hposition1.B_y  = phaseState.ySupport;
         hposition1.B_x  =  phaseState.xSupport; 
+        hposition2.B_y  = phaseState.ySwing;
+        hposition2.B_x  =  phaseState.xSwing;
+        hposition3.B_y  = phaseState.ySupport;
+        hposition3.B_x  =  phaseState.xSupport;
+        hposition4.B_y  = phaseState.ySwing;
+        hposition4.B_x  =  phaseState.xSwing;
     }
     inverseKinematic_All();
     Motor_SendCmd_AllAngle();   
 }
-
 void motion_TurnRight(float height, float step_height, float stride)
 {
+    float freq = 0.02f; // 步频
+    tau = tau + freq; // 前进
+    if(tau >= 1.0f){tau = 0.0f;}
 
+    if (tau <= 0.5f)
+    {
+        GaitPhasesPoints phaseState = gaitGenerator(0, height, step_height, stride);
 
+        hposition1.B_y  = phaseState.ySwing;
+        hposition1.B_x  = phaseState.xSwing; 
+        hposition2.B_y  = phaseState.ySupport;
+        hposition2.B_x  = phaseState.xSupport; 
+        hposition3.B_y  = phaseState.ySwing;
+        hposition3.B_x  = -phaseState.xSwing; 
+        hposition4.B_y  = phaseState.ySupport;
+        hposition4.B_x  = -phaseState.xSupport; 
+    }
+    else if (tau > 0.5f && tau <= 1.0f)
+    {
+        GaitPhasesPoints phaseState = gaitGenerator(1, height, step_height, stride);
+
+        hposition1.B_y  = phaseState.ySupport;
+        hposition1.B_x  = phaseState.xSupport; 
+        hposition2.B_y  = phaseState.ySwing;
+        hposition2.B_x  = phaseState.xSwing;
+        hposition3.B_y  = phaseState.ySupport;
+        hposition3.B_x  = -phaseState.xSupport;
+        hposition4.B_y  = phaseState.ySwing;
+        hposition4.B_x  = -phaseState.xSwing;
+    }
     inverseKinematic_All();
     Motor_SendCmd_AllAngle();   
 }
 
 void motion_TurnLeft(float height, float step_height, float stride)
 {
+float freq = 0.02f; // 步频
+    tau = tau + freq; // 前进
+    if(tau >= 1.0f){tau = 0.0f;}
 
+    if (tau <= 0.5f)
+    {
+        GaitPhasesPoints phaseState = gaitGenerator(0, height, step_height, stride);
 
+        hposition1.B_y  = phaseState.ySwing;
+        hposition1.B_x  = -phaseState.xSwing; 
+        hposition2.B_y  = phaseState.ySupport;
+        hposition2.B_x  = -phaseState.xSupport; 
+        hposition3.B_y  = phaseState.ySwing;
+        hposition3.B_x  = phaseState.xSwing; 
+        hposition4.B_y  = phaseState.ySupport;
+        hposition4.B_x  = phaseState.xSupport; 
+    }
+    else if (tau > 0.5f && tau <= 1.0f)
+    {
+        GaitPhasesPoints phaseState = gaitGenerator(1, height, step_height, stride);
+
+        hposition1.B_y  = phaseState.ySupport;
+        hposition1.B_x  = -phaseState.xSupport; 
+        hposition2.B_y  = phaseState.ySwing;
+        hposition2.B_x  = -phaseState.xSwing;
+        hposition3.B_y  = phaseState.ySupport;
+        hposition3.B_x  = phaseState.xSupport;
+        hposition4.B_y  = phaseState.ySwing;
+        hposition4.B_x  = phaseState.xSwing;
+    }
     inverseKinematic_All();
-    Motor_SendCmd_AllAngle();   
+    Motor_SendCmd_AllAngle();    
 }
 
 void motion_StandBy(float height)
@@ -109,6 +176,10 @@ void motion_StandBy(float height)
     hposition2.B_y = height;
     hposition3.B_y = height;
     hposition4.B_y = height;
+    hposition1.B_x = 0.0f;
+    hposition2.B_x = 0.0f;
+    hposition3.B_x = 0.0f;
+    hposition4.B_x = 0.0f;
     inverseKinematic_All();
     Motor_SendCmd_AllAngle();   
 }
@@ -120,16 +191,29 @@ void StepInPlace(float height, float step_height)
 
     if(tau >= 1.0f){tau = 0.0f;}
     tau += 0.03f;
-    float theta = 2.0f * pi * tau/1.0f;
-
-    hposition1.B_x = 0.0f;
-    hposition1.B_y = r * sinf(theta) + center_y;
-    hposition2.B_x = 0.0f;
-    hposition2.B_y = -r * sinf(theta) + center_y;    
-    hposition3.B_x = 0.0f;
-    hposition3.B_y = r * sinf(theta) + center_y;
-    hposition4.B_x = 0.0f;
-    hposition4.B_y = -r * sinf(theta) + center_y;
+    float theta = 2.0f * pi * tau/0.5f;
+    if (tau <= 0.5f)
+    {
+        hposition1.B_x = 0.0f;
+        hposition1.B_y = r + center_y;
+        hposition2.B_x = 0.0f;
+        hposition2.B_y = r * cosf(theta) + center_y;    
+        hposition3.B_x = 0.0f;
+        hposition3.B_y = r + center_y;
+        hposition4.B_x = 0.0f;
+        hposition4.B_y = r * cosf(theta) + center_y;
+    }
+    else
+    {
+        hposition1.B_x = 0.0f;
+        hposition1.B_y = r * cosf(theta) + center_y;
+        hposition2.B_x = 0.0f;
+        hposition2.B_y = r + center_y;    
+        hposition3.B_x = 0.0f;
+        hposition3.B_y = r * cosf(theta) + center_y;
+        hposition4.B_x = 0.0f;
+        hposition4.B_y = r + center_y;
+    }
     inverseKinematic_All();
     Motor_SendCmd_AllAngle();    
 }
@@ -158,9 +242,21 @@ void testJump() // 调用一次跳一次
             theta =  pi * tau/(faai);
             hposition1.B_x = 0.0f;
             hposition1.B_y = r * cosf(theta) + center_y;  // (27-r,27+r)
+            hposition2.B_x = 0.0f;
+            hposition2.B_y = r * cosf(theta) + center_y;
+            hposition3.B_x = 0.0f;
+            hposition3.B_y = r * cosf(theta) + center_y;
+            hposition4.B_x = 0.0f;
+            hposition4.B_y = r * cosf(theta) + center_y; 
         }else{
-           hposition1.B_x = 0.0f;
-           hposition1.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;           
+            hposition1.B_x = 0.0f;
+            hposition1.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;     
+            hposition2.B_x = 0.0f;      
+            hposition2.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;
+            hposition3.B_x = 0.0f;
+            hposition3.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;
+            hposition4.B_x = 0.0f;
+            hposition4.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;
         }
         inverseKinematic_All();
         Motor_SendCmd_AllAngle();   

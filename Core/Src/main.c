@@ -228,22 +228,22 @@ int main(void)
     {
         case 1:
 
-            motion_Forward(height, 8.0f, stride);
+            motion_Forward(height, 13.0f, stride);
         break;
                 
         case 2:
 
-            motion_Backward(height,  8.0f, stride);
+            motion_Backward(height,  13.0f, stride);
         break;
 
         case 3:
       
-            motion_TurnRight(height,  8.0f, stride);
+            motion_TurnRight(height,  13.0f, stride);
         break;
                 
         case 4:
 
-            motion_TurnLeft(height,  8.0f, stride);
+            motion_TurnLeft(height,  13.0f, stride);
         break;   
           
         case 5:
