@@ -22,9 +22,13 @@
 #include "usart.h"
 #include "gpio.h"
 
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdint.h>
 #include "motor.h"
+#include "gait.h"
+#include "crc_ccitt.h"
 #include "kinematic.h"
 #include "global_var.h"
 #include "remote_control.h"
@@ -40,8 +44,9 @@
 /* USER CODE BEGIN PD */
 
 
+
 // 统一设置电机控制参数
-#define Expect_Kp 0.1
+#define Expect_Kp 0.5
 #define EXpect_kw 0.01 
 
 /* USER CODE END PD */
@@ -111,6 +116,7 @@ void SystemClock_Config(void);
 
 
 /* USER CODE END PFP */
+/* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
@@ -140,7 +146,6 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
-
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -171,18 +176,18 @@ int main(void)
     Motor_Init(&hmotor5, &huart6, 5);
     hmotor5.Kp = Expect_Kp;
     hmotor5.Kw = EXpect_kw;	
-    Motor_Init(&hmotor6, &huart6, 4);
+    Motor_Init(&hmotor6, &huart6, 6);
     hmotor6.Kp = Expect_Kp;
     hmotor6.Kw = EXpect_kw;    
-    Motor_Init(&hmotor7, &huart6, 5);
+    Motor_Init(&hmotor7, &huart6, 7);
     hmotor7.Kp = Expect_Kp;
     hmotor7.Kw = EXpect_kw;	
-    Motor_Init(&hmotor8, &huart6, 4);
+    Motor_Init(&hmotor8, &huart6, 8);
     hmotor8.Kp = Expect_Kp;
     hmotor8.Kw = EXpect_kw;  
 
 
-  /* USER CODE END 2 */
+	/* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -228,22 +233,22 @@ int main(void)
     {
         case 1:
 
-            motion_Forward(height, 8.0f, stride);
+            motion_Forward(height, 12.0f, stride);
         break;
                 
         case 2:
 
-            motion_Backward(height,  8.0f, stride);
+            motion_Backward(height,  12.0f, stride);
         break;
 
         case 3:
       
-            motion_TurnRight(height,  8.0f, stride);
+            motion_TurnRight(height,  12.0f, stride);
         break;
                 
         case 4:
 
-            motion_TurnLeft(height,  8.0f, stride);
+            motion_TurnLeft(height,  12.0f, stride);
         break;   
           
         case 5:
@@ -261,7 +266,7 @@ int main(void)
         break; 
 
         case 8:
-            testJump(); // 测试跳跃用，实际上没有这个动作
+            testJump(stride); // 测试跳跃用，实际上没有这个动作
         break; 
 
         default:
@@ -342,7 +347,8 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-#ifdef USE_FULL_ASSERT
+
+#ifdef  USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -358,3 +364,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+

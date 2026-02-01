@@ -89,9 +89,11 @@ hposition3 : hmotor5(α) , hmotor6(β)
 hposition4 : hmotor7(α) , hmotor8(β)
 */
 void Motor_SendCmd_AllAngle(){
+    //hmotor1.Theta_des = motor1_bias / 6.33f + 6.28 * 20.0f / 360.0f;
     hmotor1.Theta_des = motor1_bias / 6.33f + 6.28 * hposition1.alpha / 360.0f;
     Motor_SendCmd(&hmotor1);
     HAL_Delay(1);
+	//hmotor2.Theta_des = motor2_bias / 6.33f + 6.28 * 20.0f / 360.0f;
     hmotor2.Theta_des = motor2_bias / 6.33f + 6.28 * hposition1.beta / 360.0f;
     Motor_SendCmd(&hmotor2);
     HAL_Delay(1);
@@ -101,16 +103,20 @@ void Motor_SendCmd_AllAngle(){
     hmotor4.Theta_des = motor4_bias / 6.33f + 6.28 * hposition2.beta / 360.0f;
     Motor_SendCmd(&hmotor4);
     HAL_Delay(1);
-    hmotor5.Theta_des = motor5_bias / 6.33f + 6.28 * hposition3.alpha / 360.0f;
+	//hmotor5.Theta_des = motor5_bias / 6.33f + 6.28 * -67.2f / 360.0f;
+    hmotor5.Theta_des = motor5_bias / 6.33f + 6.28 * -hposition3.alpha / 360.0f;
     Motor_SendCmd(&hmotor5);
     HAL_Delay(1);
-    hmotor6.Theta_des = motor6_bias / 6.33f + 6.28 * hposition3.beta / 360.0f;
+	//hmotor6.Theta_des = motor6_bias / 6.33f + 6.28 * -48.3f / 360.0f;
+    hmotor6.Theta_des = motor6_bias / 6.33f + 6.28 * -hposition3.beta / 360.0f;
     Motor_SendCmd(&hmotor6);
     HAL_Delay(1);
-    hmotor7.Theta_des = motor7_bias / 6.33f + 6.28 * hposition4.alpha / 360.0f;
+	//hmotor7.Theta_des = motor7_bias / 6.33f + 6.28 * -67.2f / 360.0f;
+    hmotor7.Theta_des = motor7_bias / 6.33f + 6.28 * -hposition4.alpha / 360.0f;
     Motor_SendCmd(&hmotor7);
     HAL_Delay(1);
-    hmotor8.Theta_des = motor8_bias / 6.33f + 6.28 * hposition4.beta / 360.0f;
+	//hmotor8.Theta_des = motor8_bias / 6.33f + 6.28 * -48.3f / 360.0f;
+    hmotor8.Theta_des = motor8_bias / 6.33f + 6.28 * -hposition4.beta / 360.0f;
     Motor_SendCmd(&hmotor8);
 	HAL_Delay(1);
 
