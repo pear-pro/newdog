@@ -434,24 +434,14 @@
               <FilePath>..\Core\Src\kinematic.c</FilePath>
             </File>
             <File>
-              <FileName>motors.c</FileName>
+              <FileName>debug_uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\motors.c</FilePath>
+              <FilePath>..\Core\Src\debug_uart.c</FilePath>
             </File>
             <File>
-              <FileName>motors.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Core\Inc\motors.h</FilePath>
-            </File>
-            <File>
-              <FileName>motor_feedback.c</FileName>
+              <FileName>math_utils.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\motor_feedback.c</FilePath>
-            </File>
-            <File>
-              <FileName>motor_feedback.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Core\Inc\motor_feedback.h</FilePath>
+              <FilePath>..\Core\Src\math_utils.c</FilePath>
             </File>
             <File>
               <FileName>main.c</FileName>
@@ -533,16 +523,6 @@
               <FileName>stm32f4xx_hal_msp.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/stm32f4xx_hal_msp.c</FilePath>
-            </File>
-            <File>
-              <FileName>debug_uart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\debug_uart.c</FilePath>
-            </File>
-            <File>
-              <FileName>math_utils.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\math_utils.c</FilePath>
             </File>
           </Files>
         </Group>

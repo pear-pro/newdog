@@ -44,7 +44,7 @@ static uint16_t crc_ccitt_byte(uint16_t crc, uint8_t c) {
 }
 
 // 完整的CRC计算
- uint16_t crc_ccitt(uint16_t crc, const uint8_t* buffer, uint32_t len) {
+static uint16_t crc_ccitt(uint16_t crc, const uint8_t* buffer, uint32_t len) {
     uint16_t tmp = crc;
     while (len--) {
         tmp = crc_ccitt_byte(tmp, *buffer++);
@@ -60,15 +60,5 @@ void unitree_crc_complete(uint8_t frame[17]) {
     // 按小端字节序填充到frame[15]和frame[16]
     frame[15] = crc & 0xFF;       // 低字节
     frame[16] = (crc >> 8) & 0xFF; // 高字节
-	
-}
-
-
-uint8_t CRC16_CCITT_Check(uint8_t *frame, uint8_t data_len)
-{
-    uint16_t crc_calc = crc_ccitt(0x0000, frame, data_len);
-    uint16_t crc_recv = frame[data_len] |
-                       (frame[data_len + 1] << 8);
-    return (crc_calc == crc_recv);
 }
 

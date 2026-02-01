@@ -1,5 +1,6 @@
 #include "kinematic.h"
 #include "gait.h"
+#include "global_var.h"
 #include <math.h>
 
 #define L1 12.5f
@@ -8,11 +9,17 @@
 #define L4 12.5f
 #define pi 3.141592f
 #define R_min 15.2f // 足离电机轴心的最近距离。手量的，后期需要验证
-#define R_max 38.5f
+#define R_max 37.0f
 #define Res_x -16.4f // 挡板坐标。手量的，后期需要验证
 #define Res_y 4.0f
 #define Y_max 9.52f // y的最大值，由最小半径方程和经过挡板坐标的切线方程联立求得。后期精确测量挡板坐标后可更新此值
 
+void normalize_angle_deg(float* angle)
+{
+	*angle = fmodf(*angle + 180.0f, 360.0f);
+	if (*angle < 0.0f) *angle += 360.0f;
+	*angle -= 180.0f;
+}
 
 void inverseKinematic(Position_HandleTypeDef *hposition){
 	float x = hposition->B_x;
@@ -62,23 +69,28 @@ void inverseKinematic(Position_HandleTypeDef *hposition){
 	}
 	
 	// α 与 β 的两个解
-	float alpha1 = (2.0f * atan2f(b + sqrtf(delta_alpha), a + c )- pi/2) * 180.0f / pi;
-	float alpha2 = (2.0f * atan2f(b - sqrtf(delta_alpha), a + c) - pi/2) * 180.0f / pi;
-	float beta1 = (pi/2 - 2.0f * atan2f(e + sqrtf(delta_beta),d + f)) * 180.0f / pi;
-	float beta2 = (pi/2 - 2.0f * atan2f(e - sqrtf(delta_beta),d + f)) * 180.0f / pi;
+	float alpha1 = 2.0f * atan2f(b + sqrtf(delta_alpha), a + c ) * 180.0f / pi;
+	float alpha2 = 2.0f * atan2f(b - sqrtf(delta_alpha), a + c )  * 180.0f / pi;
+	float beta1 = 2.0f * atan2f(e + sqrtf(delta_beta),d + f) * 180.0f / pi;
+	float beta2 = 2.0f * atan2f(e - sqrtf(delta_beta),d + f) * 180.0f / pi;
 	
-	alpha1 = fmodf(alpha1,360.0f);
-	alpha2 = fmodf(alpha2,360.0f);
-	beta1 = fmodf(beta1,360.0f);
-	beta2 = fmodf(beta2,360.0f);
-	
-	if (alpha1 == beta1) {
+	alpha1 = fmodf((alpha1 - 90.0), 360.0f);
+	alpha2 = fmodf((alpha2 - 90.0), 360.0f);
+	beta1 = fmodf((90.0 - beta1), 360.0f);
+	beta2 = fmodf((90.0 - beta2), 360.0f);
+
+	if (alpha1 == -beta1) {
 		float temp = beta1;
 		beta1 = beta2;
 		beta2 = temp;
 	}
 
-	// 防止两条腿打架
+	normalize_angle_deg(&alpha1);
+	normalize_angle_deg(&alpha2);
+	normalize_angle_deg(&beta1);
+	normalize_angle_deg(&beta2);
+
+	// 防止两条腿交叉
 	if (alpha1 >= 0.0f && beta1 < 0.0f){
 		if (alpha1 >= fabsf(beta1)){
 			hposition->alpha = alpha1;
@@ -102,6 +114,12 @@ void inverseKinematic(Position_HandleTypeDef *hposition){
 		hposition->alpha = alpha1;
 		hposition->beta = beta1;
 	}
+	
 }
-
+void inverseKinematic_All(){
+	inverseKinematic(&hposition1);
+	inverseKinematic(&hposition2);
+	inverseKinematic(&hposition3);
+	inverseKinematic(&hposition4);	
+}
 

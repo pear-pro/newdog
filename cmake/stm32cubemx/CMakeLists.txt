@@ -28,8 +28,6 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/kinematic.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/math_utils.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/motor.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/motor_feedback.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/motors.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/usart.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/stm32f4xx_it.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/stm32f4xx_hal_msp.c

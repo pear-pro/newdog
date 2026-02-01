@@ -1,6 +1,7 @@
 #ifndef __GAIT__
 #define __GAIT__
-#include "stm32f4xx_hal.h"
+
+#define Ts 1.00f          // 控制周期
 
 /*某只脚的两个电机转动的角度，alpha和beta*/
 typedef struct
@@ -11,25 +12,25 @@ typedef struct
 	float B_y;  // B点的y坐标
 
 }Position_HandleTypeDef;
-typedef struct {
-    float freq;    // 时间步长
-    float height;  // 步高（跳跃高度）
-    float stride;  // 步长（前进距离）
-    float T;       // 步态周期
-    float maxHeight;    // 最大高度
-} Gait_Config;
 
+typedef struct 
+{
+  float xSwing;    // 前半周期生成的摆动相的x坐标
+  float ySwing;    // 前半周期生成的摆动相的y坐标
+  float xSupport;  // 前半周期生成的支撑相的x坐标
+  float ySupport;  // 前半周期生成的支撑相的y坐标
+  float sigma;     // 轨迹生成三角函数中的相位
+}GaitPhasesPoints;
 
-extern Gait_Config g_gait_config;
+void motion_Forward(float height, float step_height, float stride);
+void motion_Backward(float height, float step_height, float stride);
+void motion_TurnRight(float height, float step_height, float stride);
+void motion_TurnLeft(float height, float step_height, float stride);
+void motion_StandBy(float height);
+void StepInPlace(float height, float step_height);
+void motion_Jump();
 
-
-void Jump(Position_HandleTypeDef *hposition);
-
-
-
+void testCircle();
+void testJump();
 
 #endif
-
-
-
-

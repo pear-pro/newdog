@@ -1,10 +1,12 @@
 #include "motor.h"
+#include "usart.h"
 #include "crc_ccitt.h"
+#include "global_var.h"
 
-//单个电机
+/* ---------------- ?????? ---------------- */
 static HAL_StatusTypeDef Motor_PackCmd(Motor_HandleTypeDef *hmotor);
 
-
+/* ---------------- ??? ---------------- */
 HAL_StatusTypeDef Motor_Init(Motor_HandleTypeDef *hmotor,
                              UART_HandleTypeDef *huart,
                              uint8_t motor_id)
@@ -24,26 +26,22 @@ HAL_StatusTypeDef Motor_Init(Motor_HandleTypeDef *hmotor,
     return HAL_OK;
 }
 
-
-HAL_StatusTypeDef Motor_SendCmd(Motor_HandleTypeDef *hmotor)
+/* ---------------- ????(??) ---------------- */
+void Motor_SendCmd(Motor_HandleTypeDef *hmotor)
 {
-    if (Motor_PackCmd(hmotor) != HAL_OK)
-        return HAL_ERROR;
+    if (Motor_PackCmd(hmotor) != HAL_OK){
+        //
+    };
 
-    return HAL_UART_Transmit(
-        hmotor->huart,
-        hmotor->TxData,
-        MOTOR_CMD_LEN,
-        100
-    );
+    RS485_SendFrame_Blocking(&huart6,hmotor->TxData);
 }
 
-
+/* ---------------- ????(??) ---------------- */
 static HAL_StatusTypeDef Motor_PackCmd(Motor_HandleTypeDef *hmotor)
 {
     if (!hmotor) return HAL_ERROR;
 
-   
+    /* 1. ?? ? ?? */
     hmotor->Tau_set   = (int16_t)(hmotor->Tau_ff * 256.0f);
     hmotor->Omega_set = (int16_t)(
         (hmotor->Omega_des * MOTOR_DEC_RATIO / (2.0f * PI)) * 256.0f
@@ -83,3 +81,38 @@ static HAL_StatusTypeDef Motor_PackCmd(Motor_HandleTypeDef *hmotor)
 
     return HAL_OK;
 }
+
+/*
+hposition1 : hmotor1(α) , hmotor2(β)
+hposition2 : hmotor3(α) , hmotor4(β)
+hposition3 : hmotor5(α) , hmotor6(β)
+hposition4 : hmotor7(α) , hmotor8(β)
+*/
+void Motor_SendCmd_AllAngle(){
+    hmotor1.Theta_des = motor1_bias / 6.33f + 6.28 * hposition1.alpha / 360.0f;
+    Motor_SendCmd(&hmotor1);
+    HAL_Delay(1);
+    hmotor2.Theta_des = motor2_bias / 6.33f + 6.28 * hposition1.beta / 360.0f;
+    Motor_SendCmd(&hmotor2);
+    HAL_Delay(1);
+    hmotor3.Theta_des = motor3_bias / 6.33f + 6.28 * hposition2.alpha / 360.0f;
+    Motor_SendCmd(&hmotor3);
+    HAL_Delay(1);
+    hmotor4.Theta_des = motor4_bias / 6.33f + 6.28 * hposition2.beta / 360.0f;
+    Motor_SendCmd(&hmotor4);
+    HAL_Delay(1);
+    hmotor5.Theta_des = motor5_bias / 6.33f + 6.28 * hposition3.alpha / 360.0f;
+    Motor_SendCmd(&hmotor5);
+    HAL_Delay(1);
+    hmotor6.Theta_des = motor6_bias / 6.33f + 6.28 * hposition3.beta / 360.0f;
+    Motor_SendCmd(&hmotor6);
+    HAL_Delay(1);
+    hmotor7.Theta_des = motor7_bias / 6.33f + 6.28 * hposition4.alpha / 360.0f;
+    Motor_SendCmd(&hmotor7);
+    HAL_Delay(1);
+    hmotor8.Theta_des = motor8_bias / 6.33f + 6.28 * hposition4.beta / 360.0f;
+    Motor_SendCmd(&hmotor8);
+	HAL_Delay(1);
+
+}
+
