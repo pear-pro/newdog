@@ -28,7 +28,7 @@ GaitPhasesPoints  gaitGenerator(int state, float height, float step_height, floa
 // 把运动曲线赋值给每个足   height:支撑脚离电机轴心高度  step_height:摆动高度  stride:步幅
 void motion_Forward(float height, float step_height, float stride)
 {
-    float freq = 0.02f; // 步频
+    float freq = 0.1f; // 步频
     tau = tau + freq; // 前进
     if(tau >= 1.0f){tau = 0.0f;}
 
@@ -65,7 +65,7 @@ void motion_Forward(float height, float step_height, float stride)
 
 void motion_Backward(float height, float step_height, float stride)
 {
-    float freq = 0.02f; // 步频
+    float freq = 0.1f; // 步频
     tau = tau - freq; // 后退
     if(tau < 0.0f){tau = 1.0f;}
 
@@ -100,7 +100,7 @@ void motion_Backward(float height, float step_height, float stride)
 }
 void motion_TurnRight(float height, float step_height, float stride)
 {
-    float freq = 0.02f; // 步频
+    float freq = 0.1f; // 步频
     tau = tau + freq; // 前进
     if(tau >= 1.0f){tau = 0.0f;}
 
@@ -136,7 +136,7 @@ void motion_TurnRight(float height, float step_height, float stride)
 
 void motion_TurnLeft(float height, float step_height, float stride)
 {
-float freq = 0.02f; // 步频
+float freq = 0.1f; // 步频
     tau = tau + freq; // 前进
     if(tau >= 1.0f){tau = 0.0f;}
 

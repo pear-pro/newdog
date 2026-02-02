@@ -218,7 +218,7 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf, RC_ctrl_t *rc_ctrl)
   }
 
 
-    height = rc_ctrl->rc.ch[3] / 10.0f + 30.0f;
+    height = rc_ctrl->rc.ch[3] / 10.0f + 22.0f;
     step_height = rc_ctrl->rc.ch[3] / 10.0f + 10.0f;
     float num[]={a,height, step_height, stride, move_state};
     Vofa_JustFloat(num, 5);
