@@ -278,7 +278,6 @@ void StepInPlace(float height, float step_height)
         hposition3.B_y = r + center_y;
         hposition4.B_x = 0.0f;
         hposition4.B_y = r * cosf(theta) + center_y;
-        set_Motor_Kp(1,0,1,0);
     }
     else
     {
@@ -290,7 +289,6 @@ void StepInPlace(float height, float step_height)
         hposition3.B_y = r * cosf(theta) + center_y;
         hposition4.B_x = 0.0f;
         hposition4.B_y = r + center_y;
-        set_Motor_Kp(0,1,0,1);
     }
     inverseKinematic_All();
     Motor_SendCmd_AllAngle();    
