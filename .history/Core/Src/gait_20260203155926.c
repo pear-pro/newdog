@@ -7,57 +7,8 @@
 
 float tau = 0.0f;
 float t = 0;    
-float support_Kp = 0.9f;
+float support_Kp = 0.9;
 float swing_Kp = 0.2f;
-
-// state == 1 支撑相 ; state == 0 摆动相
-void set_Motor_Kp(int hposition1_state, int hposition2_state, int hposition3_state, int hposition4_state)
-{
-    if (hposition1_state == 1) // 支撑相
-        {
-            hmotor1.Kp = support_Kp;
-            hmotor2.Kp = support_Kp;
-        }
-    else                      // 摆动相
-        {
-            hmotor1.Kp = swing_Kp;
-            hmotor2.Kp = swing_Kp;
-        }
-
-    if (hposition2_state == 1) // 支撑相
-        {
-            hmotor3.Kp = support_Kp;
-            hmotor4.Kp = support_Kp;
-        }
-    else                      // 摆动相
-        {
-            hmotor3.Kp = swing_Kp;
-            hmotor4.Kp = swing_Kp;
-        }
-
-    if (hposition3_state == 1) // 支撑相
-        {
-            hmotor5.Kp = support_Kp;
-            hmotor6.Kp = support_Kp;
-        }
-    else                      // 摆动相
-        {
-            hmotor5.Kp = swing_Kp;
-            hmotor6.Kp = swing_Kp;
-        }
-
-    if (hposition4_state == 1) // 支撑相
-        {
-            hmotor7.Kp = support_Kp;
-            hmotor8.Kp = support_Kp;
-        }
-    else                      // 摆动相
-        {
-            hmotor7.Kp = swing_Kp;
-            hmotor8.Kp = swing_Kp;
-        }
-
-}
 
 // 单足摆线轨迹生成
 GaitPhasesPoints  gaitGenerator(int state, float height, float step_height, float stride)
@@ -95,7 +46,6 @@ void motion_Forward(float height, float step_height, float stride)
         hposition3.B_x  =  phaseState.xSwing; 
         hposition4.B_y  = phaseState.ySupport;
         hposition4.B_x  =  phaseState.xSupport; 
-        set_Motor_Kp(0,1,0,1);
     }
     else if (tau > 0.5f && tau <= 1.0f)
     {
@@ -109,12 +59,10 @@ void motion_Forward(float height, float step_height, float stride)
         hposition3.B_x  =  phaseState.xSupport;
         hposition4.B_y  = phaseState.ySwing;
         hposition4.B_x  =  phaseState.xSwing;
-        set_Motor_Kp(1,0,1,0);
     }
 
     inverseKinematic_All();
-    Motor_SendCmd_AllAngle();  
-    set_Motor_Kp(0,0,0,0);
+    Motor_SendCmd_AllAngle();   
 }
 
 void motion_Backward(float height, float step_height, float stride)
@@ -135,8 +83,6 @@ void motion_Backward(float height, float step_height, float stride)
         hposition3.B_x  =  phaseState.xSwing; 
         hposition4.B_y  = phaseState.ySupport;
         hposition4.B_x  =  phaseState.xSupport; 
-        set_Motor_Kp(0,1,0,1);
-
     }
     else if (tau > 0.5f && tau <= 1.0f)
     {
@@ -150,11 +96,9 @@ void motion_Backward(float height, float step_height, float stride)
         hposition3.B_x  =  phaseState.xSupport;
         hposition4.B_y  = phaseState.ySwing;
         hposition4.B_x  =  phaseState.xSwing;
-        set_Motor_Kp(1,0,1,0);
     }
     inverseKinematic_All();
     Motor_SendCmd_AllAngle();   
-    set_Motor_Kp(0,0,0,0);
 }
 void motion_TurnRight(float height, float step_height, float stride)
 {
@@ -174,7 +118,6 @@ void motion_TurnRight(float height, float step_height, float stride)
         hposition3.B_x  = -phaseState.xSwing; 
         hposition4.B_y  = phaseState.ySupport;
         hposition4.B_x  = -phaseState.xSupport; 
-        set_Motor_Kp(0,1,0,1);
     }
     else if (tau > 0.5f && tau <= 1.0f)
     {
@@ -188,11 +131,9 @@ void motion_TurnRight(float height, float step_height, float stride)
         hposition3.B_x  = -phaseState.xSupport;
         hposition4.B_y  = phaseState.ySwing;
         hposition4.B_x  = -phaseState.xSwing;
-        set_Motor_Kp(1,0,1,0);
     }
     inverseKinematic_All();
     Motor_SendCmd_AllAngle();   
-    set_Motor_Kp(0,0,0,0);
 }
 
 void motion_TurnLeft(float height, float step_height, float stride)
@@ -213,7 +154,6 @@ float freq = 0.02f; // 步频
         hposition3.B_x  = phaseState.xSwing; 
         hposition4.B_y  = phaseState.ySupport;
         hposition4.B_x  = phaseState.xSupport; 
-        set_Motor_Kp(0,1,0,1);
     }
     else if (tau > 0.5f && tau <= 1.0f)
     {
@@ -227,11 +167,9 @@ float freq = 0.02f; // 步频
         hposition3.B_x  = phaseState.xSupport;
         hposition4.B_y  = phaseState.ySwing;
         hposition4.B_x  = phaseState.xSwing;
-        set_Motor_Kp(1,0,1,0);
     }
     inverseKinematic_All();
     Motor_SendCmd_AllAngle();    
-    set_Motor_Kp(0,0,0,0);
 }
 
 void motion_StandBy(float height)
