@@ -445,6 +445,16 @@
               <FilePath>..\Core\Src\math_utils.c</FilePath>
             </File>
             <File>
+              <FileName>bsp_rc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\bsp_rc.c</FilePath>
+            </File>
+            <File>
+              <FileName>remote_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\remote_control.c</FilePath>
+            </File>
+            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/main.c</FilePath>
@@ -526,14 +536,14 @@
               <FilePath>../Core/Src/stm32f4xx_hal_msp.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_rc.c</FileName>
+              <FileName>key.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\bsp_rc.c</FilePath>
+              <FilePath>..\Core\Src\key.c</FilePath>
             </File>
             <File>
-              <FileName>remote_control.c</FileName>
+              <FileName>pg_led.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\remote_control.c</FilePath>
+              <FilePath>..\Core\Src\pg_led.c</FilePath>
             </File>
             <File>
               <FileName>global_var.h</FileName>

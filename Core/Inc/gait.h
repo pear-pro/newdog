@@ -31,6 +31,6 @@ void StepInPlace(float height, float step_height);
 void motion_Jump();
 
 void testCircle();
-void testJump();
+void testJump(float stride);
 
 #endif

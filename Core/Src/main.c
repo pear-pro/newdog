@@ -24,10 +24,15 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdint.h>
 #include "motor.h"
+#include "gait.h"
+#include "crc_ccitt.h"
 #include "kinematic.h"
 #include "global_var.h"
 #include "remote_control.h"
+#include "key.h"
+#include "pg_led.h"
 
 /* USER CODE END Includes */
 
@@ -40,8 +45,9 @@
 /* USER CODE BEGIN PD */
 
 
+
 // 统一设置电机控制参数
-#define Expect_Kp 0.1
+#define Expect_Kp 0.5
 #define EXpect_kw 0.01 
 
 /* USER CODE END PD */
@@ -171,13 +177,13 @@ int main(void)
     Motor_Init(&hmotor5, &huart6, 5);
     hmotor5.Kp = Expect_Kp;
     hmotor5.Kw = EXpect_kw;	
-    Motor_Init(&hmotor6, &huart6, 4);
+    Motor_Init(&hmotor6, &huart6, 6);
     hmotor6.Kp = Expect_Kp;
     hmotor6.Kw = EXpect_kw;    
-    Motor_Init(&hmotor7, &huart6, 5);
+    Motor_Init(&hmotor7, &huart6, 7);
     hmotor7.Kp = Expect_Kp;
     hmotor7.Kw = EXpect_kw;	
-    Motor_Init(&hmotor8, &huart6, 4);
+    Motor_Init(&hmotor8, &huart6, 8);
     hmotor8.Kp = Expect_Kp;
     hmotor8.Kw = EXpect_kw;  
 
@@ -261,7 +267,7 @@ int main(void)
         break; 
 
         case 8:
-            testJump(); // 测试跳跃用，实际上没有这个动作
+            testJump(stride); // 测试跳跃用，实际上没有这个动作
         break; 
 
         default:

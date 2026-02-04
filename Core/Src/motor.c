@@ -89,9 +89,11 @@ hposition3 : hmotor5(α) , hmotor6(β)
 hposition4 : hmotor7(α) , hmotor8(β)
 */
 void Motor_SendCmd_AllAngle(){
+    //hmotor1.Theta_des = motor1_bias / 6.33f + 6.28 * 20.0f / 360.0f;
     hmotor1.Theta_des = motor1_bias / 6.33f + 6.28 * hposition1.alpha / 360.0f;
     Motor_SendCmd(&hmotor1);
     HAL_Delay(1);
+	//hmotor2.Theta_des = motor2_bias / 6.33f + 6.28 * 20.0f / 360.0f;
     hmotor2.Theta_des = motor2_bias / 6.33f + 6.28 * hposition1.beta / 360.0f;
     Motor_SendCmd(&hmotor2);
     HAL_Delay(1);

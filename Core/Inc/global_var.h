@@ -34,5 +34,4 @@ extern int move_state; // 运动状态
 extern float height;      // 支撑高度
 extern float step_height; // 摆动高度
 extern float stride;      // 步幅
-
 #endif // GLOBAL_VARS_H
