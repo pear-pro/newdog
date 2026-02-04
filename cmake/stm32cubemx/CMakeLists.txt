@@ -37,6 +37,8 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../startup_stm32f427xx.s
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/remote_control.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/bsp_rc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/pg_led.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/key.c
 )
 
 # STM32 HAL/LL Drivers

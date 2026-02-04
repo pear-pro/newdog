@@ -20,9 +20,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_it.h"
-#include "remote_control.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "remote_control.h"
+#include "key.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -204,6 +205,20 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line2 interrupt.
+  */
+void EXTI2_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI2_IRQn 0 */
+
+  /* USER CODE END EXTI2_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
+  /* USER CODE BEGIN EXTI2_IRQn 1 */
+
+  /* USER CODE END EXTI2_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA1 stream1 global interrupt.
   */
 void DMA1_Stream1_IRQHandler(void)
@@ -274,5 +289,9 @@ void UART7_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  key_exti_callback(GPIO_Pin);
+}
 
 /* USER CODE END 1 */

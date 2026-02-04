@@ -22,7 +22,6 @@
 #include "usart.h"
 #include "gpio.h"
 
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdint.h>
@@ -32,6 +31,8 @@
 #include "kinematic.h"
 #include "global_var.h"
 #include "remote_control.h"
+#include "key.h"
+#include "pg_led.h"
 
 /* USER CODE END Includes */
 
@@ -116,7 +117,6 @@ void SystemClock_Config(void);
 
 
 /* USER CODE END PFP */
-/* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
@@ -146,6 +146,7 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
+
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -187,7 +188,7 @@ int main(void)
     hmotor8.Kw = EXpect_kw;  
 
 
-	/* USER CODE END 2 */
+  /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -347,8 +348,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -364,4 +364,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
