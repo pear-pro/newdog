@@ -21,14 +21,14 @@ extern Position_HandleTypeDef hposition2;
 extern Position_HandleTypeDef hposition3;
 extern Position_HandleTypeDef hposition4;
 
-extern float motor1_bias = 5.80f;
-extern float motor2_bias = 3.53f;
-extern float motor3_bias = 3.57f;
-extern float motor4_bias = 0.19f;
-extern float motor5_bias = 4.40f;
-extern float motor6_bias = 3.78f;
-extern float motor7_bias = 0.10f;
-extern float motor8_bias = -1.09f;
+#define motor1_bias 5.80f
+#define motor2_bias 3.53f
+#define motor3_bias 3.57f 
+#define motor4_bias 0.19f
+#define motor5_bias 4.40f
+#define motor6_bias 3.78f
+#define motor7_bias 0.10f
+#define motor8_bias -1.09f
 
 extern int move_state; // 运动状态
 extern float height;      // 支撑高度

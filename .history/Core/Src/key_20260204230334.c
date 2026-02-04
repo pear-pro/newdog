@@ -91,7 +91,6 @@ void key_exti_callback(uint16_t gpio_pin)
         key_state = KEY_PRESSED;
         pressed_event = 1;
         Led_Set('A');
-        Motor_InitBias();
     }
     else
     {

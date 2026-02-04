@@ -43,6 +43,5 @@ HAL_StatusTypeDef Motor_Init(Motor_HandleTypeDef *hmotor,
 
 void Motor_SendCmd(Motor_HandleTypeDef *hmotor);
 void Motor_SendCmd_AllAngle();
-void Motor_InitBias();
 
 #endif /* __MOTOR_H */

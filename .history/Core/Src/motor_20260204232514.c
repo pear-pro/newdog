@@ -37,72 +37,26 @@ HAL_StatusTypeDef Motor_Init(Motor_HandleTypeDef *hmotor,
 
 void Motor_InitBias()
 {
-    uint8_t RxArray[16] = {0};
-
     // 恢复零力矩模式
     uint8_t InitArray[] = {                         
     0xFE, 0xEE, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};	
     unitree_crc_complete(InitArray);
     HAL_UART_Transmit(&huart6, InitArray, 17, 100);
-    HAL_Delay(500);	
+    HAL_Delay(10);	
 
-    // 逐个获取偏置值
-    InitArray[] = {                         
-    0xFE, 0xEE, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};	
-    unitree_crc_complete(InitArray);
-    HAL_UART_Transmit(&huart6, InitArray, 17, 100);
-    HAL_UART_Receive(&huart6, RxArray, 16, 100);
-    motor1_bias = (float)(RxArray[10] << 24 | RxArray[9] << 16 | RxArray[8] << 8 | RxArray[7]) * 32768.0f * 2.0f * PI;
 
-    InitArray[] = {                         
-    0xFE, 0xEE, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};	
-    unitree_crc_complete(InitArray);
-    HAL_UART_Transmit(&huart6, InitArray, 17, 100);
-    HAL_UART_Receive(&huart6, RxArray, 16, 100);
-    motor2_bias = (float)(RxArray[10] << 24 | RxArray[9] << 16 | RxArray[8] << 8 | RxArray[7]) * 32768.0f * 2.0f * PI;
 
-    InitArray[] = {                         
-    0xFE, 0xEE, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};	
-    unitree_crc_complete(InitArray);
-    HAL_UART_Transmit(&huart6, InitArray, 17, 100);
-    HAL_UART_Receive(&huart6, RxArray, 16, 100);
-    motor3_bias = (float)(RxArray[10] << 24 | RxArray[9] << 16 | RxArray[8] << 8 | RxArray[7]) * 32768.0f * 2.0f * PI;
 
-    InitArray[] = {                         
-    0xFE, 0xEE, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};	
-    unitree_crc_complete(InitArray);
-    HAL_UART_Transmit(&huart6, InitArray, 17, 100);
-    HAL_UART_Receive(&huart6, RxArray, 16, 100);
-    motor4_bias = (float)(RxArray[10] << 24 | RxArray[9] << 16 | RxArray[8] << 8 | RxArray[7]) * 32768.0f * 2.0f * PI;
 
-    InitArray[] = {                         
-    0xFE, 0xEE, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};	
-    unitree_crc_complete(InitArray);
-    HAL_UART_Transmit(&huart6, InitArray, 17, 100);
-    HAL_UART_Receive(&huart6, RxArray, 16, 100);
-    motor5_bias = (float)(RxArray[10] << 24 | RxArray[9] << 16 | RxArray[8] << 8 | RxArray[7]) * 32768.0f * 2.0f * PI;
 
-    InitArray[] = {                         
-    0xFE, 0xEE, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};	
-    unitree_crc_complete(InitArray);
-    HAL_UART_Transmit(&huart6, InitArray, 17, 100);
-    HAL_UART_Receive(&huart6, RxArray, 16, 100);
-    motor6_bias = (float)(RxArray[10] << 24 | RxArray[9] << 16 | RxArray[8] << 8 | RxArray[7]) * 32768.0f * 2.0f * PI;
-
-    InitArray[] = {                         
-    0xFE, 0xEE, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};	
-    unitree_crc_complete(InitArray);
-    HAL_UART_Transmit(&huart6, InitArray, 17, 100);
-    HAL_UART_Receive(&huart6, RxArray, 16, 100);
-    motor7_bias = (float)(RxArray[10] << 24 | RxArray[9] << 16 | RxArray[8] << 8 | RxArray[7]) * 32768.0f * 2.0f * PI;
-
-    InitArray[] = {                         
-    0xFE, 0xEE, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};	
-    unitree_crc_complete(InitArray);
-    HAL_UART_Transmit(&huart6, InitArray, 17, 100);
-    HAL_UART_Receive(&huart6, RxArray, 16, 100);
-    motor8_bias = (float)(RxArray[10] << 24 | RxArray[9] << 16 | RxArray[8] << 8 | RxArray[7]) * 32768.0f * 2.0f * PI;
 }
+
+
+
+
+
+
+
 
 
 

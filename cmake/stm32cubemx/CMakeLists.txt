@@ -20,25 +20,14 @@ set(MX_Include_Dirs
 # STM32CubeMX generated application sources
 set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/main.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/crc_ccitt.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/debug_uart.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/dma.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/gait.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/gpio.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/kinematic.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/math_utils.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/motor.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/dma.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/usart.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/stm32f4xx_it.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/stm32f4xx_hal_msp.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/sysmem.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/syscalls.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/math_utils.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../startup_stm32f427xx.s
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/remote_control.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/bsp_rc.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/pg_led.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/key.c
 )
 
 # STM32 HAL/LL Drivers
