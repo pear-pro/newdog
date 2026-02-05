@@ -44,8 +44,8 @@ void Motor_InitBias()
         0xFE, 0xEE, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};    
     unitree_crc_complete(InitArray);
     HAL_UART_Transmit(&huart6, InitArray, 17, 100);
-    HAL_Delay(2000);
-
+    HAL_Delay(500);
+    
     // 逐个获取偏置值
     float* motor_bias_ptrs[8] = {
         &motor1_bias, &motor2_bias, &motor3_bias, &motor4_bias,
@@ -56,14 +56,17 @@ void Motor_InitBias()
     for (int i = 0; i < 8; i++) {
         int motor_id = i + 1;
         
-        uint8_t InitArray[] = {                         
-            0xFE, 0xEE, motor_id, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+=        uint8_t InitArray[] = {                         
+            0xFE, 0xEE, motor_id, 0x00, 0x00, 0x00, 0x00, 0x00, 
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        };
         
         unitree_crc_complete(InitArray);
         HAL_UART_Transmit(&huart6, InitArray, 17, 100);
         
         if (HAL_UART_Receive(&huart6, RxArray, 16, 100) == HAL_OK) {
             int32_t raw_value = (int32_t)(RxArray[10] << 24|RxArray[9] << 16|RxArray[8] << 8|RxArray[7]);
+            
             float bias_value = (float)raw_value * 32768.0f * 2.0f * PI;
             
             // 数据有效性检查
