@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "can.h"
 #include "dma.h"
 #include "usart.h"
 #include "gpio.h"
@@ -154,6 +155,7 @@ int main(void)
   MX_USART6_UART_Init();
   MX_UART7_Init();
   MX_USART1_UART_Init();
+  MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
 
 //  初始化电机结构体,角度环控制只需要初始化kp和kw
