@@ -41,10 +41,24 @@ add_subdirectory(cmake/stm32cubemx)
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
-
+# =========================================================================
+# 【在此处显式添加所有你的自定义底层与算法 .c 文件】
+# =========================================================================
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
+    # 机械狗驱动与算法核心层
+    Core/Src/motor.c
+    Core/Src/gait.c
+    Core/Src/kinematic.c
+    Core/Src/math_utils.c
+    Core/Src/crc_ccitt.c
+    Core/Src/debug_uart.c
+
+# 新增的：
+# IMU 接收解析逻辑
+    Core/Src/HWT901B.c
+
 )
 
 # Add include paths

@@ -28,7 +28,7 @@
 #include "motor.h"
 #include "kinematic.h"
 #include "global_var.h"
-
+#include "HWT901B.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -106,6 +106,9 @@ float height = 30.0f;      // 支撑高度
 float step_height = 10.0f; // 摆动高度
 float stride = 10.0f;      // 步幅
 
+
+  /* 用于心跳监控的局部变量 */
+  uint32_t last_frame_count = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -157,8 +160,11 @@ int main(void)
   MX_USART1_UART_Init();
   MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
+  
+  /* 1. 启动陀螺仪核心解析引擎 (内含精确0x50过滤器与中断开启) */
+  HWT901B_Init(&hcan1);
 
-//  初始化电机结构体,角度环控制只需要初始化kp和kw
+  //  初始化电机结构体,角度环控制只需要初始化kp和kw
     Motor_Init(&hmotor1, &huart6, 1);
     hmotor1.Kp = Expect_Kp;
     hmotor1.Kw = EXpect_kw;	
@@ -192,6 +198,17 @@ int main(void)
   while (1)
   { 
 
+      /* 【系统健康心跳监控】
+       * 每隔 50 毫秒检查一次：如果收到新的有效数据帧，翻转一次指示灯
+       * 视觉效果：由于陀螺仪高频发送，绿灯会呈现出极高频的“微弱常亮/快速闪烁”状态
+       */
+      if (HWT901B_Data.FrameCount != last_frame_count)
+      {
+          HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_14);
+          last_frame_count = HWT901B_Data.FrameCount;
+      }
+      
+      HAL_Delay(50); // 主循环控制在 20Hz 左右运行
     // if (t >= Ts){t = 0;}
     // 根据t给B点坐标赋值
     // 注意下面的trot和StepInPlace一次只能取消注释其中一个，StepInPlace是原地踏步
@@ -300,12 +317,11 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 6;
   RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;

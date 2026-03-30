@@ -273,5 +273,18 @@ void USART6_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+//增加部分：
+/**
+  * @brief  CAN1 接收中断底层的弱函数重写
+  * @note   当硬件 FIFO0 收到数据时，HAL 库会自动跳转到这里
+  */
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+    /* USER CODE BEGIN CAN1_RX0_IRQn 0 */
 
+    /* 调用我们的核心解析引擎，将原始数据转化为浮点欧拉角 */
+    HWT901B_CAN_RxCallback(hcan);
+
+    /* USER CODE END CAN1_RX0_IRQn 0 */
+}
 /* USER CODE END 1 */
