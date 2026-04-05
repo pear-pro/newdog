@@ -16,8 +16,8 @@
 
 float tau = 0.0f;
 float t = 0;    
-float support_Kp = 0.6f; // 0.6,0.25
-float swing_Kp = 0.3f;
+float support_Kp = 0.1f; // 0.6,0.25
+float swing_Kp = 0.1f;
 float support_tau_ff = 0.2f;
 float swing_tau_ff = 0.0f;
 
@@ -28,7 +28,7 @@ float motor3_kp_offset = 0.0f;
 float motor4_kp_offset = 0.2f;
 float motor5_kp_offset = 0.1f;
 float motor6_kp_offset = 0.25f;
-float motor7_kp_offset = 0.1f;
+float motor7_kp_offset = 0.00f;
 float motor8_kp_offset = 0.35f;
 
 // state == 1 支撑相 ; state == 0 摆动相
@@ -172,10 +172,10 @@ void motion_Forward(float height, float step_height, float stride)
 
 void motion_Mix(float height, float step_height, float stride)
 {
-    tau = tau + Forward_freq; // 前进
+    float freq = Forward_freq; // 步频
+    tau = tau + freq; // 前进
     if(tau >= 1.0f){tau = 0.0f;}
 
-	// 左右转控制
     float R_stride = stride; // 右脚步幅
     float L_stride = stride; // 左脚步幅
     if (rc_x > 0){
@@ -189,13 +189,13 @@ void motion_Mix(float height, float step_height, float stride)
         GaitPhasesPoints RightState = gaitGenerator(0, height, step_height, R_stride);
         GaitPhasesPoints LeftState = gaitGenerator(0, height, step_height, L_stride);
 
-        hposition1.B_y  = RightState.ySwing * (1.0f+tanf(pi*stab_roll/180.0f)) ;
+        hposition1.B_y  = RightState.ySwing;
         hposition1.B_x  =  RightState.xSwing; 
-        hposition2.B_y  = RightState.ySupport * (1.0f+tanf(pi*stab_roll/180.0f));
+        hposition2.B_y  = RightState.ySupport;
         hposition2.B_x  =  RightState.xSupport; 
-        hposition3.B_y  = LeftState.ySwing * (1.0f-tanf(pi*stab_roll/180.0f));
+        hposition3.B_y  = LeftState.ySwing;
         hposition3.B_x  =  LeftState.xSwing; 
-        hposition4.B_y  = LeftState.ySupport * (1.0f-tanf(pi*stab_roll/180.0f));
+        hposition4.B_y  = LeftState.ySupport;
         hposition4.B_x  =  LeftState.xSupport; 
         set_Motor_Kp(0,1,0,1);
     }
@@ -204,13 +204,13 @@ void motion_Mix(float height, float step_height, float stride)
         GaitPhasesPoints RightState = gaitGenerator(1, height, step_height, R_stride);
         GaitPhasesPoints LeftState = gaitGenerator(1, height, step_height, L_stride);
 
-        hposition1.B_y  = RightState.ySupport * (1.0f+tanf(pi*stab_roll/180.0f));
+        hposition1.B_y  = RightState.ySupport;
         hposition1.B_x  =  RightState.xSupport; 
-        hposition2.B_y  = RightState.ySwing * (1.0f+tanf(pi*stab_roll/180.0f));
+        hposition2.B_y  = RightState.ySwing;
         hposition2.B_x  =  RightState.xSwing;
-        hposition3.B_y  = LeftState.ySupport * (1.0f-tanf(pi*stab_roll/180.0f));
+        hposition3.B_y  = LeftState.ySupport;
         hposition3.B_x  =  LeftState.xSupport;
-        hposition4.B_y  = LeftState.ySwing * (1.0f-tanf(pi*stab_roll/180.0f));
+        hposition4.B_y  = LeftState.ySwing;
         hposition4.B_x  =  LeftState.xSwing;
         set_Motor_Kp(1,0,1,0);
     }
@@ -221,10 +221,10 @@ void motion_Mix(float height, float step_height, float stride)
 
 void motion_StandBy(float height)
 {
-    hposition1.B_y = height * (1.0f+tanf(pi*stab_roll/180.0f));
-    hposition2.B_y = height * (1.0f+tanf(pi*stab_roll/180.0f));
-    hposition3.B_y = height * (1.0f-tanf(pi*stab_roll/180.0f));
-    hposition4.B_y = height * (1.0f-tanf(pi*stab_roll/180.0f));
+    hposition1.B_y = height;
+    hposition2.B_y = height;
+    hposition3.B_y = height;
+    hposition4.B_y = height;
     hposition1.B_x = 0.0f;
     hposition2.B_x = 0.0f;
     hposition3.B_x = 0.0f;
@@ -299,6 +299,8 @@ void flip_body()
         }
         flip_state = 1;
     }
+	
+   
 }
 
 
@@ -310,6 +312,43 @@ void motion_Jump()
 
 }
 
+
+// 往上跳，实际上要写成往前跳的动作
+//void testJump() // 调用一次跳一次 
+//{
+//    float faai = 0.9f; // 前90%的时间收脚，后10%时间跳跃
+//    float r = 9.0f;
+//    float theta = 0.0f;
+//    float center_y = 27.0f;
+//	tau = 0.0f;
+
+//    while(tau <= 1.0f)
+//    {
+//        tau += 0.2f;
+//        if (tau <= faai){
+//            theta =  pi * tau/(faai);
+//            hposition1.B_x = 0.0f;
+//            hposition1.B_y = r * cosf(theta) + center_y;  // (27-r,27+r)
+//            hposition2.B_x = 0.0f;
+//            hposition2.B_y = r * cosf(theta) + center_y;
+//            hposition3.B_x = 0.0f;
+//            hposition3.B_y = r * cosf(theta) + center_y;
+//            hposition4.B_x = 0.0f;
+//            hposition4.B_y = r * cosf(theta) + center_y; 
+//        }else{
+//            hposition1.B_x = 0.0f;
+//            hposition1.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;     
+//            hposition2.B_x = 0.0f;      
+//            hposition2.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;
+//            hposition3.B_x = 0.0f;
+//            hposition3.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;
+//            hposition4.B_x = 0.0f;
+//            hposition4.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;
+//        }
+//        inverseKinematic_All();
+//        Motor_SendCmd_AllAngle();   
+//    }
+//}
 
 void testJump(float stride)// 调用一次跳一次 
 {

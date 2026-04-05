@@ -21,24 +21,17 @@ extern Position_HandleTypeDef hposition2;
 extern Position_HandleTypeDef hposition3;
 extern Position_HandleTypeDef hposition4;
 
-extern float motor1_bias;
-extern float motor2_bias;
-extern float motor3_bias;
-extern float motor4_bias;
-extern float motor5_bias;
-extern float motor6_bias;
-extern float motor7_bias;
-extern float motor8_bias;
-
-// 遥控参数
-#define rc_x_max 40.0f
-#define rc_y_max 20.0f
+extern float motor1_bias = 5.80f;
+extern float motor2_bias = 3.53f;
+extern float motor3_bias = 3.57f;
+extern float motor4_bias = 0.19f;
+extern float motor5_bias = 4.40f;
+extern float motor6_bias = 3.78f;
+extern float motor7_bias = 0.10f;
+extern float motor8_bias = -1.09f;
 
 extern int move_state; // 运动状态
 extern float height;      // 支撑高度
 extern float step_height; // 摆动高度
 extern float stride;      // 步幅
-extern float rc_x;
-extern float rc_y;
-
 #endif // GLOBAL_VARS_H

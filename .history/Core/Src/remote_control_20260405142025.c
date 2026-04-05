@@ -2,7 +2,6 @@
 #include "main.h"
 #include "math_utils.h"
 #include "debug_uart.h"
-#include "global_var.h"
 
 int move_state = 0; // �˶�״̬
 float height = 30.0f;      // ֧�Ÿ߶�
@@ -10,7 +9,8 @@ float step_height = 10.0f; // �ڶ��߶�
 float stride = 10.0f;      // ����
 float rc_x = 0.0f;
 float rc_y = 0.0f;
-
+#define rc_x_max 40.0f
+#define rc_y_max 20.0f
 
 extern UART_HandleTypeDef huart1;
 extern DMA_HandleTypeDef hdma_usart1_rx;
@@ -222,7 +222,7 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf, RC_ctrl_t *rc_ctrl)
 
 	rc_x=math_normalize_rangef(rc_ctrl->rc.ch[0]/10, -66.0f, 66.0f, -rc_x_max, rc_x_max);
 	rc_y=math_normalize_rangef(rc_ctrl->rc.ch[1]/10, -66.0f, 66.0f, -rc_y_max, rc_y_max);
-    height = rc_ctrl->rc.ch[3] / 10.0f + 37.0f;
+//    height = rc_ctrl->rc.ch[3] / 10.0f + 37.0f;
 //    step_height = rc_ctrl->rc.ch[3] / 10.0f + 10.0f;
 //    float num[]={a,height, step_height, stride, move_state};
 //    Vofa_JustFloat(num, 5);

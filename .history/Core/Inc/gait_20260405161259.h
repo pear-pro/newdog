@@ -23,6 +23,9 @@ typedef struct
 }GaitPhasesPoints;
 
 void motion_Forward(float height, float step_height, float stride);
+void motion_Backward(float height, float step_height, float stride);
+void motion_TurnRight(float height, float step_height, float stride);
+void motion_TurnLeft(float height, float step_height, float stride);
 void motion_StandBy(float height);
 void StepInPlace(float height, float step_height);
 void motion_Jump();

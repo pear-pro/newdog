@@ -33,9 +33,6 @@
 #include "remote_control.h"
 #include "key.h"
 #include "pg_led.h"
-#include "imu.h"
-#include "sucker.h"
-
 
 /* USER CODE END Includes */
 
@@ -50,9 +47,8 @@
 
 
 // 统一设置电机控制参数
-#define Expect_Kp 0.6
-#define EXpect_kw 0.01  // 0.01
-#define Expect_Tau_ff 0.0f
+#define Expect_Kp 0.5
+#define EXpect_kw 0.01 
 
 /* USER CODE END PD */
 
@@ -167,35 +163,27 @@ int main(void)
 
 //  初始化电机结构体,角度环控制只需要初始化kp和kw
     Motor_Init(&hmotor1, &huart6, 1);
-	hmotor1.Tau_ff = -Expect_Tau_ff;
     hmotor1.Kp = Expect_Kp;
     hmotor1.Kw = EXpect_kw;	
     Motor_Init(&hmotor2, &huart6, 2);
-	  hmotor2.Tau_ff = -Expect_Tau_ff;
     hmotor2.Kp = Expect_Kp;
     hmotor2.Kw = EXpect_kw;
     Motor_Init(&hmotor3, &huart6, 3);
-    hmotor3.Tau_ff = -Expect_Tau_ff;
     hmotor3.Kp = Expect_Kp;
     hmotor3.Kw = EXpect_kw;	
     Motor_Init(&hmotor4, &huart6, 4);
-    hmotor4.Tau_ff = -Expect_Tau_ff;
     hmotor4.Kp = Expect_Kp;
     hmotor4.Kw = EXpect_kw;    
     Motor_Init(&hmotor5, &huart6, 5);
-    hmotor5.Tau_ff = Expect_Tau_ff;
     hmotor5.Kp = Expect_Kp;
     hmotor5.Kw = EXpect_kw;	
     Motor_Init(&hmotor6, &huart6, 6);
-    hmotor6.Tau_ff = Expect_Tau_ff;
     hmotor6.Kp = Expect_Kp;
     hmotor6.Kw = EXpect_kw;    
     Motor_Init(&hmotor7, &huart6, 7);
-    hmotor7.Tau_ff = Expect_Tau_ff;
     hmotor7.Kp = Expect_Kp;
     hmotor7.Kw = EXpect_kw;	
     Motor_Init(&hmotor8, &huart6, 8);
-    hmotor8.Tau_ff = Expect_Tau_ff;
     hmotor8.Kp = Expect_Kp;
     hmotor8.Kw = EXpect_kw;  
 
@@ -206,24 +194,25 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   { 
-    // 对 body_roll 积分得到地面倾角
-	stab_roll += kp_roll*(0 - body_roll);
-	if (stab_roll > 40.0f) { stab_roll = 40.0f;}
-	if (stab_roll < -40.0f) { stab_roll = -40.0f;}
 
-//	stab_roll = 0.0f;
-	// 每循环调用一次
-	static int state = 0;  // 0:上升, 1:下降, 2:回零
-	if (state == 0) {
-		stab_roll += 0.1f;
-		if (stab_roll >= 20.0f) state = 1;
-	} else if (state == 1) {
-		stab_roll -= 0.1f;
-		if (stab_roll <= -20.0f) state = 2;
-	} else if (state == 2) {
-		stab_roll += 0.1f;
-		if (stab_roll >= 0.0f) state = 0;
-	}	
+    // if (t >= Ts){t = 0;}
+    // 根据t给B点坐标赋值
+    // 注意下面的trot和StepInPlace一次只能取消注释其中一个，StepInPlace是原地踏步
+    // trot(1,30,15,40); // 前进
+    //StepInPlace(0.01,34,5); // 原地踏步
+    // testCircle();
+	// testStep();
+	// HAL_Delay(6);
+
+  //   // 根据B点坐标，逆解算出alpha和beta
+  //   inverseKinematic(&hposition1);
+
+  //   // 发送角度数据
+  //   hmotor5.Theta_des = motor5_bias / 6.33f + 6.28 * hposition1.alpha / 360.0f;;
+  //   Motor_SendCmd(&hmotor5);
+  //   hmotor4.Theta_des = motor4_bias / 6.33f + 6.28 * hposition1.beta / 360.0f;
+  //   Motor_SendCmd(&hmotor4);
+
 
     /*
     遥控传参：运动状态 move_state
@@ -239,109 +228,53 @@ int main(void)
                 - 传入height决定支撑腿高度，step_height决定抬起高度
     */
     
+    Motor_InitBias();
+    HAL_Delay(50);
 
-	
-//	//----------4/4单电机通信测试----------
+    // switch (move_state)
+    // {
+    //     case 1:
 
-//	for (float angle = 20.0f; angle <= 110.0f; angle+=0.8f)
-//	{
-//		hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * (float)angle / 360.0f;
-//		Motor_SendCmd(&hmotor4); 
-//		HAL_Delay(1);
-//		hmotor2.Theta_des = motor2_bias / 6.33f + 6.28f * (float)angle / 360.0f;
-//		Motor_SendCmd(&hmotor2); 
-//		HAL_Delay(1);
-//		
-//	}
-//	for (float angle = 110.0f; angle >= 20.0f; angle-=0.8f)
-//	{
-//		hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * (float)angle / 360.0f;
-//		Motor_SendCmd(&hmotor4);
-//		HAL_Delay(1); 
-//		hmotor2.Theta_des = motor2_bias / 6.33f + 6.28f * (float)angle / 360.0f;
-//		Motor_SendCmd(&hmotor2);
-//		HAL_Delay(1);
-//		
-//	}
-
-
-	// ------------imu控制翻身的条件写这
-//	if (height > 42.0f){
-//		flip_body();
-//	}
-	
-	// 捡起箱子的代码
-	if (1){
-	
-		sucker_State(1);
-	}
-	
-	
-	// -----------状态机----------------
-	// 原本：move_state
-	
-	int temp_state = 0;
-
-//	static uint32_t start_time = 0;
-//	static uint8_t state_active = 1;  // 1表示正在执行状态机，0表示已超时
-
-//	// 首次进入时记录开始时间
-//	if (start_time == 0)
-//	{
-//		start_time = HAL_GetTick();
-//	}
-
-//	// 检查14秒超时
-//	if (HAL_GetTick() - start_time >= 14000)
-//	{
-//		temp_state = 0;      // 状态设为0
-//		state_active = 0;    // 标记已超时
-//	}
-
-
-	
-    switch (temp_state)
-    {
-        case 1:
-
-            motion_Forward(20.0f, 13.0f, rc_y);
-        break;
+    //         motion_Forward(height, 13.0f, stride);
+    //     break;
                 
-        case 2:
-			motion_Mix(20.0f, 7.0f, rc_y);
-        break;
+    //     case 2:
 
-        case 3:
-		    motion_Forward(20.0f, 0.0f, 10.0f);
-        break;
+    //         motion_Backward(height,  13.0f, stride);
+    //     break;
+
+    //     case 3:
+      
+    //         motion_TurnRight(height,  13.0f, stride);
+    //     break;
                 
-        case 4:
-			flip_body();
-			HAL_Delay(1000);
-        break;   
+    //     case 4:
+
+    //         motion_TurnLeft(height,  13.0f, stride);
+    //     break;   
           
-        case 5:
+    //     case 5:
 
-            StepInPlace(23.0f, step_height);
-        break;
+    //         StepInPlace(height, step_height);
+    //     break;
                 
-        case 6:
-            motion_Jump();
-			move_state = 0;
-        break;     
+    //     case 6:
+    //         motion_Jump();
+		// 	move_state = 0;
+    //     break;     
 
-        case 7:
-            testCircle(); // 测试画圆用，实际上没有这个动作
-        break; 
+    //     case 7:
+    //         testCircle(); // 测试画圆用，实际上没有这个动作
+    //     break; 
 
-        case 8:
-            testJump(stride); // 测试跳跃用，实际上没有这个动作
-        break; 
+    //     case 8:
+    //         testJump(stride); // 测试跳跃用，实际上没有这个动作
+    //     break; 
 
-        default:
-            motion_StandBy(20.0f) ;
-            break;
-    }
+    //     default:
+    //         motion_StandBy(height) ;
+    //         break;
+    // }
 
 
 	  

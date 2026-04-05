@@ -1,24 +1,16 @@
-/*
- * motor.c
- */
-
 #include "motor.h"
 #include "usart.h"
 #include "crc_ccitt.h"
 #include "global_var.h"
-#include "imu.h"
 
-
-float motor1_bias = 5.00f;
-float motor2_bias = 3.60f;
-float motor3_bias = 3.65f;
-float motor4_bias = 0.68f;
+float motor1_bias = 5.80f;
+float motor2_bias = 3.53f;
+float motor3_bias = 3.57f;
+float motor4_bias = 0.19f;
 float motor5_bias = 4.40f;
 float motor6_bias = 3.78f;
-float motor7_bias = -0.20f;
-float motor8_bias = -0.85f;
-
-float flip_offset = 0.0f; // 3.165f
+float motor7_bias = 0.10f;
+float motor8_bias = -1.09f;
 
 /* ---------------- ?????? ---------------- */
 static HAL_StatusTypeDef Motor_PackCmd(Motor_HandleTypeDef *hmotor);
@@ -54,7 +46,7 @@ void Motor_InitBias()
     HAL_UART_Transmit(&huart6, InitArray, 17, 100);
     HAL_Delay(2000);
 
-    // 获取偏置值指针
+    // 逐个获取偏置值
     float* motor_bias_ptrs[8] = {
         &motor1_bias, &motor2_bias, &motor3_bias, &motor4_bias,
         &motor5_bias, &motor6_bias, &motor7_bias, &motor8_bias
@@ -66,51 +58,20 @@ void Motor_InitBias()
         
         uint8_t InitArray[] = {                         
             0xFE, 0xEE, motor_id, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        
         unitree_crc_complete(InitArray);
         HAL_UART_Transmit(&huart6, InitArray, 17, 100);
-
-        #define MAX_RETRY 3
-        uint8_t success = 0;
-
-        for (int retry = 0; retry < MAX_RETRY; retry++)
-        {
-            HAL_UART_Transmit(&huart6, InitArray, 17, 100);
-
-            if (HAL_UART_Receive(&huart6, RxArray, 16, 100) == HAL_OK)
-            {
-                // 校验包头
-                if (RxArray[0] == 0xFD && RxArray[1] == 0xEE)
-                {
-                    success = 1;
-
-                    int32_t raw_value = (int32_t)(
-                        ((uint32_t)RxArray[7]) |
-                        ((uint32_t)RxArray[8] << 8) |
-                        ((uint32_t)RxArray[9] << 16) |
-                        ((uint32_t)RxArray[10] << 24)
-                    );            
-                    float bias_value = (float)raw_value / 32768.0f * 2.0f * PI;
-                    
-                    // 数据有效性检查
-                    // if (bias_value >= -6.28f && bias_value <= 6.28f) {
-                    //     *(motor_bias_ptrs[i]) = bias_value;
-                    // } 
-                    *(motor_bias_ptrs[i]) = bias_value;
-
-                    break;
-                }
-            }
-
-            HAL_Delay(2);
-        }
-
-        // if (!success)
-        // {
-        //     // 这里你可以：
-        //     // 1. 标记这个电机通信失败
-        //     // 2. 或者继续下一个电机
-        //     return;
-        // }
+        
+        if (HAL_UART_Receive(&huart6, RxArray, 16, 100) == HAL_OK) {
+            int32_t raw_value = (int32_t)(RxArray[10] << 24|RxArray[9] << 16|RxArray[8] << 8|RxArray[7]);
+            float bias_value = (float)raw_value * 32768.0f * 2.0f * PI;
+            
+            // 数据有效性检查
+            if (bias_value >= -6.28f && bias_value <= 6.28f) {
+                *(motor_bias_ptrs[i]) = bias_value;
+            } 
+        } 
+        HAL_Delay(10);
     }
 }
 
@@ -118,14 +79,11 @@ void Motor_InitBias()
 /* ---------------- ????(??) ---------------- */
 void Motor_SendCmd(Motor_HandleTypeDef *hmotor)
 {
-//    if (Motor_PackCmd(hmotor) != HAL_OK){
-//        //
-//    };
-	Motor_PackCmd(hmotor);
+    if (Motor_PackCmd(hmotor) != HAL_OK){
+        //
+    };
 
-	HAL_UART_Transmit(&huart6, hmotor->TxData, 17, 1000);
-
-    //RS485_SendFrame_Blocking(&huart6,hmotor->TxData);
+    RS485_SendFrame_Blocking(&huart6,hmotor->TxData);
 }
 
 /* ---------------- ????(??) ---------------- */
@@ -180,32 +138,30 @@ hposition3 : hmotor5(α) , hmotor6(β)
 hposition4 : hmotor7(α) , hmotor8(β)
 */
 void Motor_SendCmd_AllAngle(){
-
-	//hmotor1.Theta_des = motor1_bias / 6.33f + 6.28 * 20.0f / 360.0f;
-    hmotor1.Theta_des = motor1_bias / 6.33f + 6.28f * hposition1.alpha / 360.0f - flip_offset;
+    //hmotor1.Theta_des = motor1_bias / 6.33f + 6.28 * 20.0f / 360.0f;
+    hmotor1.Theta_des = motor1_bias / 6.33f + 6.28 * hposition1.alpha / 360.0f;
     Motor_SendCmd(&hmotor1);
     HAL_Delay(1);
 	//hmotor2.Theta_des = motor2_bias / 6.33f + 6.28 * 20.0f / 360.0f;
-    hmotor2.Theta_des = motor2_bias / 6.33f + 6.28f * hposition1.beta / 360.0f + flip_offset;
+    hmotor2.Theta_des = motor2_bias / 6.33f + 6.28 * hposition1.beta / 360.0f;
     Motor_SendCmd(&hmotor2);
     HAL_Delay(1);
-    //hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * 50.0f / 360.0f;
-    hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * hposition2.beta / 360.0f - flip_offset;
-    Motor_SendCmd(&hmotor4);
-	HAL_Delay(1);
-    hmotor3.Theta_des = motor3_bias / 6.33f + 6.28f * hposition2.alpha / 360.0f + flip_offset;
+    hmotor3.Theta_des = motor3_bias / 6.33f + 6.28 * hposition2.alpha / 360.0f;
     Motor_SendCmd(&hmotor3);
     HAL_Delay(1);
-    hmotor5.Theta_des = motor5_bias / 6.33f + 6.28f * -hposition3.alpha / 360.0f - flip_offset;
+    hmotor4.Theta_des = motor4_bias / 6.33f + 6.28 * hposition2.beta / 360.0f;
+    Motor_SendCmd(&hmotor4);
+    HAL_Delay(1);
+    hmotor5.Theta_des = motor5_bias / 6.33f + 6.28 * -hposition3.alpha / 360.0f;
     Motor_SendCmd(&hmotor5);
     HAL_Delay(1);
-    hmotor6.Theta_des = motor6_bias / 6.33f + 6.28f * -hposition3.beta / 360.0f + flip_offset;
+    hmotor6.Theta_des = motor6_bias / 6.33f + 6.28 * -hposition3.beta / 360.0f;
     Motor_SendCmd(&hmotor6);
     HAL_Delay(1);
-    hmotor7.Theta_des = motor7_bias / 6.33f + 6.28f * -hposition4.alpha / 360.0f + flip_offset;
+    hmotor7.Theta_des = motor7_bias / 6.33f + 6.28 * -hposition4.alpha / 360.0f;
     Motor_SendCmd(&hmotor7);
     HAL_Delay(1);
-    hmotor8.Theta_des = motor8_bias / 6.33f + 6.28f * -hposition4.beta / 360.0f - flip_offset;
+    hmotor8.Theta_des = motor8_bias / 6.33f + 6.28 * -hposition4.beta / 360.0f;
     Motor_SendCmd(&hmotor8);
 	HAL_Delay(1);
 

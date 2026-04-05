@@ -74,10 +74,10 @@ void inverseKinematic(Position_HandleTypeDef *hposition){
 	float beta1 = 2.0f * atan2f(e + sqrtf(delta_beta),d + f) * 180.0f / pi;
 	float beta2 = 2.0f * atan2f(e - sqrtf(delta_beta),d + f) * 180.0f / pi;
 	
-	alpha1 = fmodf((alpha1 - 90.0), 360.0f);
-	alpha2 = fmodf((alpha2 - 90.0), 360.0f);
-	beta1 = fmodf((90.0 - beta1), 360.0f);
-	beta2 = fmodf((90.0 - beta2), 360.0f);
+	alpha1 = fmodf((alpha1 - 90.0f), 360.0f);
+	alpha2 = fmodf((alpha2 - 90.0f), 360.0f);
+	beta1 = fmodf((90.0f - beta1), 360.0f);
+	beta2 = fmodf((90.0f - beta2), 360.0f);
 
 	if (alpha1 == -beta1) {
 		float temp = beta1;
