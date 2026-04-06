@@ -20,6 +20,7 @@
 #include "main.h"
 #include "can.h"
 #include "dma.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,9 +35,9 @@
 #include "remote_control.h"
 #include "key.h"
 #include "pg_led.h"
-#include "imu.h"
 #include "sucker.h"
-
+#include "imu.h"
+#include "pwm_app.h"
 
 /* USER CODE END Includes */
 
@@ -163,8 +164,9 @@ int main(void)
   MX_UART7_Init();
   MX_USART1_UART_Init();
   MX_CAN1_Init();
+  MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
-  
+  PWM_Init(); 
   remote_control_init(); // 初始化遥控器
 
 //  初始化电机结构体,角度环控制只需要初始化kp和kw
@@ -208,6 +210,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   { 
+ //    PWM_Set(PWM_IN); 
+	  
+  //PWM_Set(PWM_OUT); // �����ͷ�
+   
+	  
+	//  PWM_Set(PWM_IDLE);
     /*
     遥控传参：运动状态 move_state
              支撑高度 height

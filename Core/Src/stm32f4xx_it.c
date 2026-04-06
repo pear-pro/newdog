@@ -59,6 +59,7 @@
 
 /* External variables --------------------------------------------------------*/
 extern CAN_HandleTypeDef hcan1;
+extern TIM_HandleTypeDef htim5;
 extern DMA_HandleTypeDef hdma_uart7_tx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern UART_HandleTypeDef huart7;
@@ -263,6 +264,20 @@ void USART1_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles TIM5 global interrupt.
+  */
+void TIM5_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM5_IRQn 0 */
+
+  /* USER CODE END TIM5_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim5);
+  /* USER CODE BEGIN TIM5_IRQn 1 */
+
+  /* USER CODE END TIM5_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA2 stream2 global interrupt.
   */
 void DMA2_Stream2_IRQHandler(void)
@@ -311,15 +326,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 }
 
 /**
-  * @brief  CAN1 FIFO0 ÏûÏ¢´ý´¦ÀíÖÐ¶Ï»Øµ÷º¯Êý
-  * @param  hcan CAN ¾ä±úÖ¸Õë
+  * @brief  CAN1 FIFO0 ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶Ï»Øµï¿½ï¿½ï¿½ï¿½ï¿½
+  * @param  hcan CAN ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
   * @details 
-  *   - ¸Ãº¯ÊýÔÚ CAN1 FIFO0 ½ÓÊÕµ½ÐÂÏûÏ¢Ê±±»´¥·¢
-  *   - ¸ºÔð´¦ÀíÀ´×Ô HWT901B IMU ´«¸ÐÆ÷µÄ CAN Êý¾ÝÖ¡
-  *   - ÊµÊ±¸üÐÂ»úÌåÅ·À­½Ç£¨¹ö×ª¡¢¸©Ñö¡¢Æ«º½£©ºÍ IMU ´«¸ÐÆ÷×´Ì¬
+  *   - ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½ CAN1 FIFO0 ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½Ï¢Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+  *   - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ HWT901B IMU ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ CAN ï¿½ï¿½ï¿½ï¿½Ö¡
+  *   - ÊµÊ±ï¿½ï¿½ï¿½Â»ï¿½ï¿½ï¿½Å·ï¿½ï¿½ï¿½Ç£ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ IMU ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
   * @note
-  *   - ½öÔÚ CAN1_RX0_IRQHandler() ÖÐ±»µ÷ÓÃ
-  *   - ´¦ÀíËÙ¶ÈÖ±½ÓÓ°Ïì×ËÌ¬¸üÐÂÆµÂÊºÍ¿ØÖÆÏµÍ³ÏìÓ¦Ê±¼ä
+  *   - ï¿½ï¿½ï¿½ï¿½ CAN1_RX0_IRQHandler() ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½
+  *   - ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½Ö±ï¿½ï¿½Ó°ï¿½ï¿½ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Æµï¿½ÊºÍ¿ï¿½ï¿½ï¿½ÏµÍ³ï¿½ï¿½Ó¦Ê±ï¿½ï¿½
   * @return None
   */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
