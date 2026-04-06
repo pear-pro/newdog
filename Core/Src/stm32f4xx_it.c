@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "remote_control.h"
 #include "key.h"
+#include "imu.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,6 +58,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern CAN_HandleTypeDef hcan1;
 extern DMA_HandleTypeDef hdma_uart7_tx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern UART_HandleTypeDef huart7;
@@ -233,6 +235,20 @@ void DMA1_Stream1_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles CAN1 RX0 interrupts.
+  */
+void CAN1_RX0_IRQHandler(void)
+{
+  /* USER CODE BEGIN CAN1_RX0_IRQn 0 */
+
+  /* USER CODE END CAN1_RX0_IRQn 0 */
+  HAL_CAN_IRQHandler(&hcan1);
+  /* USER CODE BEGIN CAN1_RX0_IRQn 1 */
+
+  /* USER CODE END CAN1_RX0_IRQn 1 */
+}
+
+/**
   * @brief This function handles USART1 global interrupt.
   */
 void USART1_IRQHandler(void)
@@ -293,5 +309,27 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   key_exti_callback(GPIO_Pin);
 }
+
+/**
+  * @brief  CAN1 FIFO0 消息待处理中断回调函数
+  * @param  hcan CAN 句柄指针
+  * @details 
+  *   - 该函数在 CAN1 FIFO0 接收到新消息时被触发
+  *   - 负责处理来自 HWT901B IMU 传感器的 CAN 数据帧
+  *   - 实时更新机体欧拉角（滚转、俯仰、偏航）和 IMU 传感器状态
+  * @note
+  *   - 仅在 CAN1_RX0_IRQHandler() 中被调用
+  *   - 处理速度直接影响姿态更新频率和控制系统响应时间
+  * @return None
+  */
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+      /* USER CODE BEGIN CAN1_RX0_IRQn 0 */
+             IMU_CAN_RXCALLback(hcan);
+   
+       /* USER CODE END CAN1_RX0_IRQn 0 */
+   
+}
+
 
 /* USER CODE END 1 */

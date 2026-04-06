@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "can.h"
 #include "dma.h"
 #include "usart.h"
 #include "gpio.h"
@@ -58,7 +59,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+uint32_t alive_tick = 0; 
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -161,8 +162,9 @@ int main(void)
   MX_USART6_UART_Init();
   MX_UART7_Init();
   MX_USART1_UART_Init();
+  MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
-
+  
   remote_control_init(); // 初始化遥控器
 
 //  初始化电机结构体,角度环控制只需要初始化kp和kw
@@ -206,25 +208,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   { 
-    // 对 body_roll 积分得到地面倾角
-	stab_roll += kp_roll*(0 - body_roll);
-	if (stab_roll > 40.0f) { stab_roll = 40.0f;}
-	if (stab_roll < -40.0f) { stab_roll = -40.0f;}
-
-//	stab_roll = 0.0f;
-	// 每循环调用一次
-	static int state = 0;  // 0:上升, 1:下降, 2:回零
-	if (state == 0) {
-		stab_roll += 0.1f;
-		if (stab_roll >= 20.0f) state = 1;
-	} else if (state == 1) {
-		stab_roll -= 0.1f;
-		if (stab_roll <= -20.0f) state = 2;
-	} else if (state == 2) {
-		stab_roll += 0.1f;
-		if (stab_roll >= 0.0f) state = 0;
-	}	
-
     /*
     遥控传参：运动状态 move_state
              支撑高度 height
@@ -369,12 +352,11 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 6;
   RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
