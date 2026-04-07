@@ -210,33 +210,32 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   { 
-    
-// -------吸盘--------
-  //    PWM_Set(PWM_IN); 
-	  
-  //PWM_Set(PWM_OUT); // �����ͷ�
-	//  PWM_Set(PWM_IDLE);
-
-
     // 对 body_roll 积分得到地面倾角
 	stab_roll += kp_roll*(0 - body_roll);
 	if (stab_roll > 40.0f) { stab_roll = 40.0f;}
 	if (stab_roll < -40.0f) { stab_roll = -40.0f;}
 
-	stab_roll = 0.0f;
-//	// 每循环调用一次
-//	static int state = 0;  // 0:上升, 1:下降, 2:回零
-//	if (state == 0) {
-//		stab_roll += 0.1f;
-//		if (stab_roll >= 20.0f) state = 1;
-//	} else if (state == 1) {
-//		stab_roll -= 0.1f;
-//		if (stab_roll <= -20.0f) state = 2;
-//	} else if (state == 2) {
-//		stab_roll += 0.1f;
-//		if (stab_roll >= 0.0f) state = 0;
-//	}	
+//	stab_roll = 0.0f;
+	// 每循环调用一次
+	static int state = 0;  // 0:上升, 1:下降, 2:回零
+	if (state == 0) {
+		stab_roll += 0.1f;
+		if (stab_roll >= 20.0f) state = 1;
+	} else if (state == 1) {
+		stab_roll -= 0.1f;
+		if (stab_roll <= -20.0f) state = 2;
+	} else if (state == 2) {
+		stab_roll += 0.1f;
+		if (stab_roll >= 0.0f) state = 0;
+	}	
 
+   //    PWM_Set(PWM_IN); 
+	  
+  //PWM_Set(PWM_OUT); // �����ͷ�
+   
+	  
+	//  PWM_Set(PWM_IDLE);
+  
     /*
     遥控传参：运动状态 move_state
              支撑高度 height

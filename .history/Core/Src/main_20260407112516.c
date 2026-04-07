@@ -210,7 +210,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   { 
-    
 // -------吸盘--------
   //    PWM_Set(PWM_IN); 
 	  
