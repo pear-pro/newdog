@@ -210,10 +210,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   { 
-    //    PWM_Set(PWM_IN); 
-    //PWM_Set(PWM_OUT); // �����ͷ�
-	  //  PWM_Set(PWM_IDLE);
-
+     //    PWM_Set(PWM_IN); 
+	  
+  //PWM_Set(PWM_OUT); // �����ͷ�
+   
+	  
+	//  PWM_Set(PWM_IDLE);
     // 对 body_roll 积分得到地面倾角
 	stab_roll += kp_roll*(0 - body_roll);
 	if (stab_roll > 40.0f) { stab_roll = 40.0f;}

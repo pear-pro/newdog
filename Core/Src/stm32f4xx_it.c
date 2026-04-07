@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "remote_control.h"
 #include "key.h"
+#include "imu.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,6 +58,8 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern CAN_HandleTypeDef hcan1;
+extern TIM_HandleTypeDef htim5;
 extern DMA_HandleTypeDef hdma_uart7_tx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern UART_HandleTypeDef huart7;
@@ -233,6 +236,20 @@ void DMA1_Stream1_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles CAN1 RX0 interrupts.
+  */
+void CAN1_RX0_IRQHandler(void)
+{
+  /* USER CODE BEGIN CAN1_RX0_IRQn 0 */
+
+  /* USER CODE END CAN1_RX0_IRQn 0 */
+  HAL_CAN_IRQHandler(&hcan1);
+  /* USER CODE BEGIN CAN1_RX0_IRQn 1 */
+
+  /* USER CODE END CAN1_RX0_IRQn 1 */
+}
+
+/**
   * @brief This function handles USART1 global interrupt.
   */
 void USART1_IRQHandler(void)
@@ -244,6 +261,20 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 1 */
 	USART1_IRQHandlerCallBack();
   /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM5 global interrupt.
+  */
+void TIM5_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM5_IRQn 0 */
+
+  /* USER CODE END TIM5_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim5);
+  /* USER CODE BEGIN TIM5_IRQn 1 */
+
+  /* USER CODE END TIM5_IRQn 1 */
 }
 
 /**
@@ -293,5 +324,27 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   key_exti_callback(GPIO_Pin);
 }
+
+/**
+  * @brief  CAN1 FIFO0 ��Ϣ�������жϻص�����
+  * @param  hcan CAN ���ָ��
+  * @details 
+  *   - �ú����� CAN1 FIFO0 ���յ�����Ϣʱ������
+  *   - ���������� HWT901B IMU �������� CAN ����֡
+  *   - ʵʱ���»���ŷ���ǣ���ת��������ƫ������ IMU ������״̬
+  * @note
+  *   - ���� CAN1_RX0_IRQHandler() �б�����
+  *   - �����ٶ�ֱ��Ӱ����̬����Ƶ�ʺͿ���ϵͳ��Ӧʱ��
+  * @return None
+  */
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+      /* USER CODE BEGIN CAN1_RX0_IRQn 0 */
+             IMU_CAN_RXCALLback(hcan);
+   
+       /* USER CODE END CAN1_RX0_IRQn 0 */
+   
+}
+
 
 /* USER CODE END 1 */
