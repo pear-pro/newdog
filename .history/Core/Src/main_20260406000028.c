@@ -243,14 +243,26 @@ int main(void)
 	
 //	//----------4/4单电机通信测试----------
 
-//	MotorTest_Sweep(1, 0.4f);
-//	MotorTest_Sweep(2, 0.4f);
-//	MotorTest_Sweep(3, 0.4f);
-//	MotorTest_Sweep(4, 0.4f);
-//	MotorTest_Sweep(5, 0.4f);  
-//	MotorTest_Sweep(6, 0.4f);
-//	MotorTest_Sweep(7, 0.4f);
-//	MotorTest_Sweep(8, 0.4f);
+//	for (float angle = 20.0f; angle <= 110.0f; angle+=0.8f)
+//	{
+//		hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * (float)angle / 360.0f;
+//		Motor_SendCmd(&hmotor4); 
+//		HAL_Delay(1);
+//		hmotor2.Theta_des = motor2_bias / 6.33f + 6.28f * (float)angle / 360.0f;
+//		Motor_SendCmd(&hmotor2); 
+//		HAL_Delay(1);
+//		
+//	}
+//	for (float angle = 110.0f; angle >= 20.0f; angle-=0.8f)
+//	{
+//		hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * (float)angle / 360.0f;
+//		Motor_SendCmd(&hmotor4);
+//		HAL_Delay(1); 
+//		hmotor2.Theta_des = motor2_bias / 6.33f + 6.28f * (float)angle / 360.0f;
+//		Motor_SendCmd(&hmotor2);
+//		HAL_Delay(1);
+//		
+//	}
 
 
 	// ------------imu控制翻身的条件写这
@@ -259,25 +271,22 @@ int main(void)
 //	}
 	
 	// 捡起箱子的代码
-//	if (height > 42.0f){
-//		motion_Down(15.0f,20.0f);
-//		sucker_State(1);
-//		HAL_Delay(1000);
-//		motion_Up(20.0f,15.0f);
-//	}
+	if (height > 42.0f){
+		motion_Down(15.0f,20.0f);
+		sucker_State(1);
+		HAL_Delay(1000);
+		motion_Up(20.0f,15.0f);
+
+	}
 	
-//	// 跳跃代码
-//	if (height > 42.0f){
-//		motion_Jump(35.0f);
-//	}
-//	
+	
 	// -----------状态机----------------
 	// 原本：move_state
 	
-	int temp_state = 1;
+	int temp_state = 0;
 
-	static uint32_t start_time = 0;
-	static uint8_t state_active = 1;  // 1表示正在执行状态机，0表示已超时
+//	static uint32_t start_time = 0;
+//	static uint8_t state_active = 1;  // 1表示正在执行状态机，0表示已超时
 
 //	// 首次进入时记录开始时间
 //	if (start_time == 0)
@@ -286,55 +295,56 @@ int main(void)
 //	}
 
 //	// 检查14秒超时
-//	if (HAL_GetTick() - start_time >= 8000)
+//	if (HAL_GetTick() - start_time >= 14000)
 //	{
 //		temp_state = 0;      // 状态设为0
 //		state_active = 0;    // 标记已超时
 //	}
 
-//    walk_height = 20.0f;
-////	
-//    switch (temp_state)
-//    {
-//        case 1:
+    walk_height = 20.0f;
+	
+    switch (temp_state)
+    {
+        case 1:
 
-//        //motion_Forward(walk_height, 13.0f, rc_y);
-//		motion_Forward(26.0f, 13.0f, 10);
-//        break;
-//                
-//        case 2:
-//			  motion_Mix(walk_height, 7.0f, rc_y);
-//        break;
+        motion_Forward(walk_height, 13.0f, rc_y);
+        break;
+                
+        case 2:
+			  motion_Mix(walk_height, 7.0f, rc_y);
+        break;
 
-//        case 3:
-//		    motion_Forward(walk_height, 0.0f, 10.0f);
-//        break;
-//                
-//        case 4:
-//			flip_body();
-//			HAL_Delay(1000);
-//        break;   
-//          
-//        case 5:
-//			motion_Jump(6.0f);
-//            //StepInPlace(20.0f, step_height);
-//        break;
-//                
-//        case 6:
+        case 3:
+		    motion_Forward(walk_height, 0.0f, 10.0f);
+        break;
+                
+        case 4:
+			flip_body();
+			HAL_Delay(1000);
+        break;   
+          
+        case 5:
 
-//        break;     
+            StepInPlace(walk_height, step_height);
+        break;
+                
+        case 6:
+            motion_Jump();
+			move_state = 0;
+        break;     
 
-//        case 7:
-//            testCircle(); // 测试画圆用，实际上没有这个动作
-//        break; 
+        case 7:
+            testCircle(); // 测试画圆用，实际上没有这个动作
+        break; 
 
-//        case 8:
-//        break; 
+        case 8:
+            testJump(stride); // 测试跳跃用，实际上没有这个动作
+        break; 
 
-//        default:
-//            motion_StandBy(walk_height) ;
-//            break;
-//    }
+        default:
+            motion_StandBy(walk_height) ;
+            break;
+    }
 
 
 	  

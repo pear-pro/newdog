@@ -243,14 +243,14 @@ int main(void)
 	
 //	//----------4/4单电机通信测试----------
 
-//	MotorTest_Sweep(1, 0.4f);
-//	MotorTest_Sweep(2, 0.4f);
-//	MotorTest_Sweep(3, 0.4f);
-//	MotorTest_Sweep(4, 0.4f);
-//	MotorTest_Sweep(5, 0.4f);  
-//	MotorTest_Sweep(6, 0.4f);
-//	MotorTest_Sweep(7, 0.4f);
-//	MotorTest_Sweep(8, 0.4f);
+	MotorTest_Sweep(1, 0.4f);
+  MotorTest_Sweep(2, 0.4f);
+  MotorTest_Sweep(3, 0.4f);
+	MotorTest_Sweep(4, 0.4f);
+	MotorTest_Sweep(5, 0.4f);  
+  MotorTest_Sweep(6, 0.4f);
+  MotorTest_Sweep(7, 0.4f);
+	MotorTest_Sweep(8, 0.4f);
 
 
 	// ------------imu控制翻身的条件写这

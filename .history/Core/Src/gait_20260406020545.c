@@ -12,20 +12,20 @@
 
 #define pi 3.141592f
 
-#define Forward_freq 0.008f 
+#define Forward_freq 0.005f 
 #define up_down_freq 0.04f
 #define jump_freq1 0.01f
-#define jump_freq2 0.4f
-#define jump_freq3 0.07f
+#define jump_freq2 0.25f
+#define jump_freq3 0.03f
 #define jump_freq4 0.01f
 
 float walk_height = 20.0f; 
 
 float tau = 0.0f;
 float t = 0;    
-float support_Kp = 0.4f; // 0.6,0.25
+float support_Kp = 0.5f; // 0.6,0.25
 float swing_Kp = 0.4f;
-float support_tau_ff = 0.0f;
+float support_tau_ff = 0.2f;
 float swing_tau_ff = 0.0f;
 
 // 每个电机的发力表现不同
@@ -117,18 +117,6 @@ void set_Motor_Kp(int hposition1_state, int hposition2_state, int hposition3_sta
             hmotor8.Tau_ff = swing_tau_ff;
         }
 
-}
-
-void quick_set_kp(float kp_value)
-{
-    hmotor1.Kp = kp_value* (1.0f + motor1_kp_offset);
-    hmotor2.Kp = kp_value * (1.0f + motor2_kp_offset);
-    hmotor3.Kp = kp_value* (1.0f + motor3_kp_offset);
-    hmotor4.Kp = kp_value * (1.0f + motor4_kp_offset);
-    hmotor5.Kp = kp_value* (1.0f + motor5_kp_offset);
-    hmotor6.Kp = kp_value * (1.0f + motor6_kp_offset);
-    hmotor7.Kp = kp_value* (1.0f + motor7_kp_offset);
-    hmotor8.Kp = kp_value * (1.0f + motor8_kp_offset);
 }
 
 // 单足摆线轨迹生成
@@ -398,7 +386,6 @@ void motion_Jump(float stride)
     float x_des = sqrt(height_des*height_des/(1+k*k));
     float y_des = k * x_des;
 
-    quick_set_kp(1.3f); // 跳跃时增大Kp，提升响应速度
     for (float x = x_start;x < x_des; x += jump_freq2*(fabsf(x_start - x_des))){
         float y = k * x;
         hposition1.B_y = y;
@@ -432,8 +419,7 @@ void motion_Jump(float stride)
         inverseKinematic_All();
         Motor_SendCmd_AllAngle(); 
     }
-	
-
+	    
     for (float angle = pi;angle <=2*pi; angle += jump_freq2 * pi){
 
         float x = stride * ((angle - sin(angle)) / (2 * pi)) - stride / 2;
@@ -451,7 +437,7 @@ void motion_Jump(float stride)
         inverseKinematic_All();
         Motor_SendCmd_AllAngle(); 
     }
-	
+    
     for (float x = stride / 2.0f; x > 0.0f; x -= jump_freq4 * stride){
         float y = walk_height;
 
@@ -467,7 +453,6 @@ void motion_Jump(float stride)
         inverseKinematic_All();
         Motor_SendCmd_AllAngle(); 
     }
-	quick_set_kp(support_Kp); // 落地时减小Kp，增加缓冲，防止过度震荡    
 
 
 }
@@ -492,6 +477,3 @@ void testCircle()
     inverseKinematic_All();
     Motor_SendCmd_AllAngle();   
 }
-
-
-	

@@ -28,7 +28,7 @@ typedef struct
 void motion_Forward(float height, float step_height, float stride);
 void motion_StandBy(float height);
 void StepInPlace(float height, float step_height);
-void motion_Jump(float stride);
+void motion_Jump();
 void motion_Mix(float height, float step_height, float stride);
 void flip_body();
 void motion_Down(float start,float des);
@@ -36,5 +36,6 @@ void motion_Up(float start,float des);
 
 
 void testCircle();
+void testJump(float stride);
 
 #endif

@@ -43,6 +43,60 @@ HAL_StatusTypeDef Motor_Init(Motor_HandleTypeDef *hmotor,
     return HAL_OK;
 }
 
+void MotorTest_Sweep(int id, float step)
+{
+    Motor_HandleTypeDef* motor = NULL;
+    float bias = 0;
+    int is_positive = 1;  // 1:正角度电机, 0:负角度电机
+    
+    // 根据ID配置电机参数
+    switch(id)
+    {
+        case 1: motor = &hmotor1; bias = motor1_bias; is_positive = 1; break;
+        case 2: motor = &hmotor2; bias = motor2_bias; is_positive = 1; break;
+        case 3: motor = &hmotor3; bias = motor3_bias; is_positive = 1; break;
+        case 4: motor = &hmotor4; bias = motor4_bias; is_positive = 1; break;
+        case 5: motor = &hmotor5; bias = motor5_bias; is_positive = 0; break;
+        case 6: motor = &hmotor6; bias = motor6_bias; is_positive = 0; break;
+        case 7: motor = &hmotor7; bias = motor7_bias; is_positive = 0; break;
+        case 8: motor = &hmotor8; bias = motor8_bias; is_positive = 0; break;
+        default: return;
+    }
+    
+    // 正角度电机 (1-4)
+    if(is_positive)
+    {
+        for(float angle = 20.0f; angle <= 110.0f; angle += step)
+        {
+            motor->Theta_des = bias / 6.33f + 6.28f * angle / 360.0f;
+            Motor_SendCmd(motor);
+            HAL_Delay(1);
+        }
+        for(float angle = 110.0f; angle >= 20.0f; angle -= step)
+        {
+            motor->Theta_des = bias / 6.33f + 6.28f * angle / 360.0f;
+            Motor_SendCmd(motor);
+            HAL_Delay(1);
+        }
+    }
+    // 负角度电机 (5-8)
+    else
+    {
+        for(float angle = -20.0f; angle >= -100.0f; angle -= step)
+        {
+            motor->Theta_des = bias / 6.33f + 6.28f * angle / 360.0f;
+            Motor_SendCmd(motor);
+            HAL_Delay(1);
+        }
+        for(float angle = -100.0f; angle <= -20.0f; angle += step)
+        {
+            motor->Theta_des = bias / 6.33f + 6.28f * angle / 360.0f;
+            Motor_SendCmd(motor);
+            HAL_Delay(1);
+        }
+    }
+}
+
 void Motor_InitBias()
 {
     uint8_t RxArray[16] = {0};

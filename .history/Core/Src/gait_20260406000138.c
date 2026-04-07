@@ -12,20 +12,19 @@
 
 #define pi 3.141592f
 
-#define Forward_freq 0.008f 
+#define Forward_freq 0.005f 
 #define up_down_freq 0.04f
-#define jump_freq1 0.01f
-#define jump_freq2 0.4f
-#define jump_freq3 0.07f
-#define jump_freq4 0.01f
+#define jump_freq1 0.002f
+#define jump_freq2 0.002f
+
 
 float walk_height = 20.0f; 
 
 float tau = 0.0f;
 float t = 0;    
-float support_Kp = 0.4f; // 0.6,0.25
-float swing_Kp = 0.4f;
-float support_tau_ff = 0.0f;
+float support_Kp = 0.3f; // 0.6,0.25
+float swing_Kp = 0.2f;
+float support_tau_ff = 0.2f;
 float swing_tau_ff = 0.0f;
 
 // 每个电机的发力表现不同
@@ -117,18 +116,6 @@ void set_Motor_Kp(int hposition1_state, int hposition2_state, int hposition3_sta
             hmotor8.Tau_ff = swing_tau_ff;
         }
 
-}
-
-void quick_set_kp(float kp_value)
-{
-    hmotor1.Kp = kp_value* (1.0f + motor1_kp_offset);
-    hmotor2.Kp = kp_value * (1.0f + motor2_kp_offset);
-    hmotor3.Kp = kp_value* (1.0f + motor3_kp_offset);
-    hmotor4.Kp = kp_value * (1.0f + motor4_kp_offset);
-    hmotor5.Kp = kp_value* (1.0f + motor5_kp_offset);
-    hmotor6.Kp = kp_value * (1.0f + motor6_kp_offset);
-    hmotor7.Kp = kp_value* (1.0f + motor7_kp_offset);
-    hmotor8.Kp = kp_value * (1.0f + motor8_kp_offset);
 }
 
 // 单足摆线轨迹生成
@@ -370,56 +357,31 @@ void motion_Down(float start, float des)
 // 往前跳, 15.5f~37.0f ？
 void motion_Jump(float stride)
 {
-    float height_des = 33.0f; // 蹬地腿长
-    float step_height = height_des - 13.0f; // 抬腿高度
+    float height_des = 37.0f; // 蹬地腿长
+    float step_height = 20.0f; // 抬腿高度
 
-    float r = fabsf(15.5f - walk_height) * 0.5f;
-    float center_y = (15.5f + walk_height) / 2.0f;
-    float theta = 0.0f;
+    motion_Down(walk_height,15.5f);
 
-    for (float i = 0.0f; i <= 1.0f; i += jump_freq1){
-        theta = pi * i;
-        hposition1.B_x = 0.0f;
-        hposition1.B_y = r * cosf(theta) + center_y;
-        hposition2.B_x = 0.0f;
-        hposition2.B_y = r * cosf(theta) + center_y;    
-        hposition3.B_x = 0.0f;
-        hposition3.B_y = r * cosf(theta) + center_y;
-        hposition4.B_x = 0.0f;
-        hposition4.B_y = r * cosf(theta) + center_y;
-
-        inverseKinematic_All();
-        Motor_SendCmd_AllAngle(); 
-    }
-	
-    float k = 2*height_des/stride; // 斜率
-    float x_start = sqrt(15.5f*15.5f/(1+k*k));
-	float y_start = k * x_start;
-    float x_des = sqrt(height_des*height_des/(1+k*k));
+    float k = 2*height_des/stride; // 跳跃高度调节系数，越大跳得越高
+    float x_start = sqrt(15.5f*15.5f - (1+k*k));
+    float x_des = sqrt(height_des*height_des - (1+k*k));
     float y_des = k * x_des;
-
-    quick_set_kp(1.3f); // 跳跃时增大Kp，提升响应速度
-    for (float x = x_start;x < x_des; x += jump_freq2*(fabsf(x_start - x_des))){
+    for (float x = x_start;x < x_des; x += jump_freq1){
         float y = k * x;
         hposition1.B_y = y;
-        hposition1.B_x = -x; 
+        hposition1.B_x = x; 
         hposition2.B_y = y;
-        hposition2.B_x = -x; 
+        hposition2.B_x = x; 
         hposition3.B_y = y;
-        hposition3.B_x = -x; 
+        hposition3.B_x = x; 
         hposition4.B_y = y;
-        hposition4.B_x = -x; 
+        hposition4.B_x = x; 
 
         inverseKinematic_All();
         Motor_SendCmd_AllAngle(); 
     }
-	
-    for (float angle = 0.0f;angle <=pi; angle += jump_freq3 * pi){
-
-        float x = stride * ((angle - sin(angle)) / (2 * pi)) - stride / 2;
-        float y = height_des - step_height * (1 - cos(angle)) / 2;
-		y *= 0.9f;
-
+    for (float x = x_des;x > x_start; x -= jump_freq1){
+        float y = k * x;
         hposition1.B_y = y;
         hposition1.B_x = x; 
         hposition2.B_y = y;
@@ -427,49 +389,79 @@ void motion_Jump(float stride)
         hposition3.B_y = y;
         hposition3.B_x = x; 
         hposition4.B_y = y;
-        hposition4.B_x = x;
+        hposition4.B_x = x; 
 
         inverseKinematic_All();
         Motor_SendCmd_AllAngle(); 
     }
+    // for (float angle = 0.0f;angle <=pi; angle += jump_freq2){
+    //     float x = x0 + stride * (angle - sinf(angle)) / M_PI;
+    //     float y = y0 + step_height * (1.0f - cosf(angle)) / 2.0f;
+    //     hposition1.B_y = y;
+    //     hposition1.B_x = x; 
+    //     hposition2.B_y = y;
+    //     hposition2.B_x = x; 
+    //     hposition3.B_y = y;
+    //     hposition3.B_x = x; 
+    //     hposition4.B_y = y;
+    //     hposition4.B_x = x;
+
+    //     inverseKinematic_All();
+    //     Motor_SendCmd_AllAngle(); 
+    // }
+    
+
+
+}
+
+
+void testJump(float stride)// 调用一次跳一次 
+{
+    float faai = 0.9f; // 前90%的时间收脚，后10%时间跳跃
+    float r = 9.0f;
+    float theta = 0.0f;
+    float center_y = 27.0f;
 	
-
-    for (float angle = pi;angle <=2*pi; angle += jump_freq2 * pi){
-
-        float x = stride * ((angle - sin(angle)) / (2 * pi)) - stride / 2;
-        float y = walk_height - (walk_height - 15.5f) * (1 - cos(angle)) / 2;
-
-        hposition1.B_y = y;
-        hposition1.B_x = x; 
-        hposition2.B_y = y;
-        hposition2.B_x = x; 
-        hposition3.B_y = y;
-        hposition3.B_x = x; 
-        hposition4.B_y = y;
-        hposition4.B_x = x;
-
-        inverseKinematic_All();
-        Motor_SendCmd_AllAngle(); 
-    }
 	
-    for (float x = stride / 2.0f; x > 0.0f; x -= jump_freq4 * stride){
-        float y = walk_height;
+	tau = 0.0f;
 
-        hposition1.B_y = y;
-        hposition1.B_x = x; 
-        hposition2.B_y = y;
-        hposition2.B_x = x; 
-        hposition3.B_y = y;
-        hposition3.B_x = x; 
-        hposition4.B_y = y;
-        hposition4.B_x = x;
-
+//    while(tau <= 1.0f)
+//    {
+//        tau += 0.05f;
+//        if (tau <= faai){
+//            theta =  pi * tau/(faai);
+//            hposition1.B_x = 0.0f;
+//            hposition1.B_y = r * cosf(theta) + center_y;  // (27-r,27+r)
+//        }else{
+//           hposition1.B_x = 0.0f;
+//           hposition1.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;           
+//        }
+	while(tau <= 2.0f)
+    {
+        tau += 0.05f;
+        if (tau <= faai){
+            theta =  pi * tau/(faai);
+            hposition1.B_x = 0.0f;
+            hposition1.B_y = r * cosf(theta) + center_y;  // (27-r,27+r)
+            hposition2.B_x = 0.0f;
+            hposition2.B_y = r * cosf(theta) + center_y;
+            hposition3.B_x = 0.0f;
+            hposition3.B_y = r * cosf(theta) + center_y;
+            hposition4.B_x = 0.0f;
+            hposition4.B_y = r * cosf(theta) + center_y; 
+        }else{
+            hposition1.B_x = 0.0f;
+            hposition1.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;     
+            hposition2.B_x = 0.0f;      
+            hposition2.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;
+            hposition3.B_x = 0.0f;
+            hposition3.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;
+            hposition4.B_x = 0.0f;
+            hposition4.B_y = 2.0f*r * (tau - faai)/(1.0f - faai) + center_y - r;
+        }
         inverseKinematic_All();
-        Motor_SendCmd_AllAngle(); 
+        Motor_SendCmd_AllAngle();   
     }
-	quick_set_kp(support_Kp); // 落地时减小Kp，增加缓冲，防止过度震荡    
-
-
 }
 
 
@@ -492,6 +484,3 @@ void testCircle()
     inverseKinematic_All();
     Motor_SendCmd_AllAngle();   
 }
-
-
-	
