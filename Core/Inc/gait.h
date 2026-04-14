@@ -25,12 +25,13 @@ typedef struct
   float sigma;     // 轨迹生成三角函数中的相位
 }GaitPhasesPoints;
 
+void  Body_Roll_Stabilizer(void);
 void motion_Forward(float height, float step_height, float stride);
 void motion_StandBy(float height);
 void StepInPlace(float height, float step_height);
 void motion_Jump(float stride);
 void motion_Mix(float height, float step_height, float stride);
-void flip_body();
+void flip_body(void);
 void motion_Down(float start,float des);
 void motion_Up(float start,float des);
 

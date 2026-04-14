@@ -28,6 +28,10 @@ float swing_Kp = 0.4f;
 float support_tau_ff = 0.0f;
 float swing_tau_ff = 0.0f;
 
+// -----imu闭环控制的变量-----
+kp_GyroZ = 0.05f; 
+GyroZ_max = 40.0f; // z轴转向角速度最大值
+
 // 每个电机的发力表现不同
 float motor1_kp_offset = 0.2f;
 float motor2_kp_offset = 0.0f;
@@ -131,16 +135,6 @@ void quick_set_kp(float kp_value)
     hmotor8.Kp = kp_value * (1.0f + motor8_kp_offset);
 }
 
-void  Body_Roll_Stabilizer(){
-	stab_roll += kp_roll*(0 - body_roll) - kd_roll * (body_roll - prev_body_roll);
-	
-	if (stab_roll > 40.0f) { stab_roll = 40.0f;}
-	if (stab_roll < -40.0f) { stab_roll = -40.0f;}
-	
-	prev_body_roll = body_roll;
-}
- 
-
 // 单足摆线轨迹生成
 GaitPhasesPoints  gaitGenerator(int state, float height, float step_height, float stride)
 {
@@ -204,23 +198,14 @@ void motion_Mix(float height, float step_height, float stride)
     tau = tau + Forward_freq; // 前进
     if(tau >= 1.0f){tau = 0.0f;}
 
-    // 带陀螺仪的前进闭环控制
-    //     if (rc_x > 0){
-    //     R_stride = stride + kp_GyroZ * (GyroZ_max*rc_x/rc_x_max - GyroZ);
-    // }else{
-    //     L_stride = stride - kp_GyroZ * (GyroZ_max*rc_x/rc_x_max - GyroZ);
-    // }
-
-    
-
-
+    //(rc_x/rc_x_max)
 	// 左右转控制
     float R_stride = stride; // 右脚步幅
     float L_stride = stride; // 左脚步幅
     if (rc_x > 0){
-        R_stride = stride * 20.0f*(rc_x/rc_x_max);
+        R_stride = stride + kp_GyroZ * (GyroZ_max*rc_x/rc_x_max - GyroZ);
     }else{
-        L_stride = stride * 20.0f*(rc_x/rc_x_max);
+        L_stride = stride + kp_GyroZ * (GyroZ_max*rc_x/rc_x_max - GyroZ);
     }
 
     if (tau <= 0.5f)

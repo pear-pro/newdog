@@ -15,6 +15,7 @@ extern Motor_HandleTypeDef hmotor5;
 extern Motor_HandleTypeDef hmotor6;
 extern Motor_HandleTypeDef hmotor7;
 extern Motor_HandleTypeDef hmotor8;
+extern Motor_HandleTypeDef hmotor9;
 
 extern Position_HandleTypeDef hposition1;
 extern Position_HandleTypeDef hposition2;
@@ -29,6 +30,10 @@ extern float motor5_bias;
 extern float motor6_bias;
 extern float motor7_bias;
 extern float motor8_bias;
+
+extern float Expect_Kp;
+extern float EXpect_kw;
+extern float Expect_Tau_ff;
 
 // 遥控参数
 #define rc_x_max 40.0f

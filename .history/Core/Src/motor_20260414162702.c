@@ -23,6 +23,50 @@ float flip_offset = 0.0f; // 3.165f 狗腿翻身对应的电机反转角度
 static HAL_StatusTypeDef Motor_PackCmd(Motor_HandleTypeDef *hmotor);
 
 
+// ---------- 电机ID重映射 ----------
+typedef struct {
+    Motor_HandleTypeDef *src;
+    Motor_HandleTypeDef *dst;
+} MotorSwapPair;
+
+void swap_motor_data_snapshot(MotorSwapPair pairs[], int pair_count) {
+    // 临时保存所有源电机的原始数据
+    Motor_HandleTypeDef src_snapshots[pair_count];
+    
+    // 第一步：保存所有源电机的原始数据
+    for (int i = 0; i < pair_count; i++) {
+        memcpy(&src_snapshots[i], pairs[i].src, sizeof(Motor_HandleTypeDef));
+    }
+    
+    // 第二步：将保存的原始数据写入对应的目标电机
+    for (int i = 0; i < pair_count; i++) {
+        memcpy(pairs[i].dst, &src_snapshots[i], sizeof(Motor_HandleTypeDef));
+    }
+}
+
+// 电机指针数组（按编号1~9）
+Motor_HandleTypeDef *motors[] = {
+    &hmotor1, &hmotor2, &hmotor3, &hmotor4, &hmotor5,
+    &hmotor6, &hmotor7, &hmotor8, &hmotor9
+};
+
+// 定义交换规则：{源, 目标}
+MotorSwapPair swap_rules[] = {
+    {&hmotor1, &hmotor5},
+    {&hmotor2, &hmotor4},
+    {&hmotor3, &hmotor6},
+    {&hmotor4, &hmotor7},
+    {&hmotor5, &hmotor9},
+    {&hmotor6, &hmotor8},
+    {&hmotor7, &hmotor2},
+    {&hmotor8, &hmotor3},
+};
+
+int rule_count = sizeof(swap_rules) / sizeof(swap_rules[0]);
+
+
+// ---------- 电机ID重映射结束 ----------
+
 HAL_StatusTypeDef Motor_Init(Motor_HandleTypeDef *hmotor, UART_HandleTypeDef *huart, uint8_t motor_id)
 {
     if (!hmotor || !huart || motor_id > MOTOR_MAX_ID)
@@ -38,56 +82,6 @@ HAL_StatusTypeDef Motor_Init(Motor_HandleTypeDef *hmotor, UART_HandleTypeDef *hu
     hmotor->Kw = 0.0f;
 
     return HAL_OK;
-}
-
-//  初始化电机结构体,角度环控制只需要初始化kp和kw
-void init_motor_parameters(void)
-{
-    Motor_Init(&hmotor1, &huart6, 1);
-	hmotor1.Tau_ff = -Expect_Tau_ff;
-    hmotor1.Kp = Expect_Kp;
-    hmotor1.Kw = EXpect_kw;	
-    Motor_Init(&hmotor2, &huart6, 2);
-	hmotor2.Tau_ff = -Expect_Tau_ff;
-    hmotor2.Kp = Expect_Kp;
-    hmotor2.Kw = EXpect_kw;
-    Motor_Init(&hmotor3, &huart6, 3);
-    hmotor3.Tau_ff = -Expect_Tau_ff;
-    hmotor3.Kp = Expect_Kp;
-    hmotor3.Kw = EXpect_kw;	
-    Motor_Init(&hmotor4, &huart6, 4);
-    hmotor4.Tau_ff = -Expect_Tau_ff;
-    hmotor4.Kp = Expect_Kp;
-    hmotor4.Kw = EXpect_kw;    
-    Motor_Init(&hmotor5, &huart6, 5);
-    hmotor5.Tau_ff = Expect_Tau_ff;
-    hmotor5.Kp = Expect_Kp;
-    hmotor5.Kw = EXpect_kw;	
-    Motor_Init(&hmotor6, &huart6, 6);
-    hmotor6.Tau_ff = Expect_Tau_ff;
-    hmotor6.Kp = Expect_Kp;
-    hmotor6.Kw = EXpect_kw;    
-    Motor_Init(&hmotor7, &huart6, 7);
-    hmotor7.Tau_ff = Expect_Tau_ff;
-    hmotor7.Kp = Expect_Kp;
-    hmotor7.Kw = EXpect_kw;	
-    Motor_Init(&hmotor8, &huart6, 8);
-    hmotor8.Tau_ff = Expect_Tau_ff;
-    hmotor8.Kp = Expect_Kp;
-    hmotor8.Kw = EXpect_kw;  
-}
-
-// 电机id重映射
-void remap_motor_ids(void)
-{
-	hmotor1.MotorID = 5;
-    hmotor2.MotorID = 4;
-    hmotor3.MotorID = 6;
-    hmotor4.MotorID = 7;
-    hmotor5.MotorID = 9;
-    hmotor6.MotorID = 8;
-    hmotor7.MotorID = 2;
-    hmotor8.MotorID = 3;
 }
 
 // 电机通信测试，使其匀速扫过一定范围的角度
@@ -226,7 +220,7 @@ void motor_release()
 
 }
 
-
+/* ---------------- ????(??) ---------------- */
 void Motor_SendCmd(Motor_HandleTypeDef *hmotor)
 {
 //    if (Motor_PackCmd(hmotor) != HAL_OK){
@@ -239,7 +233,7 @@ void Motor_SendCmd(Motor_HandleTypeDef *hmotor)
     //RS485_SendFrame_Blocking(&huart6,hmotor->TxData);
 }
 
-
+/* ---------------- ????(??) ---------------- */
 static HAL_StatusTypeDef Motor_PackCmd(Motor_HandleTypeDef *hmotor)
 {
     if (!hmotor) return HAL_ERROR;
@@ -290,42 +284,43 @@ hposition2 : hmotor3(α) , hmotor4(β)
 hposition3 : hmotor5(α) , hmotor6(β)
 hposition4 : hmotor7(α) , hmotor8(β)
 */
-void Motor_SendCmd_AllAngle()
-{
+void Motor_SendCmd_AllAngle(){
+
+
     hmotor1.Theta_des = motor1_bias / 6.33f + 6.28 * 20.0f / 360.0f;
     //hmotor1.Theta_des = motor1_bias / 6.33f + 6.28f * hposition1.alpha / 360.0f - flip_offset;
     hmotor2.Theta_des = motor2_bias / 6.33f + 6.28 * 20.0f / 360.0f;
     //hmotor2.Theta_des = motor2_bias / 6.33f + 6.28f * hposition1.beta / 360.0f + flip_offset;
-    hmotor3.Theta_des = motor3_bias / 6.33f + 6.28 * 10.0f / 360.0f;
+    hmotor3.Theta_des = motor3_bias / 6.33f + 6.28 * 20.0f / 360.0f;
     //hmotor3.Theta_des = motor3_bias / 6.33f + 6.28f * hposition2.alpha / 360.0f + flip_offset;
     hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * 20.0f / 360.0f;
     //hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * hposition2.beta / 360.0f - flip_offset;
-    hmotor5.Theta_des = motor5_bias / 6.33f + 6.28f * 10.0f / 360.0f;
+    hmotor5.Theta_des = motor5_bias / 6.33f + 6.28f * 20.0f / 360.0f;
     //hmotor5.Theta_des = motor5_bias / 6.33f + 6.28f * -hposition3.alpha / 360.0f - flip_offset;
-    hmotor6.Theta_des = motor6_bias / 6.33f + 6.28f * 10.0f / 360.0f;
+    hmotor6.Theta_des = motor6_bias / 6.33f + 6.28f * 20.0f / 360.0f;
     //hmotor6.Theta_des = motor6_bias / 6.33f + 6.28f * -hposition3.beta / 360.0f + flip_offset;
     hmotor7.Theta_des = motor7_bias / 6.33f + 6.28f * 20.0f / 360.0f;
     //hmotor7.Theta_des = motor7_bias / 6.33f + 6.28f * -hposition4.alpha / 360.0f + flip_offset;
-    hmotor8.Theta_des = motor8_bias / 6.33f + 6.28f * 70.0f / 360.0f;
+    hmotor8.Theta_des = motor8_bias / 6.33f + 6.28f * 50.0f / 360.0f;
     //hmotor8.Theta_des = motor8_bias / 6.33f + 6.28f * -hposition4.beta / 360.0f - flip_offset;
 
-	
-	Motor_SendCmd(&hmotor1);
-	HAL_Delay(1);
-	Motor_SendCmd(&hmotor2);
-	HAL_Delay(1);
-	Motor_SendCmd(&hmotor3);
-	HAL_Delay(1);
-	Motor_SendCmd(&hmotor4);
-	HAL_Delay(1);
-	Motor_SendCmd(&hmotor5);
-	HAL_Delay(1);
-	Motor_SendCmd(&hmotor6);
-	HAL_Delay(1);
-	Motor_SendCmd(&hmotor7);
-	HAL_Delay(1);
-	Motor_SendCmd(&hmotor8);
-	HAL_Delay(1);
+    swap_motor_data_snapshot(swap_rules, rule_count);
 
+//    Motor_SendCmd(&hmotor2);
+//    HAL_Delay(1);
+//    Motor_SendCmd(&hmotor3);
+//    HAL_Delay(1);
+//    Motor_SendCmd(&hmotor4);
+//    HAL_Delay(1);
+//    Motor_SendCmd(&hmotor5);
+//    HAL_Delay(1);
+//    Motor_SendCmd(&hmotor6);
+//    HAL_Delay(1);
+//    Motor_SendCmd(&hmotor7);
+//    HAL_Delay(1);
+    Motor_SendCmd(&hmotor8);
+    HAL_Delay(1);
+//    Motor_SendCmd(&hmotor9);
+//    HAL_Delay(1);
 }
 

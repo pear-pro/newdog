@@ -26,14 +26,14 @@ float body_yaw = 0.0f;
 float prev_body_roll = 0.0f;
 
 // ----角速度--------------
-float GyroX=0.0f;
-float GyroY=0.0f;
-float GyroZ=0.0f;
+float GyroX;
+float GyroY;
+float GyroZ;
 
 // ----角加速度--------------
-float AccX=0.0f;
-float AccY=0.0f;
-float AccZ=0.0f;
+float AccX;
+float AccY;
+float AccZ;
 
 /**
  * @brief IMU 数据接收完成后的应用层处理回调
@@ -49,16 +49,8 @@ static void IMU_App_Update(void)
     body_pitch = IMU_rx_data.Pitch;
     body_yaw = IMU_rx_data.Yaw;
     
-    GyroX = IMU_rx_data.GyroX;
-    GyroY = IMU_rx_data.GyroY;
-    GyroZ = IMU_rx_data.GyroZ;
-
-    AccX = IMU_rx_data.AccX;
-    AccY = IMU_rx_data.AccY;
-    AccZ = IMU_rx_data.AccZ;
-
-     /* 其他实时计算（如 PID 调整）可在此添加，确保计算效率以适应高频中断 */
-
+	
+	
     /* 可在此添加实时计算
      * 例如：基于稳定余度的 PID 调整，后续PID计算还没完成，先放个占位
      * kp_roll = body_roll * 0.6f + ...

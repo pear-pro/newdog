@@ -49,10 +49,12 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
+
+
 // 统一设置电机控制参数
-float Expect_Kp = 0.1;
-float EXpect_kw = 0.01;  // 0.01
-float Expect_Tau_ff = 0.0f;
+#define Expect_Kp 0.6
+#define EXpect_kw 0.01  // 0.01
+#define Expect_Tau_ff 0.0f
 
 /* USER CODE END PD */
 
@@ -74,7 +76,6 @@ Motor_HandleTypeDef hmotor5;
 Motor_HandleTypeDef hmotor6;
 Motor_HandleTypeDef hmotor7;
 Motor_HandleTypeDef hmotor8;
-Motor_HandleTypeDef hmotor9;
 
 // 四只脚的位置相关结构体
 Position_HandleTypeDef hposition1;
@@ -112,7 +113,7 @@ hposition4 : hmotor7(α) , hmotor8(β)
 extern volatile uint8_t RS485_RxBuf[16];
 extern volatile uint8_t Receive_OK;
 
-int temp_state = 0;
+int temp_state = 1;
 static int up_trigger_count = 0;
 static int down_trigger_count = 0;
 
@@ -169,13 +170,43 @@ int main(void)
   MX_CAN1_Init();
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
-	PWM_Init(); 
-	remote_control_init(); // 初始化遥控器
+  PWM_Init(); 
+  remote_control_init(); // 初始化遥控器
 
-	init_motor_parameters();// 设置角度模式参数
-	remap_motor_ids(); // 重映射id
-	
-	motor_release();
+//  初始化电机结构体,角度环控制只需要初始化kp和kw
+    Motor_Init(&hmotor1, &huart6, 1);
+	hmotor1.Tau_ff = -Expect_Tau_ff;
+    hmotor1.Kp = Expect_Kp;
+    hmotor1.Kw = EXpect_kw;	
+    Motor_Init(&hmotor2, &huart6, 2);
+	  hmotor2.Tau_ff = -Expect_Tau_ff;
+    hmotor2.Kp = Expect_Kp;
+    hmotor2.Kw = EXpect_kw;
+    Motor_Init(&hmotor3, &huart6, 3);
+    hmotor3.Tau_ff = -Expect_Tau_ff;
+    hmotor3.Kp = Expect_Kp;
+    hmotor3.Kw = EXpect_kw;	
+    Motor_Init(&hmotor4, &huart6, 4);
+    hmotor4.Tau_ff = -Expect_Tau_ff;
+    hmotor4.Kp = Expect_Kp;
+    hmotor4.Kw = EXpect_kw;    
+    Motor_Init(&hmotor5, &huart6, 5);
+    hmotor5.Tau_ff = Expect_Tau_ff;
+    hmotor5.Kp = Expect_Kp;
+    hmotor5.Kw = EXpect_kw;	
+    Motor_Init(&hmotor6, &huart6, 6);
+    hmotor6.Tau_ff = Expect_Tau_ff;
+    hmotor6.Kp = Expect_Kp;
+    hmotor6.Kw = EXpect_kw;    
+    Motor_Init(&hmotor7, &huart6, 7);
+    hmotor7.Tau_ff = Expect_Tau_ff;
+    hmotor7.Kp = Expect_Kp;
+    hmotor7.Kw = EXpect_kw;	
+    Motor_Init(&hmotor8, &huart6, 8);
+    hmotor8.Tau_ff = Expect_Tau_ff;
+    hmotor8.Kp = Expect_Kp;
+    hmotor8.Kw = EXpect_kw;  
+
 
   /* USER CODE END 2 */
 
@@ -183,10 +214,35 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   { 
-    // pd控制横向平衡
-	Body_Roll_Stabilizer();
+    //PWM_Set(PWM_IN); 
+    //PWM_Set(PWM_OUT); // �����ͷ�
+	  //  PWM_Set(PWM_IDLE);
+	  
+	  
 
-// ----------遥控传参说明----------
+    // pd控制横向平衡
+	
+	
+	stab_roll += kp_roll*(0 - body_roll) - kd_roll * (body_roll - prev_body_roll);
+	
+	if (stab_roll > 40.0f) { stab_roll = 40.0f;}
+	if (stab_roll < -40.0f) { stab_roll = -40.0f;}
+	
+	prev_body_roll = body_roll;
+
+//	stab_roll = 5.0f;
+	// 每循环调用一次
+//	static int state = 0;  // 0:上升, 1:下降, 2:回零
+//	if (state == 0) {
+//		stab_roll += 0.1f;
+//		if (stab_roll >= 20.0f) state = 1;
+//	} else if (state == 1) {
+//		stab_roll -= 0.1f;
+//		if (stab_roll <= -20.0f) state = 2;
+//	} else if (state == 2) {
+//		stab_roll += 0.1f;
+//		if (stab_roll >= 0.0f) state = 0;
+//	}	
 
     /*
     遥控传参：运动状态 move_state
@@ -216,7 +272,7 @@ int main(void)
 //	MotorTest_Sweep(8, 0.4f);
 
 
-	// ------------imu控制翻身的条件写这---------
+	// ------------imu控制翻身的条件写这
 //	if (height > 42.0f){
 //		flip_body();
 //	}
@@ -225,45 +281,24 @@ int main(void)
 // --------- 左轮遥感控制 ----------
 	// 捡起箱子的代码
 
-//	if (height > 42.0f) {
-//		up_trigger_count++;
-//		motion_Down(15.0f, 20.0f);
-//		PWM_Set((up_trigger_count % 2 == 1) ? PWM_OUT : PWM_IN);
-//		HAL_Delay(1000);
-//		motion_Up(20.0f, 15.0f);
-//	}
-//	
-//	if (height < 16.0f) {
-//		down_trigger_count++;
-//		temp_state = (down_trigger_count % 2 == 1) ? 1 : 0;
-//	}
-
-	static int last_up_status = 0;     // 记录上次是否 >42
-	static int last_down_status = 0;   // 记录上次是否 <16
-
-	// 向上突破42（上升沿触发）
-	int current_up = (height > 42.0f) ? 1 : 0;
-	if (current_up == 1 && last_up_status == 0) {
+	if (height > 42.0f) {
 		up_trigger_count++;
 		motion_Down(15.0f, 20.0f);
 		PWM_Set((up_trigger_count % 2 == 1) ? PWM_OUT : PWM_IN);
 		HAL_Delay(1000);
 		motion_Up(20.0f, 15.0f);
 	}
-	last_up_status = current_up;
-
-	// 向下突破16（下降沿触发，从 >=16 变为 <16）
-	int current_down = (height < 30.0f) ? 1 : 0;
-	if (current_down == 1 && last_down_status == 0) {
+	
+	if (height < 16.0f) {
 		down_trigger_count++;
 		temp_state = (down_trigger_count % 2 == 1) ? 1 : 0;
 	}
-	last_down_status = current_down;
-
 
 
 	// -----------状态机----------------
 	// 原本：move_state
+	
+
 
 	static uint32_t start_time = 0;
 	static uint8_t state_active = 1;  // 1表示正在执行状态机，0表示已超时
@@ -281,8 +316,8 @@ int main(void)
 //		state_active = 0;    // 标记已超时
 //	}
 
-    walk_height = 22.0f;
-	temp_state = 8;
+    walk_height = 23.0f;
+
     switch (temp_state)
     {
         case 1:
@@ -318,11 +353,10 @@ int main(void)
         break; 
 
         case 8:
-			motion_StandBy(walk_height) ;
-
         break; 
 
         default:
+            motion_StandBy(walk_height) ;
             break;
     }
 
@@ -381,7 +415,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-// --------private functions---------
 
 /* USER CODE END 4 */
 

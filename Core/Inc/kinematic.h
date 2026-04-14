@@ -4,6 +4,6 @@
 
 
 void inverseKinematic(Position_HandleTypeDef *hposition);
-void inverseKinematic_All();
+void inverseKinematic_All(void);
 
 #endif

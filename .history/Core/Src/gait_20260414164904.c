@@ -131,16 +131,6 @@ void quick_set_kp(float kp_value)
     hmotor8.Kp = kp_value * (1.0f + motor8_kp_offset);
 }
 
-void  Body_Roll_Stabilizer(){
-	stab_roll += kp_roll*(0 - body_roll) - kd_roll * (body_roll - prev_body_roll);
-	
-	if (stab_roll > 40.0f) { stab_roll = 40.0f;}
-	if (stab_roll < -40.0f) { stab_roll = -40.0f;}
-	
-	prev_body_roll = body_roll;
-}
- 
-
 // 单足摆线轨迹生成
 GaitPhasesPoints  gaitGenerator(int state, float height, float step_height, float stride)
 {
@@ -210,9 +200,7 @@ void motion_Mix(float height, float step_height, float stride)
     // }else{
     //     L_stride = stride - kp_GyroZ * (GyroZ_max*rc_x/rc_x_max - GyroZ);
     // }
-
     
-
 
 	// 左右转控制
     float R_stride = stride; // 右脚步幅

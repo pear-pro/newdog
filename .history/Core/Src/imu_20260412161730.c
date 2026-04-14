@@ -26,14 +26,14 @@ float body_yaw = 0.0f;
 float prev_body_roll = 0.0f;
 
 // ----角速度--------------
-float GyroX=0.0f;
-float GyroY=0.0f;
-float GyroZ=0.0f;
+float GyroX;
+float GyroY;
+float GyroZ;
 
 // ----角加速度--------------
-float AccX=0.0f;
-float AccY=0.0f;
-float AccZ=0.0f;
+float AccX;
+float AccY;
+float AccZ;
 
 /**
  * @brief IMU 数据接收完成后的应用层处理回调

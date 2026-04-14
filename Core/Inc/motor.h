@@ -47,14 +47,14 @@ typedef struct
 } Motor_HandleTypeDef;
 
 /* ---------------- API ---------------- */
-HAL_StatusTypeDef Motor_Init(Motor_HandleTypeDef *hmotor,
-                             UART_HandleTypeDef *huart,
-                             uint8_t motor_id);
-
+HAL_StatusTypeDef Motor_Init(Motor_HandleTypeDef *hmotor, UART_HandleTypeDef *huart, uint8_t motor_id);
 void Motor_SendCmd(Motor_HandleTypeDef *hmotor);
-void Motor_SendCmd_AllAngle();
-void Motor_InitBias();
+void Motor_SendCmd_AllAngle(void);
+void Motor_InitBias(void);
 void MotorTest_Sweep(int id, float step);
+void motor_release(void);
+void remap_motor_ids(void);
+void init_motor_parameters(void);
 
 
 #endif /* __MOTOR_H */

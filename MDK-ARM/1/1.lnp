@@ -1,4 +1,4 @@
---cpu=Cortex-M4.fp
+--cpu=Cortex-M4.fp.sp
 "1\startup_stm32f427xx.o"
 "1\crc_ccitt.o"
 "1\motor.o"
@@ -38,7 +38,7 @@
 "1\stm32f4xx_hal_tim.o"
 "1\stm32f4xx_hal_tim_ex.o"
 "1\stm32f4xx_hal_uart.o"
-"1\system_stm32f4xx_1.o"
+"1\system_stm32f4xx.o"
 --library_type=microlib --strict --scatter "1\1.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers
