@@ -5,6 +5,8 @@
 // 包含结构体定义的头文件
 #include "motor.h"
 #include "gait.h"
+#include "ht_10a_remote_control.h"
+
 
 // 外部声明
 extern Motor_HandleTypeDef hmotor1;
@@ -31,19 +33,10 @@ extern float motor6_bias;
 extern float motor7_bias;
 extern float motor8_bias;
 
-extern float Expect_Kp;
-extern float EXpect_kw;
-extern float Expect_Tau_ff;
+
 
 // 遥控参数
-#define rc_x_max 40.0f
-#define rc_y_max 20.0f
+extern Remote_Control_struct rcData;
 
-extern int move_state; // 运动状态
-extern float height;      // 支撑高度
-extern float step_height; // 摆动高度
-extern float stride;      // 步幅
-extern float rc_x;
-extern float rc_y;
 
 #endif // GLOBAL_VARS_H

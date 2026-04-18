@@ -24,6 +24,8 @@ extern float body_pitch;
 extern float body_yaw;
 extern float prev_body_roll;
 
+extern float VeloY;
+
 extern float stab_roll;
 extern float kp_roll;
 extern float kd_roll;

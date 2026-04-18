@@ -485,6 +485,11 @@
               <FilePath>..\Core\Src\imu.c</FilePath>
             </File>
             <File>
+              <FileName>pwm_app.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\pwm_app.c</FilePath>
+            </File>
+            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/main.c</FilePath>
@@ -678,9 +683,19 @@
               <FilePath>../Core/Src/stm32f4xx_hal_msp.c</FilePath>
             </File>
             <File>
-              <FileName>pwm_app.c</FileName>
+              <FileName>ht_10a_remote_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\ht_10a_remote_control.h</FilePath>
+            </File>
+            <File>
+              <FileName>ht_10a_remote_control.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\pwm_app.c</FilePath>
+              <FilePath>..\Core\Src\ht_10a_remote_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>remote_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\remote_control.h</FilePath>
             </File>
           </Files>
         </Group>

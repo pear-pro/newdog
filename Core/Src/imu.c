@@ -14,10 +14,13 @@
 
 volatile IMU_Info_t IMU_rx_data = {0};
 
+// ----------speed of x,y,z---------
+float VeloY=0.0f;
+
 // ----水平平衡pid参数---
 float stab_roll = 0.0f; 
-float kp_roll = 0.03f;
-float kd_roll = 0.003f;
+float kp_roll = 0.01f; // 0.03
+float kd_roll = 0.001f;
 
 // ----角度--------------
 float body_roll = 0.0f; 

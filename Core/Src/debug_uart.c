@@ -21,3 +21,4 @@ void Vofa_JustFloat(float *_data, uint8_t _num)
     HAL_UART_Transmit_DMA(&huart7, tempData, (_num + 1) * 4);
     //......................................
 }
+

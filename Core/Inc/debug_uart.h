@@ -32,3 +32,4 @@
 void Vofa_JustFloat(float *_data, uint8_t _num);
 
 #endif /* __DEBUG_UART_H */
+

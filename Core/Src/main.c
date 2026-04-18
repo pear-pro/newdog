@@ -38,6 +38,7 @@
 #include "sucker.h"
 #include "imu.h"
 #include "pwm_app.h"
+#include "ht_10a_remote_control.h"
 
 /* USER CODE END Includes */
 
@@ -49,10 +50,6 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-// 统一设置电机控制参数
-float Expect_Kp = 0.1;
-float EXpect_kw = 0.01;  // 0.01
-float Expect_Tau_ff = 0.0f;
 
 /* USER CODE END PD */
 
@@ -113,8 +110,8 @@ extern volatile uint8_t RS485_RxBuf[16];
 extern volatile uint8_t Receive_OK;
 
 int temp_state = 0;
-static int up_trigger_count = 0;
-static int down_trigger_count = 0;
+//static int up_trigger_count = 0;
+//static int down_trigger_count = 0;
 
 
 /* USER CODE END PV */
@@ -168,42 +165,54 @@ int main(void)
   MX_USART1_UART_Init();
   MX_CAN1_Init();
   MX_TIM5_Init();
+  MX_TIM9_Init();
+  MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_Base_Start_IT(&htim10);
+  HAL_TIM_Base_Start(&htim9);
 	PWM_Init(); 
-	remote_control_init(); // 初始化遥控器
+	//remote_control_init(); // 初始化遥控器
+	sbus_remote_control_init();
 
 	init_motor_parameters();// 设置角度模式参数
 	remap_motor_ids(); // 重映射id
 	
-	motor_release();
-
+// motor_release();
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  { 
+  {  
+//  if (motor_release_flag == 1){
+//	motor_release_flag=0;
+//	init_motor_parameters();
+//  }
+
+// -------------位置测试-----------------
+//  while(1){
+//	float x = 10.0f;
+//	float y = 15.5f;
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//  }
+  
     // pd控制横向平衡
-	Body_Roll_Stabilizer();
+	if (rcData.sw8 == 0xFCE0){
+		Body_Roll_Stabilizer();
+	}else {
+		stab_roll=0;
+	}
 
-// ----------遥控传参说明----------
-
-    /*
-    遥控传参：运动状态 move_state
-             支撑高度 height
-             抬腿高度 step_height
-             步幅 stride
-    动作说明：1.前进，后退，左转，右转
-                - 单足轨迹都是摆线方程
-                - 传入height决定支撑高度，stride决定步幅
-             2.motion_StandBy是原地站立
-                - 传入height决定站立的高度
-             3.StepInPlace是原地踏步
-                - 传入height决定支撑腿高度，step_height决定抬起高度
-    */
-    
-
-	
 //	//----------4/4单电机通信测试----------
 
 //	MotorTest_Sweep(1, 0.4f);
@@ -214,12 +223,6 @@ int main(void)
 //	MotorTest_Sweep(6, 0.4f);
 //	MotorTest_Sweep(7, 0.4f);
 //	MotorTest_Sweep(8, 0.4f);
-
-
-	// ------------imu控制翻身的条件写这---------
-//	if (height > 42.0f){
-//		flip_body();
-//	}
 
 
 // --------- 左轮遥感控制 ----------
@@ -238,65 +241,64 @@ int main(void)
 //		temp_state = (down_trigger_count % 2 == 1) ? 1 : 0;
 //	}
 
-	static int last_up_status = 0;     // 记录上次是否 >42
-	static int last_down_status = 0;   // 记录上次是否 <16
-
-	// 向上突破42（上升沿触发）
-	int current_up = (height > 42.0f) ? 1 : 0;
-	if (current_up == 1 && last_up_status == 0) {
-		up_trigger_count++;
-		motion_Down(15.0f, 20.0f);
-		PWM_Set((up_trigger_count % 2 == 1) ? PWM_OUT : PWM_IN);
-		HAL_Delay(1000);
-		motion_Up(20.0f, 15.0f);
+	// -----------非状态机函数----------------
+  //0x0320,0x0000,0xFCE0
+    if (rcData.sw5 == 0x0320){
+		temp_state=1;
 	}
-	last_up_status = current_up;
+	if (rcData.sw5 == 0x0000){
+		temp_state=2;
+	}	
+	if (rcData.sw5 == 0xFCE0){
+		temp_state=3;
 
-	// 向下突破16（下降沿触发，从 >=16 变为 <16）
-	int current_down = (height < 30.0f) ? 1 : 0;
-	if (current_down == 1 && last_down_status == 0) {
-		down_trigger_count++;
-		temp_state = (down_trigger_count % 2 == 1) ? 1 : 0;
 	}
-	last_down_status = current_down;
-
-
+    if (rcData.sw5==0x0000&&rcData.sw7 == 0xFCE0){
+      motion_Jump(28.0f);
+    }
+	if (rcData.sw8 == 0x0320){
+		static int16_t sucker_state_count = 0;
+		sucker_state_count++;
+		motion_Down(15.0f, walk_height);
+		PWM_Set((sucker_state_count % 2 == 1) ? PWM_OUT : PWM_IN);
+		HAL_Delay(2000);
+		motion_Up(walk_height, 15.0f);
+	}
+	if (rcData.sw8 == 0xFCE0){
+			temp_state=5;
+	}
+	
+	
+//    if (rcData.sw8 == 0x0320){
+//		Forward_freq=0.04;
+//	}
+//	if (rcData.sw8 == 0x0000){
+//		Forward_freq=0.08;
+//	}	
+//	if (rcData.sw8 == 0xFCE0){
+//		Forward_freq=0.04;
+//	}
 
 	// -----------状态机----------------
 	// 原本：move_state
-
-	static uint32_t start_time = 0;
-	static uint8_t state_active = 1;  // 1表示正在执行状态机，0表示已超时
-
-//	// 首次进入时记录开始时间
-//	if (start_time == 0)
-//	{
-//		start_time = HAL_GetTick();
-//	}
-
-//	// 检查14秒超时
-//	if (HAL_GetTick() - start_time >= 8000)
-//	{
-//		temp_state = 0;      // 状态设为0
-//		state_active = 0;    // 标记已超时
-//	}
-
-    walk_height = 22.0f;
-	temp_state = 8;
+//Forward_freq=0.004;
+	//temp_state=1;
     switch (temp_state)
     {
         case 1:
-
-        motion_Forward(walk_height, 13.0f, rc_y);
+		motion_Mix(walk_height, 8.000001f, max_stride*rcData.R_y);
+        //motion_Forward(walk_height, 0.001f,  max_stride*rcData.R_y);
 		//motion_Forward(26.0f, 13.0f, 10);
         break;
                 
         case 2:
-			  motion_Mix(walk_height, 7.0f, rc_y);
+		//motion_Mix(walk_height, 0.0f, max_stride*rcData.R_y);
+		motion_StandBy(walk_height) ;
+
         break;
 
         case 3:
-		    motion_Forward(walk_height, 0.0f, 10.0f);
+			// motor_release(); // 写中断里了
         break;
                 
         case 4:
@@ -305,8 +307,8 @@ int main(void)
         break;   
           
         case 5:
-			motion_Jump(6.0f);
-            //StepInPlace(20.0f, step_height);
+		motion_Mix(walk_height, 13.0f, max_stride*rcData.R_y);
+
         break;
                 
         case 6:
@@ -314,15 +316,14 @@ int main(void)
         break;     
 
         case 7:
-            testCircle(); // 测试画圆用
+
         break; 
 
         case 8:
-			motion_StandBy(walk_height) ;
-
         break; 
-
+		
         default:
+			motion_StandBy(walk_height) ;
             break;
     }
 

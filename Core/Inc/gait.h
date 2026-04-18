@@ -15,7 +15,16 @@ typedef struct
 
 // 全局变量
 extern float walk_height;
-    
+extern float max_stride;
+extern float Forward_freq;
+
+extern float support_Kp; 
+extern float swing_Kp;
+extern float Expect_kw; 
+extern float support_tau_ff; 
+extern float swing_tau_ff;
+
+
 typedef struct 
 {
   float xSwing;    // 前半周期生成的摆动相的x坐标
@@ -35,7 +44,5 @@ void flip_body(void);
 void motion_Down(float start,float des);
 void motion_Up(float start,float des);
 
-
-void testCircle();
 
 #endif

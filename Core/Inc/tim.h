@@ -34,15 +34,23 @@ extern "C" {
 
 extern TIM_HandleTypeDef htim5;
 
+extern TIM_HandleTypeDef htim9;
+
+extern TIM_HandleTypeDef htim10;
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
 void MX_TIM5_Init(void);
+void MX_TIM9_Init(void);
+void MX_TIM10_Init(void);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* USER CODE BEGIN Prototypes */
+void MY_delay_us(uint16_t time);
+extern uint8_t emergency_stop;
 
 /* USER CODE END Prototypes */
 
