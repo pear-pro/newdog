@@ -4,11 +4,13 @@
  * 
  */
 #include "gait.h"
+#include "IMU.h"
 #include "math.h"
 #include "global_var.h"
 #include "kinematic.h"
 #include "imu.h"
 #include "motor.h"
+#include <stdint.h>
 
 #define pi 3.141592f
 
@@ -18,6 +20,9 @@
 #define jump_freq2 0.4f
 #define jump_freq3 0.07f
 #define jump_freq4 0.01f
+#define SET_BODY_ANGLE 0.0f //后续调整
+#define FILP_BACK_Y 10.0f //后续调整
+#define LANDING_Y 12.0f //后续调整
 
 float walk_height = 20.0f; 
 
@@ -387,7 +392,7 @@ void motion_Down(float start, float des)
 }
 
 
-// 往前跳, 15.5f~37.0f ？
+// 往前跳, 15.5f~37.0f 
 void motion_Jump(float stride)
 {
     float height_des = 33.0f; // 蹬地腿长
@@ -514,4 +519,111 @@ void testCircle()
 }
 
 
+
+void test_jump_filp(float stride)
+{
+  float walk_hight=0.0f;
+  float height_des=1.0f;
+  float long_hight=20.0f;
+  float angle=0.0f;
+  uint8_t pitch_triggered=0;
+  //ready
+  for(float theta=0.0f;theta<pi;theta+=0.05f)
+  {
+    float r=(long_hight-walk_hight)/2;
+    float center_y=(long_hight+walk_hight)/2;
+    hposition1.B_x=0.0f; hposition1.B_y=center_y+r*cos(theta);
+    hposition4.B_x=0.0f; hposition4.B_y=center_y+r*cos(theta);
+    hposition2.B_x=0.0f; hposition2.B_y=center_y+r*cos(theta);
+    hposition3.B_x=0.0f; hposition3.B_y=center_y+r*cos(theta);
+    inverseKinematic_All();
+    Motor_SendCmd_AllAngle();   
+  }
+  //前脚起跳
+    float k=2*long_hight/stride;
+    float x_start = sqrt(walk_hight*walk_hight/(1+k*k));
+	float y_start = k * x_start;
+    float x_des = sqrt(height_des*height_des/(1+k*k));
+    float y_des = k * x_des;
+    quick_set_kp(1.5f); // 跳跃时增大Kp，提升响应速度
+  for(float x=x_start;x<x_des;x+=jump_freq4*fabsf(x_start-x_des))
+  {
+    float y=k*x;
+    hposition1.B_x=x; hposition1.B_y=y;
+    hposition4.B_x=x; hposition4.B_y=y;
+    hposition2.B_x=0.0f; hposition2.B_y=walk_hight;
+    hposition3.B_x=0.0f; hposition3.B_y=walk_hight;
+    inverseKinematic_All();
+    Motor_SendCmd_AllAngle();   
+     if(body_pitch<SET_BODY_ANGLE){
+        pitch_triggered=1;
+        break;
+     }
+  }
+    //后脚起跳
+  for(float x=x_start;x<x_des;x+=jump_freq4*fabsf(x_start-x_des))
+    {
+        float y=k*x;
+        if(pitch_triggered){quick_set_kp(2.0f);}
+        else{quick_set_kp(1.0f);}
+        hposition1.B_x=x_des; hposition1.B_y=k*x_des;
+        hposition4.B_x=x_des; hposition4.B_y=k*x_des;
+        hposition2.B_x=x; hposition2.B_y=y;
+        hposition3.B_x=x; hposition3.B_y=y;
+        inverseKinematic_All();
+        Motor_SendCmd_AllAngle();   
+    }
+    //空中前半段，收腿
+   for(angle=0;angle<pi;angle+=jump_freq3*pi)
+   {
+      float x=x_des*(1.0f+cos(angle))/2.0f;
+      float y = k*x_des+(FILP_BACK_Y-k*x_des)*(1.0f-cosf(angle))/2.0f;
+      hposition1.B_x=x; hposition1.B_y=y;
+      hposition4.B_x=x; hposition4.B_y=y;
+      hposition2.B_x=x; hposition2.B_y=y;
+      hposition3.B_x=x; hposition3.B_y=y;
+      inverseKinematic_All();
+      Motor_SendCmd_AllAngle();
+   }
+   //空中后半段，展腿，准备落地支撑
+   quick_set_kp(1.3f);
+   for(angle=pi;angle<2*pi;angle+=jump_freq3*pi)
+   {
+     float x=stride/4.0f*(1.0f+cos(angle))/2.0f;
+     float y=LANDING_Y+(FILP_BACK_Y-LANDING_Y)*(1.0f-cosf(angle))/2.0f;
+     hposition1.B_x=x; hposition1.B_y=y;
+     hposition4.B_x=x; hposition4.B_y=y;
+     hposition2.B_x=-x; hposition2.B_y=y;
+     hposition3.B_x=-x; hposition3.B_y=y;
+     inverseKinematic_All();
+     Motor_SendCmd_AllAngle();
+   }
+   //落地缓冲
+    quick_set_kp(0.35f);
+    for(angle=2*pi;angle<3*pi;angle+=jump_freq3*pi)
+    {
+        float x=stride/4.0f;
+        float y=LANDING_Y+(walk_hight-LANDING_Y)*(1.0f-cosf(angle))/2.0f;
+        hposition1.B_x=x; hposition1.B_y=y;
+        hposition4.B_x=x; hposition4.B_y=y;
+        hposition2.B_x=-x; hposition2.B_y=y;
+        hposition3.B_x=-x; hposition3.B_y=y;
+        inverseKinematic_All();
+        Motor_SendCmd_AllAngle();
+
+    }
+    //落地后站立
+    quick_set_kp(support_Kp);
+    for(angle=3*pi;angle<4*pi;angle+=jump_freq3*pi)
+    {
+        float x=stride/4.0f+(-stride/4.0f)*(1.0f+cos(angle))/2.0f;
+        float y=walk_hight;
+        hposition1.B_x=x; hposition1.B_y=y;
+        hposition4.B_x=x; hposition4.B_y=y;
+        hposition2.B_x=-x; hposition2.B_y=y;
+        hposition3.B_x=-x; hposition3.B_y=y;
+        inverseKinematic_All();
+        Motor_SendCmd_AllAngle();
+    }
+}
 	
