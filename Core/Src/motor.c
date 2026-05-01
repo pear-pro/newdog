@@ -8,6 +8,7 @@
 #include "global_var.h"
 #include "imu.h"
 #include "string.h"
+motor_info_t damiao[1];
 
 float motor1_bias = 5.00f;
 float motor2_bias = 3.60f;
@@ -329,3 +330,137 @@ void Motor_SendCmd_AllAngle()
 
 }
 
+/*达妙电机 || 机械臂 */
+void Set_dm(CAN_HandleTypeDef* hcan,int16_t ID)
+{
+	uint16_t pos_tmp,vel_tmp,kp_tmp,kd_tmp,tor_tmp;
+  CAN_TxHeaderTypeDef can1TxMsg;
+  uint8_t             can1TxData[8] = {0};
+	if (ID==0){
+  can1TxMsg.StdId =0x00;
+  }
+  else if(ID==1)
+  {
+  can1TxMsg.StdId =0x01;
+	  
+  }
+   else if(ID==2)
+  {
+  can1TxMsg.StdId =0x02 ;
+	  
+  }
+  else if(ID==3)
+  {
+  can1TxMsg.StdId =0x03;
+	  
+  }
+    pos_tmp = float_to_uint(damiao[ID].angle, -12.5, 12.5, 16);
+    vel_tmp = float_to_uint(damiao[ID].speed, -30, 30, 12);
+    tor_tmp = float_to_uint(damiao[ID].tor, -10,10, 12);
+    kp_tmp  = float_to_uint(damiao[ID].KP, 0.0, 500.0, 12);
+    kd_tmp  = float_to_uint(damiao[ID].KD,  0.0, 5.0, 12);  
+  can1TxMsg.IDE   = CAN_ID_STD;//标准ID
+  can1TxMsg.RTR   = CAN_RTR_DATA;//数据帧
+  can1TxMsg.DLC   = 8;//数据长度
+  
+    can1TxData[0] = (pos_tmp >> 8);
+    can1TxData[1] = pos_tmp;
+    can1TxData[2] = (vel_tmp >> 4);
+    can1TxData[3] = ((vel_tmp&0xF)<<4)|(kp_tmp>>8);
+    can1TxData[4] = kp_tmp;
+    can1TxData[5] = (kd_tmp >> 4);
+    can1TxData[6] = ((kd_tmp&0xF)<<4)|(tor_tmp>>8);
+    can1TxData[7] = tor_tmp;
+  
+	/* 先检查是否有空的 TX mailbox，只有有空位才发送报文 */
+	if(HAL_CAN_GetTxMailboxesFreeLevel(hcan) > 0)
+	{
+ 			HAL_CAN_AddTxMessage(hcan, &can1TxMsg, can1TxData, (uint32_t*)CAN_TX_MAILBOX0);//发送报文
+	}
+}
+
+void Set_dm_zeropoint(CAN_HandleTypeDef* hcan,uint16_t CAN_ID)
+{
+  CAN_TxHeaderTypeDef can1TxMsg;
+  uint8_t             can1TxData[8] = {0};
+  can1TxMsg.StdId = CAN_ID;
+  can1TxMsg.IDE   = CAN_ID_STD;//标准ID
+  can1TxMsg.RTR   = CAN_RTR_DATA;//数据帧
+  can1TxMsg.DLC   = 8;//数据长度
+  can1TxData[0]=0xff;
+  can1TxData[1]=0xff;
+  can1TxData[2]=0xff;
+  can1TxData[3]=0xff;
+  can1TxData[4]=0xff;
+  can1TxData[5]=0xff;
+  can1TxData[6]=0xff;
+  can1TxData[7]=0xfe;
+
+	/* 先检查是否有空的 TX mailbox，只有有空位才发送报文 */
+	if(HAL_CAN_GetTxMailboxesFreeLevel(hcan) > 0)
+	{
+			HAL_CAN_AddTxMessage(hcan, &can1TxMsg, can1TxData, (uint32_t*)CAN_TX_MAILBOX0);//发送报文
+	}
+}
+
+void Set_dm_disable(CAN_HandleTypeDef* hcan,uint8_t ID)
+{
+  CAN_TxHeaderTypeDef can1TxMsg;
+  uint8_t             can1TxData[8] = {0};
+  can1TxMsg.StdId = 0x00+ID;
+  can1TxMsg.IDE   = CAN_ID_STD;//标准ID
+  can1TxMsg.RTR   = CAN_RTR_DATA;//数据帧
+  can1TxMsg.DLC   = 8;//数据长度
+  
+	can1TxData[0] = 0xFF;
+	can1TxData[1] = 0xFF;
+	can1TxData[2] = 0xFF;
+	can1TxData[3] = 0xFF;
+	can1TxData[4] = 0xFF;
+	can1TxData[5] = 0xFF;
+	can1TxData[6] = 0xFF;
+	can1TxData[7] = 0xFD;	
+		
+  
+	if(HAL_CAN_GetTxMailboxesFreeLevel(hcan) > 0)
+	{
+			HAL_CAN_AddTxMessage(hcan, &can1TxMsg, can1TxData, (uint32_t*)CAN_TX_MAILBOX0);
+	}
+}
+
+void Set_dm_enable(CAN_HandleTypeDef* hcan,uint8_t ID)
+{
+  CAN_TxHeaderTypeDef can1TxMsg;
+  uint8_t             can1TxData[8] = {0};
+  can1TxMsg.StdId = 0x00+ID;
+  can1TxMsg.IDE   = CAN_ID_STD;//标准ID
+  can1TxMsg.RTR   = CAN_RTR_DATA;//数据帧
+  can1TxMsg.DLC   = 8;//数据长度
+  
+    can1TxData[0] = 0xFF;
+    can1TxData[1] = 0xFF;
+    can1TxData[2] = 0xFF;
+    can1TxData[3] = 0xFF;
+    can1TxData[4] = 0xFF;
+    can1TxData[5] = 0xFF;
+    can1TxData[6] = 0xFF;
+    can1TxData[7] = 0xFC;	
+		
+  
+	if(HAL_CAN_GetTxMailboxesFreeLevel(hcan) > 0)
+	{
+			HAL_CAN_AddTxMessage(hcan, &can1TxMsg, can1TxData, (uint32_t*)CAN_TX_MAILBOX0);//·￠?í±¨??
+	}
+}
+
+
+void inilize_dm(void)
+{
+    //使能电机 初始化参数
+     Set_dm_enable(&hcan1,0X00);
+	 //Set_dm_zeropoint(&hcan1,0X00);
+     damiao[0].KP = 120.0f;//150.0f;
+     damiao[0].KD = 6.0f;
+     damiao[0].tor = 0.0f;//-1.65
+     damiao[0].angle=0.0f;
+}

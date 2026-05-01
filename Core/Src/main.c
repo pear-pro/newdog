@@ -185,7 +185,8 @@ int main(void)
   { 
     // pd控制横向平衡
 	Body_Roll_Stabilizer();
-
+   //DM || 在遥控中对damiao[0].angle进行设置
+   Set_dm(&hcan1, 0);
 // ----------遥控传参说明----------
 
     /*

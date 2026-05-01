@@ -25,6 +25,20 @@ typedef struct
   float sigma;     // 轨迹生成三�?�函数中的相�?
 }GaitPhasesPoints;
 
+typedef enum
+{
+  FILP_IDLE=0,
+  FILP_READY,
+  FILP_BACK_JUMP,
+  FILP_READY_JUMP,
+  FILP_FRONT_JUMP,
+  FILP_JUMP_RECOVER,
+  FILP_ONLY,
+  FILP_HALFS_SKY,
+  FILP_HALFE_SKY,
+  FILP_LANDING,
+  FILP_WALK_STATE
+}filp_jump_state_t;
 
 void  Body_Roll_Stabilizer(void);
 void motion_Forward(float height, float step_height, float stride);
@@ -35,7 +49,9 @@ void motion_Mix(float height, float step_height, float stride);
 void flip_body(void);
 void motion_Down(float start,float des);
 void motion_Up(float start,float des);
-
+void inverse_x(void);
+void state_filp_jump(float stride);
+void test_low_walk(float stride,float b);
 
 void testCircle();
 
