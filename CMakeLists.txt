@@ -46,12 +46,19 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
 
+    Core/Src/bsp_rc.c
+    Core/Src/can.c
+    Core/Src/key.c
     Core/Src/motor.c
     Core/Src/gait.c
     Core/Src/kinematic.c
     Core/Src/math_utils.c
     Core/Src/crc_ccitt.c
     Core/Src/debug_uart.c
+    Core/Src/pg_led.c
+    Core/Src/pwm_app.c
+    Core/Src/remote_control.c
+    Core/Src/sucker.c
 
       Core/Src/imu.c
 )

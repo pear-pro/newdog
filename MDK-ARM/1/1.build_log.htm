@@ -27,75 +27,16 @@ Project File Date:  05/21/2026
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\keil5\ARM\ARMCC\Bin'
 Build target '1'
-compiling key.c...
-compiling main.c...
-../Core/Inc/ht_10a_remote_control.h(81): warning:  #1-D: last line of file ends without a newline
-   
-../Core/Inc/robot_arm_control.h(10): warning:  #1-D: last line of file ends without a newline
-   
-../Core/Src/main.c(297): warning:  #111-D: statement is unreachable
-      if (rcData.sw5 == 0x0320&&rcData.sw7 == 0x0320){
-../Core/Src/main.c: 3 warnings, 0 errors
-compiling kinematic.c...
-../Core/Inc/ht_10a_remote_control.h(81): warning:  #1-D: last line of file ends without a newline
-   
-..\Core\Src\kinematic.c(237): warning:  #1-D: last line of file ends without a newline
-  }
-..\Core\Src\kinematic.c: 2 warnings, 0 errors
 compiling motor.c...
 ../Core/Inc/ht_10a_remote_control.h(81): warning:  #1-D: last line of file ends without a newline
    
 ..\Core\Src\motor.c(186): warning:  #550-D: variable "success"  was set but never used
           uint8_t success = 0;
 ..\Core\Src\motor.c: 2 warnings, 0 errors
-compiling tim.c...
-../Core/Inc/ht_10a_remote_control.h(81): warning:  #1-D: last line of file ends without a newline
-   
-../Core/Src/tim.c: 1 warning, 0 errors
-compiling gait.c...
-../Core/Inc/ht_10a_remote_control.h(81): warning:  #1-D: last line of file ends without a newline
-   
-..\Core\Src\gait.c(799): warning:  #550-D: variable "temp"  was set but never used
-      uint8_t temp = 0;
-..\Core\Src\gait.c(731): warning:  #177-D: variable "front_skip_Pitch"  was declared but never referenced
-      float front_skip_Pitch = 100.0f; // 前空翻时身体前倾的角度
-..\Core\Src\gait.c(733): warning:  #177-D: variable "skip_Height"  was declared but never referenced
-      float skip_Height = 35.0f; // 前空翻时蹬地的高�?
-..\Core\Src\gait.c(736): warning:  #177-D: variable "front_support_angle_max"  was declared but never referenced
-  	float front_support_angle_max = 60.0f; // 前脚蹬地的最大角�?
-..\Core\Src\gait.c(760): warning:  #177-D: variable "start_h2_alpha2"  was declared but never referenced
-      float start_h2_alpha2 = hposition2.alpha; // 后推蹬地的坐标（3�?17）对应的角度  
-..\Core\Src\gait.c(761): warning:  #177-D: variable "start_h2_beta2"  was declared but never referenced
-      float start_h2_beta2 = hposition2.beta;
-..\Core\Src\gait.c(762): warning:  #177-D: variable "start_h3_alpha2"  was declared but never referenced
-      float start_h3_alpha2 = hposition3.alpha;
-..\Core\Src\gait.c(763): warning:  #177-D: variable "start_h3_beta2"  was declared but never referenced
-      float start_h3_beta2 = hposition3.beta;
-..\Core\Src\gait.c(775): warning:  #177-D: variable "start_h1_alpha3"  was declared but never referenced
-      float start_h1_alpha3 = hposition1.alpha;
-..\Core\Src\gait.c(776): warning:  #177-D: variable "start_h1_beta3"  was declared but never referenced
-      float start_h1_beta3 = hposition1.beta;
-..\Core\Src\gait.c(777): warning:  #177-D: variable "start_h2_alpha3"  was declared but never referenced
-      float start_h2_alpha3 = hposition2.alpha;
-..\Core\Src\gait.c(778): warning:  #177-D: variable "start_h2_beta3"  was declared but never referenced
-      float start_h2_beta3 = hposition2.beta;
-..\Core\Src\gait.c(779): warning:  #177-D: variable "start_h3_alpha3"  was declared but never referenced
-      float start_h3_alpha3 = hposition3.alpha;
-..\Core\Src\gait.c(780): warning:  #177-D: variable "start_h3_beta3"  was declared but never referenced
-      float start_h3_beta3 = hposition3.beta;
-..\Core\Src\gait.c(781): warning:  #177-D: variable "start_h4_alpha3"  was declared but never referenced
-      float start_h4_alpha3 = hposition4.alpha;
-..\Core\Src\gait.c(782): warning:  #177-D: variable "start_h4_beta3"  was declared but never referenced
-      float start_h4_beta3 = hposition4.beta;
-..\Core\Src\gait.c(865): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  	for(float y=y_start;y<y_stop;y+=0.01)
-..\Core\Src\gait.c(879): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  	for(float y=y_stop;y>y_start;y-=0.01)
-..\Core\Src\gait.c: 19 warnings, 0 errors
 linking...
 Program Size: Code=18524 RO-data=1548 RW-data=256 ZI-data=2712  
 FromELF: creating hex file...
-"1\1.axf" - 0 Error(s), 27 Warning(s).
+"1\1.axf" - 0 Error(s), 2 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -118,7 +59,7 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE@5.6.0
       Include file:  CMSIS/Core/Include/tz_context.h
-Build Time Elapsed:  00:00:04
+Build Time Elapsed:  00:00:02
 </pre>
 </body>
 </html>
