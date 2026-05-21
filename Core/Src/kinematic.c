@@ -8,11 +8,12 @@
 #define L3 26.0f
 #define L4 12.5f
 #define pi 3.141592f
-#define R_min 15.2f // 足离电机轴心的最近距离。手量的，后期需要验证
-#define R_max 38.5f
+#define R_min 15.2f // 足离电机轴心的最近距离。
+#define R_max 38.5f // 足离电机轴心的最远距离。
 #define Res_x -16.4f // 挡板坐标。手量的，后期需要验证
 #define Res_y 4.0f
-#define Y_max 9.52f // y的最大值，由最小半径方程和经过挡板坐标的切线方程联立求得。后期精确测量挡板坐标后可更新此值
+#define Y_max 9.52f 
+// y的最大值，由最小半径方程和经过挡板坐标的切线方程联立求得。意思是向下半边的扇形的顶点的y轴值
 
 
 void normalize_angle_deg(float* angle)
@@ -127,25 +128,29 @@ void crawl_inverseKinematic(Position_HandleTypeDef *hposition, LegSide_t leg_sid
 	// (0,0)不可达
 	if (x == 0 && y == 0){ return;}
 	
-	// 限高
-	if (y < Y_max){y = Y_max;}
-	
+	// 限高 26/4/18更新
+//	if (y < Y_max && x>-11.93f && x<11.93f){y = Y_max;}
+//	
 	// 运动半径之外的区域不取
 	if ((x*x + y*y) < R_min*R_min){
 		float k = R_min/sqrtf(x*x + y*y);
 		x = k*x;
-		y = k*y;}
+		y = k*y;
+		return;
+		}
 	if ((x*x + y*y) > R_max*R_max){
 		float k = R_max/sqrtf(x*x + y*y);
 		x = k*x;
-		y = k*y;}
+		y = k*y;
+		return;
+		}
 
 	// 不撞挡板
-	if (leg_side == FRONT){
-		if (x < (L1*L1+Res_y*y)/Res_x){	x = (L1*L1+Res_y*y)/Res_x;}
-	}else{
-		if (x > -(L1*L1+Res_y*y)/Res_x){ x = -(L1*L1+Res_y*y)/Res_x;}
-	}
+//	if (leg_side == FRONT){
+//		if (x < (L1*L1+Res_y*y)/Res_x){	x = (L1*L1+Res_y*y)/Res_x;}
+//	}else{
+//		if (x > -(L1*L1+Res_y*y)/Res_x){ x = -(L1*L1+Res_y*y)/Res_x;}
+//	}
 
 	/*---------------------逆解算---------------------------*/
 	
@@ -224,3 +229,9 @@ void inverseKinematic_All(){
 	inverseKinematic(&hposition4);	
 }
 
+void crawl_inverseKinematic_All(){
+	crawl_inverseKinematic(&hposition1,FRONT);
+	crawl_inverseKinematic(&hposition2,BACK);
+	crawl_inverseKinematic(&hposition3,BACK);
+	crawl_inverseKinematic(&hposition4,FRONT);
+}

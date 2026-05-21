@@ -697,6 +697,16 @@
               <FileType>5</FileType>
               <FilePath>..\Core\Inc\remote_control.h</FilePath>
             </File>
+            <File>
+              <FileName>robot_arm_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\robot_arm_control.h</FilePath>
+            </File>
+            <File>
+              <FileName>robot_arm_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\robot_arm_control.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

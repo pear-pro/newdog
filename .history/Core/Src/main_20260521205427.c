@@ -40,7 +40,6 @@
 #include "imu.h"
 #include "pwm_app.h"
 #include "ht_10a_remote_control.h"
-#include "robot_arm_control.h"
 
 /* USER CODE END Includes */
 
@@ -196,12 +195,8 @@ int main(void)
 //  }
 
     // -------------机械臂调试------------------
-	while(1){
-	gimbal_send_unitree(0.0f); // 发送云台控制指令，参数为期望的云台角度
-	
-	
-	}
-	
+	gimbal_send_unitree(10.0f); // 发送云台控制指令，参数为期望的云台角度
+
 
 
     // -------------位置控制测试-----------------
@@ -271,26 +266,17 @@ int main(void)
 
 //	//----------4/4单电机通信调试----------
 
-//while(1){
-//	MotorTest_Sweep(1, 0.4f);
-//	MotorTest_Sweep(2, 0.4f);
-//	MotorTest_Sweep(3, 0.4f);
-//	MotorTest_Sweep(4, 0.4f);
-//	MotorTest_Sweep(5, 0.4f);  
-//	MotorTest_Sweep(6, 0.4f);
-//	MotorTest_Sweep(7, 0.4f);
-//	MotorTest_Sweep(8, 0.4f);
-// 	MotorTest_Sweep(9, 0.4f); 
-//	MotorTest_Sweep(10, 0.4f);
-//	MotorTest_Sweep(11, 0.4f);
-// 	MotorTest_Sweep(12, 0.4f);
-// 	MotorTest_Sweep(13, 0.4f); 
-//	MotorTest_Sweep(14, 0.4f);
-//	MotorTest_Sweep(15, 0.4f);
-//}
-
-
-
+while(1){
+	MotorTest_Sweep(1, 0.4f);
+	MotorTest_Sweep(2, 0.4f);
+	MotorTest_Sweep(3, 0.4f);
+	MotorTest_Sweep(4, 0.4f);
+	MotorTest_Sweep(5, 0.4f);  
+	MotorTest_Sweep(6, 0.4f);
+	MotorTest_Sweep(7, 0.4f);
+	MotorTest_Sweep(8, 0.4f);
+ 	MotorTest_Sweep(10, 0.4f); 
+}
   // -------------遥控控制部分------------------
 	// 说明：此处主要控制非状态机函数
   // 遥控取值：0x0320,0x0000,0xFCE0

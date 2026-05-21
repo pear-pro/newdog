@@ -17,7 +17,7 @@ extern Motor_HandleTypeDef hmotor5;
 extern Motor_HandleTypeDef hmotor6;
 extern Motor_HandleTypeDef hmotor7;
 extern Motor_HandleTypeDef hmotor8;
-extern Motor_HandleTypeDef hmotor9;
+extern Motor_HandleTypeDef hmotor10;
 
 extern Position_HandleTypeDef hposition1;
 extern Position_HandleTypeDef hposition2;
@@ -32,6 +32,7 @@ extern float motor5_bias;
 extern float motor6_bias;
 extern float motor7_bias;
 extern float motor8_bias;
+extern float motor10_bias;
 
 
 

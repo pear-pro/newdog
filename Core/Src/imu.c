@@ -49,7 +49,7 @@ static void IMU_App_Update(void)
 {
     /* 将最新接收的欧拉角复制到应用层全局变量 */
     body_roll = IMU_rx_data.Roll;
-    body_pitch = IMU_rx_data.Pitch;
+    body_pitch = IMU_rx_data.Pitch-90.0f;
     body_yaw = IMU_rx_data.Yaw;
     
     GyroX = IMU_rx_data.GyroX;

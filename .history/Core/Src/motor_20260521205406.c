@@ -22,7 +22,6 @@ float motor5_bias = 0.30f;
 float motor6_bias = 3.63f;
 float motor7_bias = -0.05f;
 float motor8_bias = 3.10f;
-float motor10_bias = 3.10f;// 云台偏置
 
 
 float flip_offset = 0.0f; // 3.165f 狗腿翻身对应的电机反转角度
@@ -322,7 +321,6 @@ static HAL_StatusTypeDef Motor_PackCmd(Motor_HandleTypeDef *hmotor)
     return HAL_OK;
 }
 
-// 给云台的宇树电机发送信号
 void gimbal_send_unitree(float angel){
 
     hmotor10.Theta_des = motor10_bias / 6.33f + 6.28f * angel / 360.0f;
@@ -331,7 +329,6 @@ void gimbal_send_unitree(float angel){
 }
 
 /*
-给腿部的宇树电机发送信号
 hposition1 : hmotor1(α) , hmotor2(β)
 hposition2 : hmotor3(α) , hmotor4(β)
 hposition3 : hmotor5(α) , hmotor6(β)
@@ -374,20 +371,4 @@ void Motor_SendCmd_AllAngle()
 	Motor_SendCmd(&hmotor5);
 	MY_delay_us(TRANSNIT_DELAY);
 }
-
-// ---------4310控制代码开始------------
-
-void motor_4310_init(){
-
-}
-
-
-void gimbal_send_4310(float angel){
-
-}
-
-
-
-// ---------4310控制代码结束------------
-
 

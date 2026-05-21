@@ -2,6 +2,7 @@
 #define __GAIT__
 
 #define Ts 1.00f          // 控制周期
+#include "stm32f4xx.h"
 
 /*某只脚的两个电机转动的角度，alpha和beta*/
 typedef struct
@@ -43,6 +44,10 @@ void motion_Mix(float height, float step_height, float stride);
 void flip_body(void);
 void motion_Down(float start,float des);
 void motion_Up(float start,float des);
+void motion_Crawl(float step_height, float stride);
+uint8_t imu_emergency_stop(void);
+void motion_Frontflip(void);
+void test_circle(void);
 
 
 #endif

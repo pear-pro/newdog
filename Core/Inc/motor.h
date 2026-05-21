@@ -4,7 +4,6 @@
 #include "stm32f4xx_hal.h"
 #include <stdint.h>
 
-/* ---------------- ??? ---------------- */
 #define PI                      3.14159f
 #define MOTOR_MAX_ID            14
 #define MOTOR_DEC_RATIO         6.33f
@@ -13,7 +12,7 @@
 
 extern float flip_offset;
 
-/* ---------------- ???? ---------------- */
+
 typedef struct
 {
     uint8_t              MotorID;
@@ -47,7 +46,7 @@ typedef struct
 } Motor_HandleTypeDef;
 
 /* ---------------- API ---------------- */
-HAL_StatusTypeDef Motor_Init(Motor_HandleTypeDef *hmotor, UART_HandleTypeDef *huart, uint8_t motor_id);
+HAL_StatusTypeDef Motor_Init(Motor_HandleTypeDef *hmotor, UART_HandleTypeDef *huart, uint8_t motor_id); 
 void Motor_SendCmd(Motor_HandleTypeDef *hmotor);
 void Motor_SendCmd_AllAngle(void);
 void Motor_InitBias(void);
@@ -55,6 +54,8 @@ void MotorTest_Sweep(int id, float step);
 void motor_release(void);
 void remap_motor_ids(void);
 void init_motor_parameters(void);
+void gimbal_send_unitree(float angel); // 给机械臂的宇树电机发送信号
+void gimbal_send_4310(float angel);  // 给机械臂的4310发送信号
 
 
 #endif /* __MOTOR_H */
