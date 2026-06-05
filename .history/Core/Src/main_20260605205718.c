@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdint.h>
+#include <math.h>
 #include "motor.h"
 #include "gait.h"
 #include "crc_ccitt.h"
@@ -39,6 +40,7 @@
 #include "imu.h"
 #include "pwm_app.h"
 #include "ht_10a_remote_control.h"
+#include "robot_arm_control.h"
 
 /* USER CODE END Includes */
 
@@ -50,10 +52,6 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-// 统一设置电机控制参数
-float Expect_Kp = 0.4;
-float EXpect_kw = 0.01;  // 0.01
-float Expect_Tau_ff = 0.0f;
 
 /* USER CODE END PD */
 
@@ -66,7 +64,7 @@ uint32_t alive_tick = 0;
 
 /* USER CODE BEGIN PV */
 
-// 8个电机的结构体
+// 9个电机的结构体
 Motor_HandleTypeDef hmotor1;
 Motor_HandleTypeDef hmotor2;
 Motor_HandleTypeDef hmotor3;
@@ -74,8 +72,8 @@ Motor_HandleTypeDef hmotor4;
 Motor_HandleTypeDef hmotor5;
 Motor_HandleTypeDef hmotor6;
 Motor_HandleTypeDef hmotor7;
-Motor_HandleTypeDef hmotor8;
-Motor_HandleTypeDef hmotor9;
+Motor_HandleTypeDef hmotor8;  // 前8个都是腿部电机
+Motor_HandleTypeDef hmotor10; // 云台电机
 
 // 四只脚的位置相关结构体
 Position_HandleTypeDef hposition1;
@@ -127,7 +125,7 @@ void SystemClock_Config(void);
 
 
 /* USER CODE END PFP */
-
+	
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
@@ -172,18 +170,18 @@ int main(void)
   MX_TIM9_Init();
   MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_Base_Start_IT(&htim10);
-  HAL_TIM_Base_Start(&htim9);
+  
+	HAL_TIM_Base_Start_IT(&htim10);
+	HAL_TIM_Base_Start(&htim9);
 	PWM_Init(); 
 	//remote_control_init(); // 初始化遥控器
-	sbus_remote_control_init();
+	sbus_remote_control_init(); // 初始化遥控器hot rc
 
-	init_motor_parameters();// 设置角度模式参数
+	init_motor_parameters();// 初始化电机参数
 	remap_motor_ids(); // 重映射id
 	
-	motor_release();
+// motor_release();
 	
-	motion_Jump(6.0f);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -191,107 +189,295 @@ int main(void)
   while (1)
   {  
   
-    // pd控制横向平衡
-	//Body_Roll_Stabilizer();
+    // -------------急停模式调试------------------
+//  if (motor_release_flag == 1){
+//	motor_release_flag=0;
+//	init_motor_parameters();
+//  }
 
-// ----------遥控传参说明----------
-
-    /*
-    遥控传参：运动状态 move_state
-             支撑高度 height
-             抬腿高度 step_height
-             步幅 stride
-    动作说明：1.前进，后退，左转，右转
-                - 单足轨迹都是摆线方程
-                - 传入height决定支撑高度，stride决定步幅
-             2.motion_StandBy是原地站立
-                - 传入height决定站立的高度
-             3.StepInPlace是原地踏步
-                - 传入height决定支撑腿高度，step_height决定抬起高度
-    */
-    
-
-	
-//	//----------4/4单电机通信测试----------
-
-//	MotorTest_Sweep(1, 0.4f);
-//	MotorTest_Sweep(2, 0.4f);
-//	MotorTest_Sweep(3, 0.4f);
-//	MotorTest_Sweep(4, 0.4f);
-//	MotorTest_Sweep(5, 0.4f);  
-//	MotorTest_Sweep(6, 0.4f);
-//	MotorTest_Sweep(7, 0.4f);
-//	MotorTest_Sweep(8, 0.4f);
-
-    // --------------- 电机偏置角调整-------
-//while(1){
-//  Motor_SendCmd_AllAngle();
-//}	
-
-	// ------------imu控制翻身的条件写这---------
-//	if (height > 42.0f){
-//		flip_body();
-//	}
-
-
-// --------- 左轮遥感控制 ----------
-	// 捡起箱子的代码
-
-//	if (height > 42.0f) {
-//		up_trigger_count++;
-//		motion_Down(15.0f, 20.0f);
-//		PWM_Set((up_trigger_count % 2 == 1) ? PWM_OUT : PWM_IN);
-//		HAL_Delay(1000);
-//		motion_Up(20.0f, 15.0f);
+    // -------------机械臂6调试------------------
+//	while(1){
+//	hmotor4.Kp =0.1f;
+//	gimbal_send_unitree(60.0f); // 发送云台控制指令，参数为期望的云台角度
+//	
+//	
 //	}
 //	
-//	if (height < 16.0f) {
-//		down_trigger_count++;
-//		temp_state = (down_trigger_count % 2 == 1) ? 1 : 0;
+
+
+    // -------------位置控制测试-----------------
+
+
+//while(1){
+
+//	float x = 0.0f;
+//	float y = 25.0f;
+//	for (x = -5.0f;x<5.0f;x+=0.1f){
+//	y = x;
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//	HAL_Delay(5);
 //	}
+//	for (x = 5.0f;x>-5.0f;x-=0.1f){
+//	
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//	HAL_Delay(5);
+//	}
+//}
+	
+//	float x = 0.0f;
+//	float y =25.0f;
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//	HAL_Delay(10);
+//	
+//	 x = 0.0f;
+//	 y =24.0f;
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//	HAL_Delay(10);
 
-	// -----------非状态机函数----------------
-  //0x0320,0x0000,0xFCE0
-    if (rcData.sw7 == 0xFCE0){
-      motion_Jump(6.0f);
-    }
+//while(1){
+
+//	float x=0.0f;
+//	float y=28.0f;
+//	float z = 25.0f;
+//	for(y=35.0f;y>=21.0f;y-=0.1f)
+//	{
+//		x=sqrtf(49.0-(y-28.0)*(y-28.0));
+//		hposition1.B_y = z;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = z;
+//		hposition2.B_x = x; 
+//		hposition3.B_y = z;
+//		hposition3.B_x = x; 
+//		hposition4.B_y = z;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//		HAL_Delay(30);
+//	}
+//	for(y=21.0f;y<=35.0f;y+=0.1f)
+//	{
+//		x=-sqrtf(49.0-(y-28.0)*(y-28.0));
+//		hposition1.B_y = z;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = z;
+//		hposition2.B_x = x; 
+//		hposition3.B_y = z;
+//		hposition3.B_x = x; 
+//		hposition4.B_y = z;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//		HAL_Delay(30);
+//	}
+//	
+//}
+
+//while(1){
+//	float x_start = -10.0f;
+//	float x_stop = -0.75;
+//	for (float x=x_start;x<x_stop;x+=0.01f){
+//		float y =2*x + 40.0f;
+//	
+//		hposition1.B_y = y;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = y;
+//		hposition2.B_x = x; 
+//		hposition3.B_y = y;
+//		hposition3.B_x = x; 
+//		hposition4.B_y = y;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//	}
+//	for (float x=x_stop;x>x_start;x-=0.01f){
+//		float y =2*x + 40.0f;
+//	
+//		hposition1.B_y = y;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = y;
+//		hposition2.B_x = x; 
+//		hposition3.B_y = y;
+//		hposition3.B_x = x; 
+//		hposition4.B_y = y;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//	}
+//}
+//	
+//  while(1){
+//	float y = 10.5f;
+//	for (float x = 12.5f;x<19.5f;x+=0.1f){
+//		hposition1.B_y = y;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = y;
+//		hposition2.B_x = -x; 
+//		hposition3.B_y = y;
+//		hposition3.B_x = -x; 
+//		hposition4.B_y = y;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//		HAL_Delay(100);
+//		}
+//	for (float x = 19.5f;x>12.5f;x-=0.1f){
+//		hposition1.B_y = y;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = y;
+//		hposition2.B_x = -x; 
+//		hposition3.B_y = y;
+//		hposition3.B_x = -x; 
+//		hposition4.B_y = y;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//		HAL_Delay(100);
+//		}			
+//  }
+
+//	//----------4/4单电机通信调试----------
+
+//while(1){
+////	MotorTest_Sweep(1, 0.4f);
+////	MotorTest_Sweep(2, 0.4f);
+//	MotorTest_Sweep(3, 0.4f);
+//	MotorTest_Sweep(4, 0.4f);
+////	MotorTest_Sweep(5, 0.4f);  
+////	MotorTest_Sweep(6, 0.4f);
+////	MotorTest_Sweep(7, 0.4f);
+////	MotorTest_Sweep(8, 0.4f);
+//// 	MotorTest_Sweep(9, 0.4f); 
+////	MotorTest_Sweep(10, 0.4f);
+////	MotorTest_Sweep(11, 0.4f);
+//// 	MotorTest_Sweep(12, 0.4f);
+//// 	MotorTest_Sweep(13, 0.4f); 
+////	MotorTest_Sweep(14, 0.4f);
+////	MotorTest_Sweep(15, 0.4f);
+//}
 
 
-	// -----------状态机----------------
+
+  // -------------遥控控制部分------------------
+  // 遥控取值：0x0320,0x0000,0xFCE0
+  /* 功能说明
+  *    sw5    sw6    sw7    sw8    代码位置    功能              state
+  *   0xFCE0   -      -      -       tim10     急停               -(不在switch中)
+  *   0x0000   -    0xFCE0   -       mian      站立               3
+  *   0x0000   -    0x0320   -       mian      跳跃               -(不在switch中)
+  *   0x0320   -      -      0xFCE0  mian      遥控控制行走        1
+  *   0x0320   -      -      0x0000  mian      树莓派控制行走      2
+  *     -    0xFCE0   -      -       tim10     调腿高
+  *     -    0x0320   -      -       tim10     调步频
+
+  * 
+  */
+
+
+	if (rcData.sw5 == 0x0000 && rcData.sw7 == 0x0320){ temp_state=3;}	
+  if (rcData.sw5 == 0x0000 && rcData.sw7 == 0xFCE0){ 
+    //motion_Jump(28.0f);
+  } 
+  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0xFCE0){{ temp_state=1;}} // 树莓派控制
+  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0x0000){{ temp_state=2;}} // 遥控控制
+
+
+    if (rcData.sw5 == 0x0320&&rcData.sw7 == 0x0320){
+		temp_state=1;
+	}
+    if (rcData.sw5 == 0x0320&&rcData.sw7 == 0xFCE0){
+		temp_state=5;
+	}	
+	
+	//if (rcData.sw5 == 0xFCE0||imu_emergency_stop()){
+	if (rcData.sw5 == 0xFCE0){
+		emergency_stop = 1;
+	}else{
+		emergency_stop = 0;	
+	}
+
+
+	if (rcData.sw8 == 0x0320){
+	    // 捡箱子
+//		static int16_t sucker_state_count = 0;
+//		sucker_state_count++;
+//		motion_Down(15.0f, walk_height);
+//		PWM_Set((sucker_state_count % 2 == 1) ? PWM_OUT : PWM_IN);
+//		HAL_Delay(2000);
+//		motion_Up(walk_height, 15.0f);
+
+//		temp_state=6; // 过限高杆
+	
+	// 平衡角度归零
+	stab_roll = 0.0f;
+	}
+	if (rcData.sw8 == 0x0000){
+		// stab_roll保持
+	}
+	if (rcData.sw8 == 0xFCE0){
+		Body_Roll_Stabilizer();
+	}
+	
+
+
+	// -----------状态机函数----------------
 	// 原本：move_state
-
-//	static uint32_t start_time = 0;
-//	static uint8_t state_active = 1;  // 1表示正在执行状态机，0表示已超时
-
-//	// 首次进入时记录开始时间
-//	if (start_time == 0)
-//	{
-//		start_time = HAL_GetTick();
-//	}
-
-//	// 检查14秒超时
-//	if (HAL_GetTick() - start_time >= 8000)
-//	{
-//		temp_state = 0;      // 状态设为0
-//		state_active = 0;    // 标记已超时
-//	}
-	float temp_rc_y = 0.0f;
-    walk_height = 20.0f;
-	temp_state = 2;
+//Forward_freq=0.004;
+	//temp_state=1;
+	
+if (emergency_stop==1){
+	motor_release();
+}else{
     switch (temp_state)
     {
         case 1:
-
-        motion_Forward(walk_height, 0.001f, temp_rc_y);
-		//motion_Forward(26.0f, 13.0f, 10);
+        // 遥控版
+		    motion_Mix(walk_height, 8.0f, max_stride*rcData.R_y,rcData.R_x);
         break;
                 
         case 2:
-			  motion_Mix(walk_height, 0.000001f, temp_rc_y);
+        // 树莓派控版
+		    motion_Mix(walk_height, 8.0f, 0.0f, 0.0f);
         break;
 
         case 3:
-		    motion_Forward(walk_height, 0.0f, 10.0f);
+        //motion_Mix(walk_height, 0.0f, max_stride*rcData.R_y);
+        motion_StandBy(walk_height) ;
         break;
                 
         case 4:
@@ -300,26 +486,28 @@ int main(void)
         break;   
           
         case 5:
-			motion_Jump(6.0f);
-            //StepInPlace(20.0f, step_height);
+		motion_Mix(walk_height, 17.0f, max_stride*rcData.R_y);
+
         break;
                 
         case 6:
-
+			motion_Crawl(5.0f,6.0f);
         break;     
 
         case 7:
-            testCircle(); // 测试画圆用
+			motion_Frontflip();
+
         break; 
 
         case 8:
+			//test_circle();
         break; 
 		
         default:
 			motion_StandBy(walk_height) ;
             break;
     }
-
+}
 
 	  
     /* USER CODE END WHILE */

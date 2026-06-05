@@ -4,18 +4,32 @@
  * 
  */
 #include "gait.h"
+#include "IMU.h"
 #include "math.h"
 #include "global_var.h"
 #include "kinematic.h"
 #include "imu.h"
 #include "tim.h"
 #include "motor.h"
+#include "stm32f427xx.h"
+#include "stm32f4xx_hal_rcc.h"
+#include <stdint.h>
 
 #define pi 3.141592f
 
-float Forward_freq = 0.0001f; // 0.004 
+float Forward_freq = 0.01f; // 0.004 
 #define up_down_freq 0.004f
 #define crawl_freq 0.02f
+
+float support_Kp = 0.2f; // 0.6/0.7,0.25/0.3
+float swing_Kp = 0.2f;
+float Expect_kw = 0.01f;  // 直接用来初始化
+float support_tau_ff = 0.00f; // 0.10
+float swing_tau_ff = 0.0f;
+
+float Frontflip_freq1 = 0.15f; // 
+float Frontflip_freq2 = 0.004f; // 
+float Frontflip_freq3 = 0.004f; // 
 
 #define jump_freq0 0.08f   // 0.01
 #define jump_freq1 0.01f   // 0.01
@@ -24,17 +38,11 @@ float Forward_freq = 0.0001f; // 0.004
 #define jump_freq4 0.005f   // 0.01  0.005
 #define jump_freq5 0.003f   // 0.01
 
-float walk_height = 22.0f; 
+float walk_height = 22.0f; //32.0
 float max_stride = 13.0f;
 
 float tau = 0.0f;
 float t = 0.0f;    
-
-float support_Kp = 0.55f; // 0.6/0.7,0.25/0.3
-float swing_Kp = 0.3f;
-float Expect_kw = 0.01f;  // 直接用来初始化
-float support_tau_ff = 0.00f; // 0.10
-float swing_tau_ff = 0.0f;
 
 float kp_GyroZ = 0.08f;  // 40~50左右输入，20左右输出
 float kp_VeloY = 10.0f; // 2.0输入，20.0左右输出
@@ -42,11 +50,11 @@ float GyroZ_max = 130.0f; // 转动角速度指令上限
 float stride_max = 20.0f;
 
 // 每个电机的发力表现不同
- float motor1_kp_offset = 0.25f;
+ float motor1_kp_offset = 0.35f;
  float motor2_kp_offset = 0.15f;
  float motor3_kp_offset = 0.3f;
  float motor4_kp_offset = 0.2f;
- float motor5_kp_offset = 0.17f;
+ float motor5_kp_offset = 0.37f;
  float motor6_kp_offset = 0.32f;
  float motor7_kp_offset = 0.37f;
  float motor8_kp_offset = 0.50f;
@@ -165,10 +173,29 @@ void quick_set_kp(float kp_value,float kw_value)
 void  Body_Roll_Stabilizer(){
 	stab_roll += kp_roll*(0 - body_roll) - kd_roll * (body_roll - prev_body_roll);
 	
+	if (body_roll<-45.0f||body_roll>45.0f){
+		emergency_stop=1;
+		stab_roll = 0;
+		return;
+	}else{
+		emergency_stop=0;	
+	}
+	
 	if (stab_roll > 20.0f) { stab_roll = 20.0f;}
 	if (stab_roll < -20.0f) { stab_roll = -20.0f;}
 	
 	prev_body_roll = body_roll;
+}
+
+uint8_t imu_emergency_stop(){
+	if (body_roll<-37.0f||body_roll>37.0f){
+		//emergency_stop=1;
+		stab_roll = 0;
+		return 1;
+	}else{
+		//emergency_stop=0;	
+		return 0;
+	}
 }
  
 
@@ -249,10 +276,10 @@ void motion_Crawl(float step_height, float stride){
     tau += crawl_freq; // 步频
     if(tau >= 1.0f) { tau = 0.0f; }
 
-  motor1_kp_offset = 0.45f;
+  motor1_kp_offset = 0.35f;
   motor2_kp_offset = 0.45f;
-  motor3_kp_offset = 0.3f;
-  motor4_kp_offset = 0.2f;
+  motor3_kp_offset = 0.2f;
+  motor4_kp_offset = 0.15f;
   motor5_kp_offset = 0.17f;
   motor6_kp_offset = 0.32f;
   motor7_kp_offset = 0.47f;
@@ -308,8 +335,13 @@ void motion_Crawl(float step_height, float stride){
   motor7_kp_offset = 0.37f;
   motor8_kp_offset = 0.50f;
 }
-void motion_Mix(float height, float step_height, float stride)
-{
+
+/* 参数说明：
+* stride：步幅，参数范围（-max_stride 到 max_stride）
+* turn_omega：转弯角速度，参数范围（-1.0f 到 1.0f）
+*/
+void motion_Mix(float height, float step_height, float stride, float turn_omega)
+{    
 //	static float _t = 0.0f;
 //	_t += Forward_freq;  
 //	if(_t >= 1.0f) { _t -= 1.0f; }
@@ -328,18 +360,18 @@ void motion_Mix(float height, float step_height, float stride)
 //   // 带陀螺仪的前进闭环控制
 //    float R_stride = stride;
 //    float L_stride = stride;  
-//    float Exp_GZ = GyroZ_max*rcData.R_x;  
+//    float Exp_GZ = GyroZ_max*turn_omega;  
 //    float yaw_correction = kp_GyroZ * (Exp_GZ - GyroZ);
 //    float shift_suppression = kp_VeloY*(0-VeloY);
 //    if (yaw_correction> stride_max) {yaw_correction = stride_max;}
 
 //   if (rcData.R_y == 0){
-//       if (rcData.R_x == 0){ VeloY = 0.0f;} // 清除零漂
-//       if (rcData.R_x <-0.05f){ // 左转
+//       if (turn_omega == 0){ VeloY = 0.0f;} // 清除零漂
+//       if (turn_omega <-0.05f){ // 左转
 //           R_stride = 0 + yaw_correction + shift_suppression;
 //           L_stride = 0 - yaw_correction - shift_suppression;
 //       }
-//       if (rcData.R_x > 0.05f){ // 右转
+//       if (turn_omega > 0.05f){ // 右转
 //           R_stride = 0 + yaw_correction - shift_suppression;
 //           L_stride = 0 - yaw_correction + shift_suppression;
 //       }    
@@ -348,7 +380,7 @@ void motion_Mix(float height, float step_height, float stride)
 //       	if (L_stride> stride_max) {L_stride= stride_max; }
 // 		if (L_stride<-stride_max) {L_stride=-stride_max; }
 //   }else{
-//       if (rcData.R_x < 0){ // 左转
+//       if (turn_omega < 0){ // 左转
 //           R_stride = stride;
 //           L_stride = stride - 2.0f*yaw_correction;
 //       }else{ // 右转
@@ -365,23 +397,23 @@ void motion_Mix(float height, float step_height, float stride)
 		float yaw_correction = kp_GyroZ * (0 - GyroZ);
 		if (yaw_correction> stride_max) {yaw_correction = stride_max;}
 		
-		if (rcData.R_x > 0.005f){
-			R_stride = stride * (1.0f - 2.0f * rcData.R_x);
+		if (turn_omega > 0.005f){
+			R_stride = stride * (1.0f - 2.0f * turn_omega);
 			L_stride = stride;
-		}else if (rcData.R_x < -0.005f){
+		}else if (turn_omega < -0.005f){
 			R_stride = stride;
-			L_stride = stride * (1.0f + 2.0f * rcData.R_x);
+			L_stride = stride * (1.0f + 2.0f * turn_omega);
 		}else{ // GyroZ逆时针为正
 			R_stride = stride + yaw_correction;
 			L_stride = stride - yaw_correction;
 		}	
 	}else {
-		if (rcData.R_x > 0.005f){
-			R_stride = stride * (1.0f - 2.0f * rcData.R_x);
+		if (turn_omega > 0.005f){
+			R_stride = stride * (1.0f - 2.0f * turn_omega);
 			L_stride = stride;
-		}else if (rcData.R_x < -0.005f){
+		}else if (turn_omega < -0.005f){
 			R_stride = stride;
-			L_stride = stride * (1.0f + 2.0f * rcData.R_x);
+			L_stride = stride * (1.0f + 2.0f * turn_omega);
 		}
 	}
 
@@ -549,7 +581,7 @@ void motion_Down(float start, float des)
 }
 
 
-// 往前跳, 15.5f~37.0f ？
+// 往前跳, 15.5f~37.0f 
 void motion_Jump(float stride)
 {
     float height_des = 38.5f; // 蹬地腿长
@@ -603,7 +635,7 @@ void motion_Jump(float stride)
 	float x_stop2 = sqrt(height_des*height_des/(1+k2*k2));
 	// float y_des = k2 * x_stop2;
 
-	quick_set_kp(14.4f,0.0f); // 跳跃时增大Kp，提升响应速度
+	quick_set_kp(1.0f,0.01f); // 跳跃时增大Kp，提升响应速度
 	for (float x = x_start2;x < x_stop2; x += jump_freq2*(fabsf(x_start2 - x_stop2))){
 	if (emergency_stop==1){return;}
 	
@@ -690,6 +722,532 @@ void motion_Jump(float stride)
 
 }
 
+void motion_Frontflip(void){
+    /*
+    1.后脚蹬，给个初始翻转速度
+    2.前后脚都收到90度
+    3.身体自然往前倒10度左右
+    4.前后一起蹬
+    5.前后脚都收到翻转后的坐标系的90度，保持蹬地状态直到落地
+    6.翻转坐标系
+
+    存储参考角：1.起跳前的站立  2.后推蹬地的坐标（3，17）对应的角度  3.原地腿伸直的角度
+
+    注意：全程慎用inverseKinematic，完全使用角度控制。完成动作后记得翻转坐标系
+    */
+    float front_retract_angle = 90.0f; // 前腿收腿角度
+    float back_retract_angle = 90.0f; // 后腿收腿角度
+    float front_skip_Pitch = 100.0f; // 前空翻时身体前倾的角度
+    float back_skip_Pitch = -50.0f; // 后腿蹬地直到身体前倾到back_skip_Pitch
+    float skip_Height = 35.0f; // 前空翻时蹬地的高度
+
+    float back_support_angle_max = 130.0f; // 后脚蹬地的最大角度
+	float front_support_angle_max = 60.0f; // 前脚蹬地的最大角度
+
+    // step0:准备起跳，存储初始角度
+    // 存储参考角：1.起跳前的站立
+	motion_StandBy(17.0f); // 准备起跳高度
+	HAL_Delay(3000);
+    float start_h1_alpha1 = hposition1.alpha;
+    float start_h1_beta1 = hposition1.beta;
+    float start_h2_alpha1 = hposition2.alpha;
+    float start_h2_beta1 = hposition2.beta;
+    float start_h3_alpha1 = hposition3.alpha;
+    float start_h3_beta1 = hposition3.beta;
+    float start_h4_alpha1 = hposition4.alpha;
+    float start_h4_beta1 = hposition4.beta;
+
+    // 存储参考角：2.后推蹬地的坐标（3，17）对应的角度
+    float x2 = 3.0f; 
+    float y2 = 17.0f; 
+    hposition2.B_y = y2;
+    hposition2.B_x = -x2; 
+    hposition3.B_y = y2;
+    hposition3.B_x = -x2; 
+	crawl_inverseKinematic(&hposition2,BACK);
+	crawl_inverseKinematic(&hposition3,BACK);
+    float start_h2_alpha2 = hposition2.alpha; // 后推蹬地的坐标（3，17）对应的角度  
+    float start_h2_beta2 = hposition2.beta;
+    float start_h3_alpha2 = hposition3.alpha;
+    float start_h3_beta2 = hposition3.beta;
+
+    //  存储参考角：3.原地腿伸直的角度
+    hposition1.B_y = 33.0f;
+    hposition2.B_y = 33.0f;
+    hposition3.B_y = 33.0f;
+    hposition4.B_y = 33.0f;
+    hposition1.B_x = 0.0f;
+    hposition2.B_x = 0.0f;
+    hposition3.B_x = 0.0f;
+    hposition4.B_x = 0.0f;
+    inverseKinematic_All();
+    float start_h1_alpha3 = hposition1.alpha;
+    float start_h1_beta3 = hposition1.beta;
+    float start_h2_alpha3 = hposition2.alpha;
+    float start_h2_beta3 = hposition2.beta;
+    float start_h3_alpha3 = hposition3.alpha;
+    float start_h3_beta3 = hposition3.beta;
+    float start_h4_alpha3 = hposition4.alpha;
+    float start_h4_beta3 = hposition4.beta;
+
+    // step1.后脚蹬，给个初始翻转速度
+    // step2：前后脚都收到90度
+    while (body_pitch < front_retract_angle){
+        if (emergency_stop==1){return;}
+
+        hposition1.alpha = start_h1_alpha1 + body_pitch;  // motor1
+        hposition1.beta =  start_h1_beta1  - body_pitch;    // motor2
+        hposition4.alpha = start_h4_alpha1 + body_pitch;   // motor7
+        hposition4.beta =  start_h4_beta1  - body_pitch;   // motor8
+//        hposition2.alpha = start_h2_alpha1 + body_pitch;   // motor3
+//        hposition2.beta =  start_h2_beta1  - body_pitch;   // motor4
+//        hposition3.alpha = start_h3_alpha1 + body_pitch;  // motor5
+//        hposition3.beta =  start_h3_beta1  - body_pitch;    // motor6
 
 
+    uint8_t temp = 0;
+		if (body_pitch > back_skip_Pitch){ // 后脚蹬
+			static float flip_tau1 = 0.0f;
+			flip_tau1 += Frontflip_freq1;
+			if (flip_tau1 >= 1.0f){ flip_tau1 = 1.0f;}
+
+			 float back_support_angle = flip_tau1*back_support_angle_max; // 后脚蹬地的角度，逐渐增加到最大值
+			 hposition2.alpha = start_h2_alpha1 - back_support_angle;   // motor3
+			 hposition2.beta =  start_h2_beta1  - back_support_angle;   // motor4
+			 hposition3.alpha = start_h3_alpha1 - back_support_angle;  // motor5
+			 hposition3.beta =  start_h3_beta1  - back_support_angle;    // motor6
+			//HAL_Delay(90);
+		temp=1;
+		}else{
+			hposition2.alpha = start_h2_alpha1 - body_pitch*back_retract_angle/front_retract_angle;   // motor3
+			hposition2.beta =  start_h2_beta1  + body_pitch*back_retract_angle/front_retract_angle;   // motor4
+			hposition3.alpha = start_h3_alpha1 - body_pitch*back_retract_angle/front_retract_angle;  // motor5
+			hposition3.beta =  start_h3_beta1  + body_pitch*back_retract_angle/front_retract_angle;    // motor6
+		temp=0;
+
+		}
+
+		 Motor_SendCmd_AllAngle(); 
+	 }
+
+}
 	
+ // --------------------------by LiShuai ,BEGIN
+// 
+//    for (float x = stride / 2.0f; x > 0.0f; x -= jump_freq4 * stride){
+//        float y = walk_height;
+
+//        hposition1.B_y = y;
+//        hposition1.B_x = x; 
+//        hposition2.B_y = y;
+//        hposition2.B_x = x; 
+//        hposition3.B_y = y;
+//        hposition3.B_x = x; 
+//        hposition4.B_y = y;
+//        hposition4.B_x = x;
+
+//        inverseKinematic_All();
+//        Motor_SendCmd_AllAngle(); 
+//    }
+//	quick_set_kp(support_Kp); // 落地时减小Kp，增加缓冲，防止过度震荡    
+
+
+//}
+
+
+
+//void testCircle()
+//{   
+//    if(tau >= 1.0f){tau = 0.0f;}
+
+//    float r = 8.0f;
+//    tau += 0.01f;
+//    float theta = 2.0f * pi * tau/1.0f;
+//    hposition1.B_x = r * cosf(theta);
+//    hposition1.B_y = r * sinf(theta) + 27.0f;
+//    hposition2.B_x = -r * cosf(theta);
+//    hposition2.B_y = -r * sinf(theta) + 27.0f;
+//    hposition3.B_x = r * cosf(theta);
+//    hposition3.B_y = r * sinf(theta) + 27.0f;
+//    hposition4.B_x = -r * cosf(theta);
+//    hposition4.B_y = -r * sinf(theta) + 27.0f;
+//    inverseKinematic_All();
+//    Motor_SendCmd_AllAngle();   
+//}
+
+///*
+//前后两腿依次按照椭圆轨迹向前移动stride
+//前后腿向后移动stride，身体向前送
+//后腿依次按照椭圆轨迹向前移动stride
+//*/
+//void test_low_walk(float stride,float b) //b是椭圆的参数
+//{
+//    float walk_H=15.5f;
+//    float low_H=5.5f;
+//    float theta=0.0f;
+//    //蹲下去
+//  for(theat=0.0f;theat<pi;theat+=up_down_freq*pi)
+//  {
+//    float r=(walk_H-low_H)/2;
+//    float center_y=(walk_H+low_H)/2;
+//    hposition1.B_x=0.0f; hposition1.B_y=center_y+r*cos(theta);
+//    hposition4.B_x=0.0f; hposition4.B_y=center_y+r*cos(theta);
+//    hposition2.B_x=0.0f; hposition2.B_y=center_y+r*cos(theta);
+//    hposition3.B_x=0.0f; hposition3.B_y=center_y+r*cos(theta);
+//    inverseKinematic_All();
+//    Motor_SendCmd_AllAngle();   
+//  }
+//  float s=stride;
+//  float r=stride/2.0f;
+//  float p=r*b/sqrt(b*b*(cosf(theat)*cosf(theat))+r*r*(sinf(theta)*sinf(theta))); //椭圆的极径,中心在(r,0)处 r=a
+//  //右前腿按照椭圆轨迹移动至s
+//  for(theat=pi;theat>0.0f;theta-=up_down_freq*pi)
+//  {
+//   // float x=r*(1+cosf(theat));
+//   // float y=r*sinf(theat);
+//    float x=r+p*cosf(theta);
+//    float y=p*sinf(theat);
+//    hposition1.B_x=x; hposition1.B_y=low_H-y;
+//    hposition4.B_x=0.0f; hposition4.B_y=low_H;
+//    hposition2.B_x=0.0f; hposition2.B_y=low_H;
+//    hposition3.B_x=0.0f; hposition3.B_y=low_H;
+//    inverseKinematic_All();
+//    Motor_SendCmd_AllAngle();   
+//  }
+//  //左前腿按照椭圆轨迹移动至s
+//  for(theat=pi;theat>0.0f;theta-=up_down_freq*pi)
+//  {
+//    float x=r+p*cosf(theta);
+//    float y=p*sinf(theat);
+//    hposition1.B_x=s; hposition1.B_y=low_H;
+//    hposition4.B_x=x; hposition4.B_y=low_H-y;
+//    hposition2.B_x=0.0f; hposition2.B_y=low_H;
+//    hposition3.B_x=0.0f; hposition3.B_y=low_H;
+//    inverseKinematic_All();
+//    Motor_SendCmd_AllAngle();   
+//  }
+//  //1,4回收 2,3后送
+//  for(theat=0.0f;theat<pi;theta+=up_down_freq*pi)
+//  {
+//    float x=s*(cosf(1+theat)/2.0f);
+
+//    hposition1.B_x=x; hposition1.B_y=low_H;
+//    hposition4.B_x=x; hposition4.B_y=low_H;
+//    hposition2.B_x=-s*(cosf(1-theat)/2.0f); hposition2.B_y=low_H;
+//    hposition3.B_x=-s*(cosf(1-theat)/2.0f); hposition3.B_y=low_H;
+//    inverseKinematic_All();
+//    Motor_SendCmd_AllAngle();   
+//  }
+//  //右后腿按照椭圆轨迹移动至0.0f
+//   for(theat=pi;theat>0.0f;theta-=up_down_freq*pi)
+//  {
+//    float x=r+p*cosf(theta);
+//    float y=p*sinf(theat);
+//    hposition1.B_x=0.0f; hposition1.B_y=low_H;
+//    hposition4.B_x=0.0f; hposition4.B_y=low_H;
+//    hposition2.B_x=-s+x; hposition2.B_y=low_H-y;
+//    hposition3.B_x=-s; hposition3.B_y=low_H;
+//     inverseKinematic_All();
+//    Motor_SendCmd_AllAngle();   
+//  }
+//  //右后腿按照椭圆轨迹移动至0.0f || 最终回到状态1
+//   for(theat=pi;theat>0.0f;theta-=up_down_freq*pi)
+//  {
+//    float x=r+p*cosf(theta);
+//    float y=p*sinf(theat);
+//    hposition1.B_x=0.0f; hposition1.B_y=low_H;
+//    hposition4.B_x=0.0f; hposition4.B_y=low_H;
+//    hposition2.B_x=0.0f; hposition2.B_y=low_H;
+//    hposition3.B_x=-s+x; hposition3.B_y=low_H-y;
+//    inverseKinematic_All();
+//    Motor_SendCmd_AllAngle();   
+//  }
+//}
+
+//// void test_jump_filp(float stride)
+//// {
+////   float walk_hight=0.0f;
+////   float height_des=1.0f;
+////   float long_hight=20.0f;
+////   float angle=0.0f;
+////   uint8_t pitch_triggered=0;
+////   //ready
+////   for(float theta=0.0f;theta<pi;theta+=0.05f)
+////   {
+////     float r=(long_hight-walk_hight)/2;
+////     float center_y=(long_hight+walk_hight)/2;
+////     hposition1.B_x=0.0f; hposition1.B_y=center_y+r*cos(theta);
+////     hposition4.B_x=0.0f; hposition4.B_y=center_y+r*cos(theta);
+////     hposition2.B_x=0.0f; hposition2.B_y=center_y+r*cos(theta);
+////     hposition3.B_x=0.0f; hposition3.B_y=center_y+r*cos(theta);
+////     inverseKinematic_All();
+////     Motor_SendCmd_AllAngle();   
+////   }
+////   //前脚起跳
+////     float k=2*long_hight/stride;
+////     float x_start = sqrt(walk_hight*walk_hight/(1+k*k));
+//// 	float y_start = k * x_start;
+////     float x_des = sqrt(height_des*height_des/(1+k*k));
+////     float y_des = k * x_des;
+////     quick_set_kp(1.5f); // 跳跃时增大Kp，提升响应速度
+////   for(float x=x_start;x<x_des;x+=jump_freq4*fabsf(x_start-x_des))
+////   {
+////     float y=k*x;
+////     hposition1.B_x=x; hposition1.B_y=y;
+////     hposition4.B_x=x; hposition4.B_y=y;
+////     hposition2.B_x=0.0f; hposition2.B_y=walk_hight;
+////     hposition3.B_x=0.0f; hposition3.B_y=walk_hight;
+////     inverseKinematic_All();
+////     Motor_SendCmd_AllAngle();   
+////      if(body_pitch<SET_BODY_ANGLE){
+////         pitch_triggered=1;
+////         break;
+////      }
+////   }
+////     //后脚起跳
+////   for(float x=x_start;x<x_des;x+=jump_freq4*fabsf(x_start-x_des))
+////     {
+////         float y=k*x;
+////         if(pitch_triggered){quick_set_kp(2.0f);}
+////         else{quick_set_kp(1.0f);}
+////         hposition1.B_x=x_des; hposition1.B_y=k*x_des;
+////         hposition4.B_x=x_des; hposition4.B_y=k*x_des;
+////         hposition2.B_x=x; hposition2.B_y=y;
+////         hposition3.B_x=x; hposition3.B_y=y;
+////         inverseKinematic_All();
+////         Motor_SendCmd_AllAngle();   
+////     }
+////     //空中前半段，收腿
+////    for(angle=0;angle<pi;angle+=jump_freq3*pi)
+////    {
+////       float x=x_des*(1.0f+cos(angle))/2.0f;
+////       float y = k*x_des+(FILP_BACK_Y-k*x_des)*(1.0f-cosf(angle))/2.0f;
+////       hposition1.B_x=x; hposition1.B_y=y;
+////       hposition4.B_x=x; hposition4.B_y=y;
+////       hposition2.B_x=x; hposition2.B_y=y;
+////       hposition3.B_x=x; hposition3.B_y=y;
+////       inverseKinematic_All();
+////       Motor_SendCmd_AllAngle();
+////    }
+////    //空中后半段，展腿，准备落地支撑
+////    quick_set_kp(1.3f);
+////    for(angle=pi;angle<2*pi;angle+=jump_freq3*pi)
+////    {
+////      float x=stride/4.0f*(1.0f+cos(angle))/2.0f;
+////      float y=LANDING_Y+(FILP_BACK_Y-LANDING_Y)*(1.0f-cosf(angle))/2.0f;
+////      hposition1.B_x=x; hposition1.B_y=y;
+////      hposition4.B_x=x; hposition4.B_y=y;
+////      hposition2.B_x=-x; hposition2.B_y=y;
+////      hposition3.B_x=-x; hposition3.B_y=y;
+////      inverseKinematic_All();
+////      Motor_SendCmd_AllAngle();
+////    }
+////    //落地缓冲
+////     quick_set_kp(0.35f);
+////     for(angle=2*pi;angle<3*pi;angle+=jump_freq3*pi)
+////     {
+////         float x=stride/4.0f;
+////         float y=LANDING_Y+(walk_hight-LANDING_Y)*(1.0f-cosf(angle))/2.0f;
+////         hposition1.B_x=x; hposition1.B_y=y;
+////         hposition4.B_x=x; hposition4.B_y=y;
+////         hposition2.B_x=-x; hposition2.B_y=y;
+////         hposition3.B_x=-x; hposition3.B_y=y;
+////         inverseKinematic_All();
+////         Motor_SendCmd_AllAngle();
+
+////     }
+////     //落地后站立
+////     quick_set_kp(support_Kp);
+////     for(angle=3*pi;angle<4*pi;angle+=jump_freq3*pi)
+////     {
+////         float x=stride/4.0f+(-stride/4.0f)*(1.0f+cos(angle))/2.0f;
+////         float y=walk_hight;
+////         hposition1.B_x=x; hposition1.B_y=y;
+////         hposition4.B_x=x; hposition4.B_y=y;
+////         hposition2.B_x=-x; hposition2.B_y=y;
+////         hposition3.B_x=-x; hposition3.B_y=y;
+////         inverseKinematic_All();
+////         Motor_SendCmd_AllAngle();
+////     }
+//// }
+//	
+//void state_filp_jump(float stride)
+//{
+//   static filp_jump_state_t j_state=FILP_IDLE;
+//   static float ready_height=12.8f;
+//   static float walk_height=20.0f;
+//   static float height_des=33.0f;
+//   static float back_x=0.0f; 
+//   static float back_y=0.0f;
+//   float fqu=0.02f;
+//   switch(j_state)
+//   {
+//    case FILP_IDLE:
+//    {
+//        quick_set_kp(support_Kp);
+//        hposition1.B_x = 0.0f; hposition1.B_y = walk_height;
+//        hposition4.B_x = 0.0f; hposition4.B_y = walk_height;
+//        hposition2.B_x = 0.0f; hposition2.B_y = walk_height;
+//        hposition3.B_x = 0.0f; hposition3.B_y = walk_height;
+//        j_state=FILP_READY;
+//        break;
+//    }
+//    case FILP_READY:
+//    {
+//        //前后腿高度到ready_height,后退往前送stride/2
+//        float r=(walk_height-ready_height)/2.0f;
+//        float center_y=(ready_height+walk_height)/2.0f;
+//        static float theta=0.0f;
+//        hposition1.B_x=0.0f; hposition1.B_y=center_y+r*cos(theta);
+//        hposition4.B_x=0.0f; hposition4.B_y=center_y+r*cos(theta);
+//        hposition2.B_x=stride/2.0f*(cosf(1-theta)/2.0f); hposition2.B_y=center_y+r*cos(theta);
+//        hposition3.B_x=stride/2.0f*(cosf(1-theta)/2.0f); hposition3.B_y=center_y+r*cos(theta);
+//        theta+=fqu*pi;
+//        if(theta>=pi){theta=0.0f; j_state=FILP_BACK_JUMP;}
+//        break;
+//    }
+//    case FILP_BACK_JUMP:
+//    {
+//         //后脚起跳
+//        float s=stride/2.0f; 
+//        float back_ready_long=sqrtf(s*s+ready_height*ready_height);
+//        float k=2*height_des/s;
+//        float x_start = sqrt(back_ready_long*back_ready_long/(1+k*k)); //sqrt(ready_height*ready_height/(1+k*k));
+//        float y_start = k * x_start;
+//        float x_des = sqrt(height_des*height_des/(1+k*k));
+//        float y_des = k * x_des-;
+//        static float x=0.0f;
+//        static uint8_t inited = 0;
+//        if(!inited){x=x_start; inited=1; quick_set_kp(1.5f);}
+//        float y=k*x;
+//        hposition2.B_x=-x; hposition2.B_y=y;
+//        hposition3.B_x=-x; hposition3.B_y=y;
+//        hposition1.B_x=0.0f; hposition1.B_y=ready_height;
+//        hposition4.B_x=0.0f; hposition4.B_y=ready_height;    
+//        if(body_pitch<=SET_BODY_PITCH) //腿可能还没到位置，但重心已经能满足翻滚条件了
+//        {
+//            inited=0;
+//            back_x=x; back_y=y;  //记录此时真实的坐标，用于后续计算,取正值方便算
+//            j_state=FILP_READY_FONT_JUMP;
+//        }
+//        else if(x<=x_des)
+//        {
+//            inited=0;
+//            x=x_start;
+//            j_state=FILP_JUMP_RECOVER;
+//        }else
+//        {
+//            x+=jump_freq4*fabsf(x_start-x_des);
+//        }
+//        break;
+//    }
+//    case FILP_JUMP_RECOVER:
+//    {
+//       static float s=0.0f;
+//       float y=back_y+(ready_height-back_y)*(1-cosf(s))/2.0f;
+//       float x=back_x*(1+cosf(s))/2.0f;
+//        hposition2.B_x=-x; hposition2.B_y=y;
+//        hposition3.B_x=-x; hposition3.B_y=y;
+//        hposition1.B_x=0.0f; hposition1.B_y=ready_height;
+//        hposition4.B_x=0.0f; hposition4.B_y=ready_height; 
+//        s+=fqu;
+//        if(s>=pi)
+//        {
+//            s=0.0f;
+//            if(body_pitch<=LIMIT_PITCH){j_state=FILP_WALK_STATE;}
+//        }
+//        break;
+//    }
+//    case FILP_READY_FONT_JUMP:
+//    {
+//        //后退转至相对身体水平位置，前腿先直接向前移(jump=0,只做翻转 || jump=1,跳加翻转)
+//       float inside_r=ready_height;
+//       float outside_r=sqrt(ready_height*ready_height+back_x*back_x);
+//       float theta_begin=atan2f(ready_height,fabsf(back_x));
+//       float theta_end=0.0f;
+//       static float theta=0.0f;
+//       static uint8_t inited=0;
+//       if(!inited){ inited=1; theta=theta_begin;} //只再第一次进入时赋值
+//       float x=outside_r*cosf(theta);
+//       float y=outside_r*sinf(theta); //相当于back_y的值了
+//       if(jump==0)
+//       {
+//        hposition1.B_x=0.0f; hposition1.B_y=ready_height;
+//        hposition4.B_x=0.0f; hposition4.B_y=ready_height;
+//        hposition2.B_x=-x;   hposition2.B_y=y;
+//        hposition3.B_x=-x;   hposition3.B_y=y;
+//        theta-=fqu*pi;
+//        if(theta<=theta_end){theta=theta_begin; inited=0; j_state=FILP_ONLY;}  
+//       }
+//       break;
+//    }
+//    case FILP_ONLY:
+//    {
+//        float x_begin=0.0f;
+//        float x_end=stride/2.0f;
+//        float y_end=sqrtf(x_end*x_end+ready_height*ready_height)-ready_height;
+//        float outside_r=sqrt(ready_height*ready_height+back_x*back_x);
+//        static float theta=0.0f;
+//        hposition1.B_x=x_begin+(x_end-x_begin)*(1-cosf(theta))/2.0f; 
+//        hposition1.B_y=ready_height+(y_end-ready_height)*(1-cosf(theta))/2.0f;
+//        hposition4.B_x=x_begin+(x_end-x_begin)*(1-cosf(theta))/2.0f; 
+//        hposition4.B_y=ready_height+(y_end-ready_height)*(1-cosf(theta))/2.0f;
+//        hposition2.B_x=-outside_r;   hposition2.B_y=0.0f;
+//        hposition3.B_x=-outside_r;   hposition3.B_y=0.0f;
+//        theta+=fqu*pi;
+//        if(theta>=pi){theta=0.0f; j_state=FILP_LANDING;}
+//        break;
+//    }
+//    case FILP_HALFS_SKY:
+//    {
+
+//    }
+//    case FILP_HALFE_SKY:
+//    {
+//     
+//    }
+//    case FILP_LANDING:
+//    {
+//       float inside_r=ready_height;
+//       float outside_r=sqrt(ready_height*ready_height+back_x*back_x);
+//       float x_end=stride/2.0f;
+//       float y_end=sqrtf(x_end*x_end+ready_height*ready_height)-ready_height;
+//       static float theta=0.0f;
+//       hposition2.B_x=outside_r+(x_end-outside_r)*(1-cosf(theta))/2.0f;
+//       hposition2.B_y=y_end*cosf(theta);
+//       hposition2.B_x=outside_r+(x_end-outside_r)*(1-cosf(theta))/2.0f;
+//       hposition2.B_y=y_end*cosf(theta);
+//       hposition1.B_x=x_end; hposition1.B_y=y_end;
+//       hposition4.B_x=x_end; hposition4.B_y=y_end;
+//       theta+=fqu*pi;
+//       if(theta>=pi){theta=0.0f; j_state=FILP_WALK_STATE;}
+//       break;
+//    }
+//    case FILP_WALK_STATE:
+//    {
+//        //第一次翻转后，狗的方向变了，要注意
+//        float x_end=stride/2.0f;
+//        float y_end=sqrtf(x_end*x_end+ready_height*ready_height)-ready_height;
+//        static float theta=0.0f;
+//        hposition1.B_x=x_end*(1+cosf(theta))/2.0f;
+//        hposition1.B_y=y_end+(walk_height-y_end)*(1-cosf(theta))/2.0f;
+//        hposition4.B_x=x_end*(1+cosf(theta))/2.0f;
+//        hposition4.B_y=y_end+(walk_height-y_end)*(1-cosf(theta))/2.0f;
+//        theta+=fqu*pi;
+//        if(theta>=pi){theta=0.0f; j_state=FILP_IDLE;}
+//        break;
+//    }
+//   }
+//    inverseKinematic_All();
+//    Motor_SendCmd_AllAngle();   
+//}
+
+//void inverse_x(void)
+//{
+//    hposition1.B_x = -hposition1.B_x;
+//    hposition2.B_x = -hposition2.B_x;
+//    hposition3.B_x = -hposition3.B_x;
+//    hposition4.B_x = -hposition4.B_x;
+//}
+
+ // ----------------------by LiShuai ,END
