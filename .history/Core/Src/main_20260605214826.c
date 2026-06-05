@@ -247,14 +247,6 @@ int main(void)
 
   // -------------遥控控制部分------------------
 	// 说明：此处主要控制非状态机函数
-  UART8_Demo_Process(); //
-
-  // // 树莓派请求行走，没用到，看后续怎么进入行走状态
-  // if (uart8_walk_request) {
-  //     rcData.sw5 = 0x0320;
-  //     rcData.sw7 = 0x0320;
-  //     uart8_walk_request = 0;
-  // }
 
   // 遥控取值：0x0320,0x0000,0xFCE0
   /* 功能说明

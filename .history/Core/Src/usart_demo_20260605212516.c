@@ -205,16 +205,12 @@ static uint8_t Parser_ValidateFrame(const uint8_t *buf)
  * 当前支持：
  *   CTRL_SPEED (0x01): 速度下发模式，注入 rcData 控制行走
  */
-
- float front_speed=0.0f;
- float turn_omega=0.0f;
-
 static void DispatchCommand(const CmdFrame_TypeDef *cmd)
 {
     switch (cmd->ctrl_mode) {
     case CTRL_SPEED:
-        front_speed = (float)cmd->velocity_v / 10000.0f;  // 线速度 → 前进步幅 (±1.0)
-        turn_omega = (float)cmd->velocity_w / 10000.0f;  // 角速度 → 转向差速 (±1.0)
+        rcData.R_y  = (float)cmd->velocity_v / 10000.0f;  // 线速度 → 前进步幅 (±1.0)
+        rcData.R_x  = (float)cmd->velocity_w / 10000.0f;  // 角速度 → 转向差速 (±1.0)
        //   rcData.sw5  = 0x0320;   // 触发行走状态
        //  rcData.sw7  = 0x0320;   // temp_state=1 → motion_Mix()
         uart8_walk_request = 1;   // 请求进入行走状态，如果你觉得不好

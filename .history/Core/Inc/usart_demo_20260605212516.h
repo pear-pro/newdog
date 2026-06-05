@@ -115,7 +115,6 @@ void UART8_Demo_SendResponse(uint8_t ctrl_mode, int16_t v, int16_t w);
 
 extern volatile uint8_t uart8_idle_flag;
 extern volatile uint8_t uart8_walk_request;
-extern float front_speed;
-extern float turn_omega;
+
 
 #endif /* USART_DEMO_H */
