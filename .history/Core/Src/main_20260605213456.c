@@ -192,22 +192,62 @@ int main(void)
   while (1)
   {  
   // --------------循环配置----------------
-    UART8_Demo_Process(); // 处理 UART8 接收的树莓派数据，更新 rcData 结构体
+      UART8_Demo_Process(); // 处理 UART8 接收的树莓派数据，更新 rcData 结构体
 
-	  stab_roll = 0.0f;// 平衡角度归零
   
+    // -------------急停模式调试------------------
+//  if (motor_release_flag == 1){
+//	motor_release_flag=0;
+//	init_motor_parameters();
+//  }1
 
     // -------------机械臂6调试------------------
 //	while(1){
 //	hmotor4.Kp =0.1f;
 //	gimbal_send_unitree(60.0f); // 发送云台控制指令，参数为期望的云台角度
 //	
+//	
 //	}
 //	
 
+
     // -------------位置控制测试-----------------
 
-// while(1){
+
+//while(1){
+
+//	float x = 0.0f;
+//	float y = 25.0f;
+//	for (x = -5.0f;x<5.0f;x+=0.1f){
+//	y = x;
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//	HAL_Delay(5);
+//	}
+//	for (x = 5.0f;x>-5.0f;x-=0.1f){
+//	
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//	HAL_Delay(5);
+//	}
+//}
+	
 //	float x = 0.0f;
 //	float y =25.0f;
 //	hposition1.B_y = y;
@@ -221,7 +261,138 @@ int main(void)
 //	crawl_inverseKinematic_All();
 //	Motor_SendCmd_AllAngle(); 
 //	HAL_Delay(10);
-// }
+//	
+//	 x = 0.0f;
+//	 y =24.0f;
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//	HAL_Delay(10);
+
+//while(1){
+
+//	float x=0.0f;
+//	float y=28.0f;
+//	float z = 25.0f;
+//	for(y=35.0f;y>=21.0f;y-=0.1f)
+//	{
+//		x=sqrtf(49.0-(y-28.0)*(y-28.0));
+//		hposition1.B_y = z;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = z;
+//		hposition2.B_x = x; 
+//		hposition3.B_y = z;
+//		hposition3.B_x = x; 
+//		hposition4.B_y = z;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//		HAL_Delay(30);
+//	}
+//	for(y=21.0f;y<=35.0f;y+=0.1f)
+//	{
+//		x=-sqrtf(49.0-(y-28.0)*(y-28.0));
+//		hposition1.B_y = z;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = z;
+//		hposition2.B_x = x; 
+//		hposition3.B_y = z;
+//		hposition3.B_x = x; 
+//		hposition4.B_y = z;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//		HAL_Delay(30);
+//	}
+//	
+//}
+
+//while(1){
+//	float x_start = -10.0f;
+//	float x_stop = -0.75;
+//	for (float x=x_start;x<x_stop;x+=0.01f){
+//		float y =2*x + 40.0f;
+//	
+//		hposition1.B_y = y;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = y;
+//		hposition2.B_x = x; 
+//		hposition3.B_y = y;
+//		hposition3.B_x = x; 
+//		hposition4.B_y = y;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//	}
+//	for (float x=x_stop;x>x_start;x-=0.01f){
+//		float y =2*x + 40.0f;
+//	
+//		hposition1.B_y = y;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = y;
+//		hposition2.B_x = x; 
+//		hposition3.B_y = y;
+//		hposition3.B_x = x; 
+//		hposition4.B_y = y;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//	}
+//}
+//	
+//  while(1){
+//	float y = 10.5f;
+//	for (float x = 12.5f;x<19.5f;x+=0.1f){
+//		hposition1.B_y = y;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = y;
+//		hposition2.B_x = -x; 
+//		hposition3.B_y = y;
+//		hposition3.B_x = -x; 
+//		hposition4.B_y = y;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//		HAL_Delay(100);
+//		}
+//	for (float x = 19.5f;x>12.5f;x-=0.1f){
+//		hposition1.B_y = y;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = y;
+//		hposition2.B_x = -x; 
+//		hposition3.B_y = y;
+//		hposition3.B_x = -x; 
+//		hposition4.B_y = y;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//		HAL_Delay(100);
+//		}			
+//  }
+
+//while(1){
+//	
+//	float x = 0.0f;
+//	float y = 25.0f;
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+
+//}
 
 
 //	//----------4/4单电机通信调试----------
@@ -243,6 +414,8 @@ int main(void)
 ////	MotorTest_Sweep(14, 0.4f);
 ////	MotorTest_Sweep(15, 0.4f);
 //}
+
+
 
 
   // -------------遥控控制部分------------------
@@ -280,13 +453,14 @@ int main(void)
 //		HAL_Delay(2000);
 //		motion_Up(walk_height, 15.0f);
 
-// 过限高杆
-//		temp_state=6; 
+//		temp_state=6; // 过限高杆
 	
 // 坐标系翻转
 // flip_body();
 // HAL_Delay(1000);
 
+	// 平衡角度归零
+	stab_roll = 0.0f;
 // 		Body_Roll_Stabilizer();// 体滚转稳定
 
 
@@ -305,7 +479,7 @@ if (emergency_stop==1){
                 
         case 2:
         // 树莓派控制行走
-		    motion_Mix(walk_height, 8.0f, max_stride*front_speed, turn_omega);
+		    motion_Mix(walk_height, 8.0f, 0.0f, 0.0f);
         break;
 
         case 3: // 跳跃

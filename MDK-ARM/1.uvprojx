@@ -490,6 +490,41 @@
               <FilePath>..\Core\Src\pwm_app.c</FilePath>
             </File>
             <File>
+              <FileName>ht_10a_remote_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\ht_10a_remote_control.h</FilePath>
+            </File>
+            <File>
+              <FileName>ht_10a_remote_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\ht_10a_remote_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>remote_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\remote_control.h</FilePath>
+            </File>
+            <File>
+              <FileName>robot_arm_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\robot_arm_control.h</FilePath>
+            </File>
+            <File>
+              <FileName>robot_arm_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\robot_arm_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor_4310.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\motor_4310.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor_4310.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\motor_4310.h</FilePath>
+            </File>
+            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/main.c</FilePath>
@@ -683,39 +718,9 @@
               <FilePath>../Core/Src/stm32f4xx_hal_msp.c</FilePath>
             </File>
             <File>
-              <FileName>ht_10a_remote_control.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Core\Inc\ht_10a_remote_control.h</FilePath>
-            </File>
-            <File>
-              <FileName>ht_10a_remote_control.c</FileName>
+              <FileName>usart_demo.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\ht_10a_remote_control.c</FilePath>
-            </File>
-            <File>
-              <FileName>remote_control.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Core\Inc\remote_control.h</FilePath>
-            </File>
-            <File>
-              <FileName>robot_arm_control.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Core\Inc\robot_arm_control.h</FilePath>
-            </File>
-            <File>
-              <FileName>robot_arm_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\robot_arm_control.c</FilePath>
-            </File>
-            <File>
-              <FileName>motor_4310.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\motor_4310.c</FilePath>
-            </File>
-            <File>
-              <FileName>motor_4310.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Core\Inc\motor_4310.h</FilePath>
+              <FilePath>..\Core\Src\usart_demo.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -8,18 +8,21 @@
 #include "global_var.h"
 #include "imu.h"
 #include "tim.h"
+#include "gait.h"
 #include "string.h"
+#include "kinematic.h"
 
 #define TRANSNIT_DELAY 500
-
-float motor1_bias = 5.00f;
-float motor2_bias = 1.50f;
+ 
+float motor1_bias = 5.35f;
+float motor2_bias = 1.35f;
 float motor3_bias = 5.87f;
-float motor4_bias = 0.28f;
-float motor5_bias = 0.05f;
-float motor6_bias = 3.88f;
-float motor7_bias = -0.20f;
-float motor8_bias = 3.50f;
+float motor4_bias = 5.4f;
+float motor5_bias = 0.30f;
+float motor6_bias = 3.63f;
+float motor7_bias = -0.05f;
+float motor8_bias = 3.10f;
+float motor10_bias = 3.10f;// 云台偏置
 
 
 float flip_offset = 0.0f; // 3.165f 狗腿翻身对应的电机反转角度
@@ -48,37 +51,41 @@ HAL_StatusTypeDef Motor_Init(Motor_HandleTypeDef *hmotor, UART_HandleTypeDef *hu
 void init_motor_parameters(void)
 {
     Motor_Init(&hmotor1, &huart6, 1);
-	hmotor1.Tau_ff = -Expect_Tau_ff;
-    hmotor1.Kp = Expect_Kp;
-    hmotor1.Kw = EXpect_kw;	
+	hmotor1.Tau_ff = -swing_tau_ff;
+    hmotor1.Kp = swing_Kp;
+    hmotor1.Kw = Expect_kw;	
     Motor_Init(&hmotor2, &huart6, 2);
-	hmotor2.Tau_ff = -Expect_Tau_ff;
-    hmotor2.Kp = Expect_Kp;
-    hmotor2.Kw = EXpect_kw;
+	hmotor2.Tau_ff = -swing_tau_ff;
+    hmotor2.Kp = swing_Kp;
+    hmotor2.Kw = Expect_kw;
     Motor_Init(&hmotor3, &huart6, 3);
-    hmotor3.Tau_ff = -Expect_Tau_ff;
-    hmotor3.Kp = Expect_Kp;
-    hmotor3.Kw = EXpect_kw;	
+    hmotor3.Tau_ff = -swing_tau_ff;
+    hmotor3.Kp = swing_Kp;
+    hmotor3.Kw = Expect_kw;	
     Motor_Init(&hmotor4, &huart6, 4);
-    hmotor4.Tau_ff = -Expect_Tau_ff;
-    hmotor4.Kp = Expect_Kp;
-    hmotor4.Kw = EXpect_kw;    
+    hmotor4.Tau_ff = -swing_tau_ff;
+    hmotor4.Kp = swing_Kp;
+    hmotor4.Kw = Expect_kw;    
     Motor_Init(&hmotor5, &huart6, 5);
-    hmotor5.Tau_ff = Expect_Tau_ff;
-    hmotor5.Kp = Expect_Kp;
-    hmotor5.Kw = EXpect_kw;	
+    hmotor5.Tau_ff = swing_tau_ff;
+    hmotor5.Kp = swing_Kp;
+    hmotor5.Kw = Expect_kw;	
     Motor_Init(&hmotor6, &huart6, 6);
-    hmotor6.Tau_ff = Expect_Tau_ff;
-    hmotor6.Kp = Expect_Kp;
-    hmotor6.Kw = EXpect_kw;    
+    hmotor6.Tau_ff = swing_tau_ff;
+    hmotor6.Kp = swing_Kp;
+    hmotor6.Kw = Expect_kw;    
     Motor_Init(&hmotor7, &huart6, 7);
-    hmotor7.Tau_ff = Expect_Tau_ff;
-    hmotor7.Kp = Expect_Kp;
-    hmotor7.Kw = EXpect_kw;	
+    hmotor7.Tau_ff = swing_tau_ff;
+    hmotor7.Kp = swing_Kp;
+    hmotor7.Kw = Expect_kw;	
     Motor_Init(&hmotor8, &huart6, 8);
-    hmotor8.Tau_ff = Expect_Tau_ff;
-    hmotor8.Kp = Expect_Kp;
-    hmotor8.Kw = EXpect_kw;  
+    hmotor8.Tau_ff = swing_tau_ff;
+    hmotor8.Kp = swing_Kp;
+    hmotor8.Kw = Expect_kw;  
+    Motor_Init(&hmotor10, &huart6, 10);
+    hmotor10.Tau_ff = swing_tau_ff;
+    hmotor10.Kp = swing_Kp;
+    hmotor10.Kw = Expect_kw;  
 }
 
 // 电机id重映射
@@ -223,10 +230,37 @@ void Motor_InitBias()
 // 让电机放松
 void motor_release()
 {
-	uint8_t InitArray[] = {                         
-		0xFE, 0xEE, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x6F, 0x9A};	
+	uint8_t InitArray[] = { 0xFE, 0xEE, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x6F, 0x9A};	
 	unitree_crc_complete(InitArray);
 	HAL_UART_Transmit(&huart6, InitArray, 17, 1000);
+
+//    hmotor1.Tau_ff = 0.0f;
+//    hmotor1.Kp = 0.0f;
+//    hmotor1.Kw = 0.0f;	
+//    hmotor2.Tau_ff = 0.0f;
+//    hmotor2.Kp = 0.0f;
+//    hmotor2.Kw = 0.0f;	
+//    hmotor3.Tau_ff = 0.0f;
+//    hmotor3.Kp = 0.0f;
+//    hmotor3.Kw = 0.0f;	
+//    hmotor4.Tau_ff = 0.0f;
+//    hmotor4.Kp = 0.0f;
+//    hmotor4.Kw = 0.0f;
+//    hmotor5.Tau_ff = 0.0f;
+//    hmotor5.Kp = 0.0f;
+//    hmotor5.Kw = 0.0f;	
+//    hmotor6.Tau_ff = 0.0f;
+//    hmotor6.Kp = 0.0f;
+//    hmotor6.Kw = 0.0f;	
+//    hmotor7.Tau_ff = 0.0f;
+//    hmotor7.Kp = 0.0f;
+//    hmotor7.Kw = 0.0f;	
+//    hmotor8.Tau_ff = 0.0f;
+//    hmotor8.Kp = 0.0f;
+//    hmotor8.Kw = 0.0f;
+//	
+//    inverseKinematic_All();
+//    Motor_SendCmd_AllAngle();  
 
 }
 
@@ -288,7 +322,18 @@ static HAL_StatusTypeDef Motor_PackCmd(Motor_HandleTypeDef *hmotor)
     return HAL_OK;
 }
 
+// 给云台的宇树电机发送信号
+void gimbal_send_unitree(float angel){
+
+    hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * angel / 360.0f;
+	Motor_SendCmd(&hmotor4);
+    hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * angel / 360.0f;
+	Motor_SendCmd(&hmotor4);
+	MY_delay_us(TRANSNIT_DELAY);
+}
+
 /*
+给腿部的宇树电机发送信号
 hposition1 : hmotor1(α) , hmotor2(β)
 hposition2 : hmotor3(α) , hmotor4(β)
 hposition3 : hmotor5(α) , hmotor6(β)
@@ -305,32 +350,45 @@ void Motor_SendCmd_AllAngle()
 //    hmotor7.Theta_des = motor7_bias / 6.33f + 6.28f * 0.0f / 360.0f;
 //    hmotor8.Theta_des = motor8_bias / 6.33f + 6.28f * 0.0f / 360.0f;
    
-	hmotor1.Theta_des = motor1_bias / 6.33f + 6.28f * hposition1.alpha / 360.0f - flip_offset;
-	hmotor2.Theta_des = motor2_bias / 6.33f + 6.28f * hposition1.beta / 360.0f + flip_offset;
+	hmotor1.Theta_des = motor1_bias / 6.33f + 6.28f * -hposition1.alpha / 360.0f - flip_offset;
+	hmotor2.Theta_des = motor2_bias / 6.33f + 6.28f * -hposition1.beta / 360.0f + flip_offset;
 	hmotor3.Theta_des = motor3_bias / 6.33f + 6.28f * hposition2.alpha / 360.0f + flip_offset;
 	hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * hposition2.beta / 360.0f - flip_offset;
 	hmotor5.Theta_des = motor5_bias / 6.33f + 6.28f * -hposition3.alpha / 360.0f - flip_offset;
 	hmotor6.Theta_des = motor6_bias / 6.33f + 6.28f * -hposition3.beta / 360.0f + flip_offset;
-	hmotor7.Theta_des = motor7_bias / 6.33f + 6.28f * -hposition4.alpha / 360.0f + flip_offset;
-	hmotor8.Theta_des = motor8_bias / 6.33f + 6.28f * -hposition4.beta / 360.0f - flip_offset;
-
-
+	hmotor7.Theta_des = motor7_bias / 6.33f + 6.28f * hposition4.alpha / 360.0f + flip_offset;
+	hmotor8.Theta_des = motor8_bias / 6.33f + 6.28f * hposition4.beta / 360.0f - flip_offset;
+	
 	Motor_SendCmd(&hmotor1);
+	MY_delay_us(TRANSNIT_DELAY);	
+	Motor_SendCmd(&hmotor3);
+	MY_delay_us(TRANSNIT_DELAY);
+	Motor_SendCmd(&hmotor8);
 	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor2);
 	MY_delay_us(TRANSNIT_DELAY);
-	Motor_SendCmd(&hmotor3);
+	Motor_SendCmd(&hmotor7);
+	MY_delay_us(TRANSNIT_DELAY);
+	Motor_SendCmd(&hmotor6);
 	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor4);
 	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor5);
 	MY_delay_us(TRANSNIT_DELAY);
-	Motor_SendCmd(&hmotor6);
-	MY_delay_us(TRANSNIT_DELAY);
-	Motor_SendCmd(&hmotor7);
-	MY_delay_us(TRANSNIT_DELAY);
-	Motor_SendCmd(&hmotor8);
-	MY_delay_us(TRANSNIT_DELAY);
+}
+
+// ---------4310控制代码开始------------
+
+void motor_4310_init(){
 
 }
+
+
+void gimbal_send_4310(float angel){
+
+}
+
+
+
+// ---------4310控制代码结束------------
 
