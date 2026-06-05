@@ -65,13 +65,16 @@ extern TIM_HandleTypeDef htim10;
 extern DMA_HandleTypeDef hdma_uart7_tx;
 extern DMA_HandleTypeDef hdma_uart8_rx;
 extern DMA_HandleTypeDef hdma_uart8_tx;
+extern DMA_HandleTypeDef hdma_uart8_rx;
+extern DMA_HandleTypeDef hdma_uart8_tx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern UART_HandleTypeDef huart7;
+extern UART_HandleTypeDef huart8;
 extern UART_HandleTypeDef huart8;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN EV */
-volatile uint32_t uart8_rx_count = 0;  // ã€è°ƒè¯•ã€‘IDLE ä¸­æ–­è§¦å‘æ¬¡æ•°ï¼ŒWatch çª—å£æŸ¥çœ‹
+volatile uint32_t uart8_rx_count = 0;  // ¡¾µ÷ÊÔ¡¿IDLE ÖĞ¶Ï´¥·¢´ÎÊı£¬Watch ´°¿Ú²é¿´
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -241,6 +244,20 @@ void DMA1_Stream0_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA1 stream0 global interrupt.
+  */
+void DMA1_Stream0_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream0_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream0_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_uart8_tx);
+  /* USER CODE BEGIN DMA1_Stream0_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream0_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA1 stream1 global interrupt.
   */
 void DMA1_Stream1_IRQHandler(void)
@@ -252,6 +269,20 @@ void DMA1_Stream1_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
 
   /* USER CODE END DMA1_Stream1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA1 stream6 global interrupt.
+  */
+void DMA1_Stream6_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream6_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream6_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_uart8_rx);
+  /* USER CODE BEGIN DMA1_Stream6_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream6_IRQn 1 */
 }
 
 /**
@@ -377,12 +408,12 @@ void UART8_IRQHandler(void)
   HAL_UART_IRQHandler(&huart8); //
   /* USER CODE BEGIN UART8_IRQn 1 */
 
-  // æ£€æŸ¥ UART8 æ˜¯å¦è§¦å‘äº† IDLEï¼ˆç©ºé—²çº¿è·¯ï¼‰ä¸­æ–­
-  // IDLE = ä¸€å¸§æ•°æ®å‘å®Œåæ€»çº¿ç©ºé—²è¶…è¿‡ 1 å­—èŠ‚æ—¶é—´
-  if (__HAL_UART_GET_FLAG(&huart8, UART_FLAG_IDLE)) {   // åˆ¤æ–­æ˜¯å¦ä¸º IDLE ç©ºé—²ä¸­æ–­ï¼ˆä¸€å¸§æ•°æ®æ¥æ”¶å®Œæ¯•ï¼‰
-      __HAL_UART_CLEAR_IDLEFLAG(&huart8);    // æ¸…é™¤ IDLE æ ‡å¿—ï¼ˆè¯» SR + è¯» DRï¼Œç¡¬ä»¶è§„å®šï¼‰
-      uart8_idle_flag = 1;        // ç½®æ ‡å¿—ä½ï¼Œé€šçŸ¥ä¸»å¾ªç¯çš„å‡½æ•°å»è¯»ç¯å½¢ç¼“å†²åŒº
-      uart8_rx_count++;           // ã€è°ƒè¯•ã€‘IDLE ä¸­æ–­è®¡æ•°ï¼ŒWatch çª—å£æŸ¥çœ‹æ­¤å˜é‡
+  // ¼ì²é UART8 ÊÇ·ñ´¥·¢ÁË IDLE£¨¿ÕÏĞÏßÂ·£©ÖĞ¶Ï
+  // IDLE = Ò»Ö¡Êı¾İ·¢Íêºó×ÜÏß¿ÕÏĞ³¬¹ı 1 ×Ö½ÚÊ±¼ä
+  if (__HAL_UART_GET_FLAG(&huart8, UART_FLAG_IDLE)) {   // ÅĞ¶ÏÊÇ·ñÎª IDLE ¿ÕÏĞÖĞ¶Ï£¨Ò»Ö¡Êı¾İ½ÓÊÕÍê±Ï£©
+      __HAL_UART_CLEAR_IDLEFLAG(&huart8);    // Çå³ı IDLE ±êÖ¾£¨¶Á SR + ¶Á DR£¬Ó²¼ş¹æ¶¨£©
+      uart8_idle_flag = 1;        // ÖÃ±êÖ¾Î»£¬Í¨ÖªÖ÷Ñ­»·µÄº¯ÊıÈ¥¶Á»·ĞÎ»º³åÇø
+      uart8_rx_count++;           // ¡¾µ÷ÊÔ¡¿IDLE ÖĞ¶Ï¼ÆÊı£¬Watch ´°¿Ú²é¿´´Ë±äÁ¿
   }
   /* USER CODE END UART8_IRQn 1 */
 }
@@ -394,15 +425,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 }
 
 /**
-  * @brief  CAN1 FIFO0 ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ¶Ï»Øµï¿½ï¿½ï¿½ï¿½ï¿½
-  * @param  hcan CAN ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+  * @brief  CAN1 FIFO0 ??????????§Ø???????
+  * @param  hcan CAN ??????
   * @details 
-  *   - ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½ CAN1 FIFO0 ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½Ï¢Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-  *   - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ HWT901B IMU ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ CAN ï¿½ï¿½ï¿½ï¿½Ö¡
-  *   - ÊµÊ±ï¿½ï¿½ï¿½Â»ï¿½ï¿½ï¿½Å·ï¿½ï¿½ï¿½Ç£ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ IMU ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
+  *   - ?¨²????? CAN1 FIFO0 ?????????????????
+  *   - ?????????? HWT901B IMU ???????? CAN ?????
+  *   - ????????????????????????????????? IMU ????????
   * @note
-  *   - ï¿½ï¿½ï¿½ï¿½ CAN1_RX0_IRQHandler() ï¿½Ğ±ï¿½ï¿½ï¿½ï¿½ï¿½
-  *   - ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½Ö±ï¿½ï¿½Ó°ï¿½ï¿½ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Æµï¿½ÊºÍ¿ï¿½ï¿½ï¿½ÏµÍ³ï¿½ï¿½Ó¦Ê±ï¿½ï¿½
+  *   - ???? CAN1_RX0_IRQHandler() ?§Ò?????
+  *   - ???????????????????????????????????
   * @return None
   */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
