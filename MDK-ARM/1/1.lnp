@@ -1,4 +1,4 @@
---cpu=Cortex-M4.fp.sp
+--cpu=Cortex-M4.fp
 "1\startup_stm32f427xx.o"
 "1\crc_ccitt.o"
 "1\motor.o"
@@ -13,6 +13,9 @@
 "1\sucker.o"
 "1\imu.o"
 "1\pwm_app.o"
+"1\ht_10a_remote_control.o"
+"1\robot_arm_control.o"
+"1\motor_4310.o"
 "1\main.o"
 "1\gpio.o"
 "1\can.o"
@@ -21,9 +24,7 @@
 "1\usart.o"
 "1\stm32f4xx_it.o"
 "1\stm32f4xx_hal_msp.o"
-"1\ht_10a_remote_control.o"
-"1\robot_arm_control.o"
-"1\motor_4310.o"
+"1\usart_demo.o"
 "1\stm32f4xx_hal_can.o"
 "1\stm32f4xx_hal_rcc.o"
 "1\stm32f4xx_hal_rcc_ex.o"

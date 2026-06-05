@@ -41,7 +41,7 @@
 #include "pwm_app.h"
 #include "ht_10a_remote_control.h"
 #include "robot_arm_control.h"
-
+#include "usart_demo.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -146,7 +146,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+   HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -169,16 +169,19 @@ int main(void)
   MX_TIM5_Init();
   MX_TIM9_Init();
   MX_TIM10_Init();
+  MX_UART8_Init();
   /* USER CODE BEGIN 2 */
   
 	HAL_TIM_Base_Start_IT(&htim10);
 	HAL_TIM_Base_Start(&htim9);
 	PWM_Init(); 
+
 	//remote_control_init(); // 初始化遥控器
 	sbus_remote_control_init(); // 初始化遥控器hot rc
 
 	init_motor_parameters();// 初始化电机参数
 	remap_motor_ids(); // 重映射id
+  UART8_Demo_Init(); // 初始化 UART8 的 DMA 接收和中断
 	
 // motor_release();
 	
@@ -193,15 +196,16 @@ int main(void)
 //  if (motor_release_flag == 1){
 //	motor_release_flag=0;
 //	init_motor_parameters();
-//  }
+//  }1
 
     // -------------机械臂调试------------------
-	while(1){
-	gimbal_send_unitree(70.0f); // 发送云台控制指令，参数为期望的云台角度
-	
-	
-	}
-	
+//	while(1){
+//	hmotor4.Kp =0.1f;
+//	gimbal_send_unitree(90.0f); // 发送云台控制指令，参数为期望的云台角度
+//	
+//	
+//	}
+//	
 
 
     // -------------位置控制测试-----------------
@@ -269,6 +273,24 @@ int main(void)
 //		}			
 //  }
 
+//while(1){
+//	
+//	float x = 0.0f;
+//	float y = 25.0f;
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+
+//}
+
+
 //	//----------4/4单电机通信调试----------
 
 //while(1){
@@ -282,17 +304,22 @@ int main(void)
 //	MotorTest_Sweep(8, 0.4f);
 // 	MotorTest_Sweep(9, 0.4f); 
 //	MotorTest_Sweep(10, 0.4f);
-//	MotorTest_Sweep(11, 0.4f);
-// 	MotorTest_Sweep(12, 0.4f);
-// 	MotorTest_Sweep(13, 0.4f); 
-//	MotorTest_Sweep(14, 0.4f);
-//	MotorTest_Sweep(15, 0.4f);
 //}
+
 
 
 
   // -------------遥控控制部分------------------
 	// 说明：此处主要控制非状态机函数
+  UART8_Demo_Process(); // 处理 UART8 接收的树莓派数据，更新 rcData 结构体
+
+  // // 树莓派请求行走，没用到，看后续怎么进入行走状态
+  // if (uart8_walk_request) {
+  //     rcData.sw5 = 0x0320;
+  //     rcData.sw7 = 0x0320;
+  //     uart8_walk_request = 0;
+  // }
+
   // 遥控取值：0x0320,0x0000,0xFCE0
     if (rcData.sw5 == 0x0320&&rcData.sw7 == 0x0320){
 		temp_state=1;
@@ -311,7 +338,7 @@ int main(void)
 		emergency_stop = 0;	
 	}
     if (rcData.sw5==0x0000&&rcData.sw7 == 0xFCE0){
-      motion_Jump(28.0f);
+      //motion_Jump(28.0f);
     }
 
 	if (rcData.sw8 == 0x0320){
@@ -349,6 +376,7 @@ if (emergency_stop==1){
     {
         case 1:
 		motion_Mix(walk_height, 8.000001f, max_stride*rcData.R_y);
+		//motion_Mix(walk_height, 8.000001f,8.0f);
         //motion_Forward(walk_height, 0.001f,  max_stride*rcData.R_y);
 		//motion_Forward(26.0f, 13.0f, 10);
         break;
@@ -369,7 +397,8 @@ if (emergency_stop==1){
         break;   
           
         case 5:
-		motion_Mix(walk_height, 17.0f, max_stride*rcData.R_y);
+//		motion_Mix(walk_height, 17.0f, max_stride*rcData.R_y);
+//        motion_Crawl1(5.0f,  6.0f);
 
         break;
                 
@@ -383,7 +412,7 @@ if (emergency_stop==1){
         break; 
 
         case 8:
-			test_circle();
+			//test_circle();
         break; 
 		
         default:

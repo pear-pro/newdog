@@ -59,6 +59,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/pwm_app.c
     Core/Src/remote_control.c
     Core/Src/sucker.c
+    Core/Src/usart_demo.c
 
       Core/Src/imu.c
 )

@@ -3,163 +3,54 @@
 <pre>
 <h1>�Vision Build Log</h1>
 <h2>Tool Versions:</h2>
-IDE-Version: ��Vision V5.39.0.0
-Copyright (C) 2023 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: LiShuai shyboy, null, LIC=14HV2-9IW4R-EV31R-KBB3N-73GTS-9HMYV
+IDE-Version: ��Vision V5.25.3.0
+Copyright (C) 2018 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: 1 hfz lao, 1, LIC=NQQMA-1I1F2-Y8SFK-ZNMAP-HHEE9-FX8G5
  
 Tool Versions:
-Toolchain:       MDK-ARM Plus  Version: 5.39.0.0
-Toolchain Path:  E:\Keil_v5\ARM\ARMCC\Bin
-C Compiler:      Armcc.exe V5.06 update 7 (build 960)
-Assembler:       Armasm.exe V5.06 update 7 (build 960)
-Linker/Locator:  ArmLink.exe V5.06 update 7 (build 960)
-Library Manager: ArmAr.exe V5.06 update 7 (build 960)
-Hex Converter:   FromElf.exe V5.06 update 7 (build 960)
-CPU DLL:         SARMCM3.DLL V5.39.0.0
-Dialog DLL:      DCM.DLL V1.17.5.0
-Target DLL:      UL2CM3.DLL V1.164.9.0
-Dialog DLL:      TCM.DLL V1.56.4.0
+Toolchain:       MDK-ARM Plus  Version: 5.24.1
+Toolchain Path:  D:\keil5\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.06 update 5 (build 528)
+Assembler:       Armasm.exe V5.06 update 5 (build 528)
+Linker/Locator:  ArmLink.exe V5.06 update 5 (build 528)
+Library Manager: ArmAr.exe V5.06 update 5 (build 528)
+Hex Converter:   FromElf.exe V5.06 update 5 (build 528)
+CPU DLL:         SARMCM3.DLL V5.24.1
+Dialog DLL:      DCM.DLL V1.16.0.0
+Target DLL:      CMSIS_AGDI.dll V1.28.3.0
+Dialog DLL:      TCM.DLL V1.32.0.0
  
 <h2>Project:</h2>
-E:\co_robocon\RoboCon-NewDog\newdog\MDK-ARM\1.uvprojx
-Project File Date:  05/21/2026
+C:\Users\hfz lao\Desktop\newdog(1)\newdog\MDK-ARM\1.uvprojx
+Project File Date:  05/31/2026
 
 <h2>Output:</h2>
-*** Using Compiler 'V5.06 update 7 (build 960)', folder: 'E:\Keil_v5\ARM\ARMCC\Bin'
+*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\keil5\ARM\ARMCC\Bin'
 Build target '1'
-compiling gait.c...
-../Core/Inc/ht_10a_remote_control.h(81): warning:  #1-D: last line of file ends without a newline
-   
-..\Core\Src\gait.c(803): warning:  #550-D: variable "temp"  was set but never used
-      uint8_t temp = 0;
-..\Core\Src\gait.c(735): warning:  #177-D: variable "front_skip_Pitch"  was declared but never referenced
-      float front_skip_Pitch = 100.0f; // 前空翻时身体前倾的角度
-..\Core\Src\gait.c(737): warning:  #177-D: variable "skip_Height"  was declared but never referenced
-      float skip_Height = 35.0f; // 前空翻时蹬地的高�?
-..\Core\Src\gait.c(740): warning:  #177-D: variable "front_support_angle_max"  was declared but never referenced
-  	float front_support_angle_max = 60.0f; // 前脚蹬地的最大角�?
-..\Core\Src\gait.c(764): warning:  #177-D: variable "start_h2_alpha2"  was declared but never referenced
-      float start_h2_alpha2 = hposition2.alpha; // 后推蹬地的坐标（3�?17）对应的角度  
-..\Core\Src\gait.c(765): warning:  #177-D: variable "start_h2_beta2"  was declared but never referenced
-      float start_h2_beta2 = hposition2.beta;
-..\Core\Src\gait.c(766): warning:  #177-D: variable "start_h3_alpha2"  was declared but never referenced
-      float start_h3_alpha2 = hposition3.alpha;
-..\Core\Src\gait.c(767): warning:  #177-D: variable "start_h3_beta2"  was declared but never referenced
-      float start_h3_beta2 = hposition3.beta;
-..\Core\Src\gait.c(779): warning:  #177-D: variable "start_h1_alpha3"  was declared but never referenced
-      float start_h1_alpha3 = hposition1.alpha;
-..\Core\Src\gait.c(780): warning:  #177-D: variable "start_h1_beta3"  was declared but never referenced
-      float start_h1_beta3 = hposition1.beta;
-..\Core\Src\gait.c(781): warning:  #177-D: variable "start_h2_alpha3"  was declared but never referenced
-      float start_h2_alpha3 = hposition2.alpha;
-..\Core\Src\gait.c(782): warning:  #177-D: variable "start_h2_beta3"  was declared but never referenced
-      float start_h2_beta3 = hposition2.beta;
-..\Core\Src\gait.c(783): warning:  #177-D: variable "start_h3_alpha3"  was declared but never referenced
-      float start_h3_alpha3 = hposition3.alpha;
-..\Core\Src\gait.c(784): warning:  #177-D: variable "start_h3_beta3"  was declared but never referenced
-      float start_h3_beta3 = hposition3.beta;
-..\Core\Src\gait.c(785): warning:  #177-D: variable "start_h4_alpha3"  was declared but never referenced
-      float start_h4_alpha3 = hposition4.alpha;
-..\Core\Src\gait.c(786): warning:  #177-D: variable "start_h4_beta3"  was declared but never referenced
-      float start_h4_beta3 = hposition4.beta;
-..\Core\Src\gait.c(830): error:  #169: expected a declaration
-  <<<<<<< Updated upstream
-..\Core\Src\gait.c(847): warning:  #12-D: parsing restarts here after previous syntax error
-  	quick_set_kp(support_Kp); // 落地时减小Kp，增加缓冲，防止过度震荡    
-..\Core\Src\gait.c(850): error:  #169: expected a declaration
-  }
-..\Core\Src\gait.c(903): warning:  #12-D: parsing restarts here after previous syntax error
-      float x=r+p*cosf(theta);
-..\Core\Src\gait.c(904): error:  #20: identifier "p" is undefined
-      float y=p*sinf(theat);
-..\Core\Src\gait.c(904): error:  #59: function call is not allowed in a constant expression
-      float y=p*sinf(theat);
-..\Core\Src\gait.c(904): error:  #20: identifier "theat" is undefined
-      float y=p*sinf(theat);
-..\Core\Src\gait.c(905): error:  #77-D: this declaration has no storage class or type specifier
-      hposition1.B_x=x; hposition1.B_y=low_H-y;
-..\Core\Src\gait.c(905): error:  #147: declaration is incompatible with "Position_HandleTypeDef hposition1"  (declared at line 22 of "../Core/Inc/global_var.h")
-      hposition1.B_x=x; hposition1.B_y=low_H-y;
-..\Core\Src\gait.c(905): error:  #65: expected a ";"
-      hposition1.B_x=x; hposition1.B_y=low_H-y;
-..\Core\Src\gait.c(905): error:  #77-D: this declaration has no storage class or type specifier
-      hposition1.B_x=x; hposition1.B_y=low_H-y;
-..\Core\Src\gait.c(905): error:  #65: expected a ";"
-      hposition1.B_x=x; hposition1.B_y=low_H-y;
-..\Core\Src\gait.c(906): error:  #77-D: this declaration has no storage class or type specifier
-      hposition4.B_x=0.0f; hposition4.B_y=low_H;
-..\Core\Src\gait.c(906): error:  #147: declaration is incompatible with "Position_HandleTypeDef hposition4"  (declared at line 25 of "../Core/Inc/global_var.h")
-      hposition4.B_x=0.0f; hposition4.B_y=low_H;
-..\Core\Src\gait.c(906): error:  #65: expected a ";"
-      hposition4.B_x=0.0f; hposition4.B_y=low_H;
-..\Core\Src\gait.c(906): error:  #77-D: this declaration has no storage class or type specifier
-      hposition4.B_x=0.0f; hposition4.B_y=low_H;
-..\Core\Src\gait.c(906): error:  #65: expected a ";"
-      hposition4.B_x=0.0f; hposition4.B_y=low_H;
-..\Core\Src\gait.c(907): error:  #77-D: this declaration has no storage class or type specifier
-      hposition2.B_x=0.0f; hposition2.B_y=low_H;
-..\Core\Src\gait.c(907): error:  #147: declaration is incompatible with "Position_HandleTypeDef hposition2"  (declared at line 23 of "../Core/Inc/global_var.h")
-      hposition2.B_x=0.0f; hposition2.B_y=low_H;
-..\Core\Src\gait.c(907): error:  #65: expected a ";"
-      hposition2.B_x=0.0f; hposition2.B_y=low_H;
-..\Core\Src\gait.c(907): error:  #77-D: this declaration has no storage class or type specifier
-      hposition2.B_x=0.0f; hposition2.B_y=low_H;
-..\Core\Src\gait.c(907): error:  #65: expected a ";"
-      hposition2.B_x=0.0f; hposition2.B_y=low_H;
-..\Core\Src\gait.c(908): error:  #77-D: this declaration has no storage class or type specifier
-      hposition3.B_x=0.0f; hposition3.B_y=low_H;
-..\Core\Src\gait.c(908): error:  #147: declaration is incompatible with "Position_HandleTypeDef hposition3"  (declared at line 24 of "../Core/Inc/global_var.h")
-      hposition3.B_x=0.0f; hposition3.B_y=low_H;
-..\Core\Src\gait.c(908): error:  #65: expected a ";"
-      hposition3.B_x=0.0f; hposition3.B_y=low_H;
-..\Core\Src\gait.c(908): error:  #77-D: this declaration has no storage class or type specifier
-      hposition3.B_x=0.0f; hposition3.B_y=low_H;
-..\Core\Src\gait.c(908): error:  #65: expected a ";"
-      hposition3.B_x=0.0f; hposition3.B_y=low_H;
-..\Core\Src\gait.c(909): warning:  #1295-D: Deprecated declaration inverseKinematic_All - give arg types
-      inverseKinematic_All();
-..\Core\Src\gait.c(909): error:  #260-D: explicit type is missing ("int" assumed)
-      inverseKinematic_All();
-..\Core\Src\gait.c(909): error:  #147: declaration is incompatible with "void inverseKinematic_All(void)"  (declared at line 11 of "../Core/Inc/kinematic.h")
-      inverseKinematic_All();
-..\Core\Src\gait.c(910): warning:  #1295-D: Deprecated declaration Motor_SendCmd_AllAngle - give arg types
-      Motor_SendCmd_AllAngle();   
-..\Core\Src\gait.c(910): error:  #260-D: explicit type is missing ("int" assumed)
-      Motor_SendCmd_AllAngle();   
-..\Core\Src\gait.c(910): error:  #147: declaration is incompatible with "void Motor_SendCmd_AllAngle(void)"  (declared at line 52 of "../Core/Inc/motor.h")
-      Motor_SendCmd_AllAngle();   
-..\Core\Src\gait.c(911): error:  #169: expected a declaration
-    }
-..\Core\Src\gait.c: 21 warnings, 30 errors
-compiling motor_4310.c...
-../Core/Inc/motor_4310.h(51): warning:  #1-D: last line of file ends without a newline
-  #endif // __MOTOR_4310_H
-..\Core\Src\motor_4310.c: 1 warning, 0 errors
-"1\1.axf" - 30 Error(s), 22 Warning(s).
+"1\1.axf" - 0 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
 
 Package Vendor: ARM
-                https://www.keil.com/pack/ARM.CMSIS.6.2.0.pack
-                ARM::CMSIS@6.2.0
-                CMSIS (Common Microcontroller Software Interface Standard)
-   * Component: CORE Version: 6.1.1
+                http://www.keil.com/pack/ARM.CMSIS.5.0.1.pack
+                ARM.CMSIS.5.0.1
+                CMSIS (Cortex Microcontroller Software Interface Standard)
+   * Component: CORE Version: 5.0.1
 
 Package Vendor: Keil
-                https://www.keil.com/pack/Keil.STM32F4xx_DFP.3.1.1.pack
-                Keil::STM32F4xx_DFP@3.1.1
-                STMicroelectronics STM32F4 Series Device Support
+                https://www.keil.com/pack/Keil.STM32F4xx_DFP.2.17.0.pack
+                Keil.STM32F4xx_DFP.2.17.0
+                STMicroelectronics STM32F4 Series Device Support, Drivers and Examples
 
 <h2>Collection of Component include folders:</h2>
-  ./RTE/_1
-  E:/c51mdk_packs/ARM/CMSIS/6.2.0/CMSIS/Core/Include
+  .\RTE\_1
+  D:\keil5\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include
+  D:\keil5\ARM\PACK\Keil\STM32F4xx_DFP\2.17.0\Drivers\CMSIS\Device\ST\STM32F4xx\Include
 
 <h2>Collection of Component Files used:</h2>
 
-   * Component: ARM::CMSIS:CORE@6.1.1
-      Include file:  CMSIS/Core/Include/tz_context.h
-Target not created.
-Build Time Elapsed:  00:00:03
+   * Component: ARM::CMSIS:CORE:5.0.1
+Build Time Elapsed:  00:00:00
 </pre>
 </body>
 </html>
