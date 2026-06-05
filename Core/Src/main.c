@@ -311,7 +311,7 @@ int main(void)
 
   // -------------遥控控制部分------------------
 	// 说明：此处主要控制非状态机函数
-  UART8_Demo_Process(); // 处理 UART8 接收的树莓派数据，更新 rcData 结构体
+  UART8_Demo_Process(); //
 
   // // 树莓派请求行走，没用到，看后续怎么进入行走状态
   // if (uart8_walk_request) {
