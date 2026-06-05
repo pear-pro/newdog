@@ -63,6 +63,7 @@ void motion_Crawl(float step_height, float stride);
 uint8_t imu_emergency_stop(void);
 void motion_Frontflip(void);
 void test_circle(void);
+ void motion_Crawl1(float step_height, float stride);
 
 
 #endif
