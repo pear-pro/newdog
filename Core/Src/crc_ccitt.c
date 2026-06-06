@@ -62,3 +62,13 @@ void unitree_crc_complete(uint8_t frame[17]) {
     frame[16] = (crc >> 8) & 0xFF; // 高字节
 }
 
+uint8_t CRC16_CCITT_Check(uint8_t *p_data, uint16_t len) {
+   
+    uint16_t calculated_crc = crc_ccitt(0x0000, p_data, len);
+
+    
+    uint16_t received_crc = (p_data[len + 1] << 8) | p_data[len];
+
+   
+    return (calculated_crc == received_crc) ? 1 : 0;
+}

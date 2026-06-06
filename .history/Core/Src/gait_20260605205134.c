@@ -21,8 +21,8 @@ float Forward_freq = 0.01f; // 0.004
 #define up_down_freq 0.004f
 #define crawl_freq 0.02f
 
-float support_Kp = 0.1f; // 0.6/0.7,0.25/0.3
-float swing_Kp = 0.1f;
+float support_Kp = 0.2f; // 0.6/0.7,0.25/0.3
+float swing_Kp = 0.2f;
 float Expect_kw = 0.01f;  // 直接用来初始化
 float support_tau_ff = 0.00f; // 0.10
 float swing_tau_ff = 0.0f;
@@ -335,8 +335,13 @@ void motion_Crawl(float step_height, float stride){
   motor7_kp_offset = 0.37f;
   motor8_kp_offset = 0.50f;
 }
-void motion_Mix(float height, float step_height, float stride)
-{
+
+/* 参数说明：
+* stride：步幅，参数范围（-max_stride 到 max_stride）
+* turn_omega：转弯角速度，参数范围（-1.0f 到 1.0f）
+*/
+void motion_Mix(float height, float step_height, float stride, float turn_omega)
+{    
 //	static float _t = 0.0f;
 //	_t += Forward_freq;  
 //	if(_t >= 1.0f) { _t -= 1.0f; }
@@ -355,18 +360,18 @@ void motion_Mix(float height, float step_height, float stride)
 //   // 带陀螺仪的前进闭环控制
 //    float R_stride = stride;
 //    float L_stride = stride;  
-//    float Exp_GZ = GyroZ_max*rcData.R_x;  
+//    float Exp_GZ = GyroZ_max*turn_omega;  
 //    float yaw_correction = kp_GyroZ * (Exp_GZ - GyroZ);
 //    float shift_suppression = kp_VeloY*(0-VeloY);
 //    if (yaw_correction> stride_max) {yaw_correction = stride_max;}
 
 //   if (rcData.R_y == 0){
-//       if (rcData.R_x == 0){ VeloY = 0.0f;} // 清除零漂
-//       if (rcData.R_x <-0.05f){ // 左转
+//       if (turn_omega == 0){ VeloY = 0.0f;} // 清除零漂
+//       if (turn_omega <-0.05f){ // 左转
 //           R_stride = 0 + yaw_correction + shift_suppression;
 //           L_stride = 0 - yaw_correction - shift_suppression;
 //       }
-//       if (rcData.R_x > 0.05f){ // 右转
+//       if (turn_omega > 0.05f){ // 右转
 //           R_stride = 0 + yaw_correction - shift_suppression;
 //           L_stride = 0 - yaw_correction + shift_suppression;
 //       }    
@@ -375,7 +380,7 @@ void motion_Mix(float height, float step_height, float stride)
 //       	if (L_stride> stride_max) {L_stride= stride_max; }
 // 		if (L_stride<-stride_max) {L_stride=-stride_max; }
 //   }else{
-//       if (rcData.R_x < 0){ // 左转
+//       if (turn_omega < 0){ // 左转
 //           R_stride = stride;
 //           L_stride = stride - 2.0f*yaw_correction;
 //       }else{ // 右转
@@ -392,23 +397,23 @@ void motion_Mix(float height, float step_height, float stride)
 		float yaw_correction = kp_GyroZ * (0 - GyroZ);
 		if (yaw_correction> stride_max) {yaw_correction = stride_max;}
 		
-		if (rcData.R_x > 0.005f){
-			R_stride = stride * (1.0f - 2.0f * rcData.R_x);
+		if (turn_omega > 0.005f){
+			R_stride = stride * (1.0f - 2.0f * turn_omega);
 			L_stride = stride;
-		}else if (rcData.R_x < -0.005f){
+		}else if (turn_omega < -0.005f){
 			R_stride = stride;
-			L_stride = stride * (1.0f + 2.0f * rcData.R_x);
+			L_stride = stride * (1.0f + 2.0f * turn_omega);
 		}else{ // GyroZ逆时针为正
 			R_stride = stride + yaw_correction;
 			L_stride = stride - yaw_correction;
 		}	
 	}else {
-		if (rcData.R_x > 0.005f){
-			R_stride = stride * (1.0f - 2.0f * rcData.R_x);
+		if (turn_omega > 0.005f){
+			R_stride = stride * (1.0f - 2.0f * turn_omega);
 			L_stride = stride;
-		}else if (rcData.R_x < -0.005f){
+		}else if (turn_omega < -0.005f){
 			R_stride = stride;
-			L_stride = stride * (1.0f + 2.0f * rcData.R_x);
+			L_stride = stride * (1.0f + 2.0f * turn_omega);
 		}
 	}
 

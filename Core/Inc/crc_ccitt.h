@@ -10,5 +10,5 @@ static uint16_t crc_ccitt(uint16_t crc, const uint8_t* buffer, uint32_t len);
 
 // Unitree CRC计算函数
 void unitree_crc_complete(uint8_t frame[17]) ;
-
+uint8_t CRC16_CCITT_Check(uint8_t *p_data, uint16_t len);
 #endif

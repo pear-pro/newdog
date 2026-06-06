@@ -10,7 +10,7 @@
       <TargetName>1</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060960::V5.06 update 7 (build 960)::.\ARMCC</pCCUsed>
+      <pCCUsed>5060528::V5.06 update 5 (build 528)::.\ARMCC</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -490,6 +490,51 @@
               <FilePath>..\Core\Src\pwm_app.c</FilePath>
             </File>
             <File>
+              <FileName>ht_10a_remote_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\ht_10a_remote_control.h</FilePath>
+            </File>
+            <File>
+              <FileName>ht_10a_remote_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\ht_10a_remote_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>remote_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\remote_control.h</FilePath>
+            </File>
+            <File>
+              <FileName>robot_arm_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\robot_arm_control.h</FilePath>
+            </File>
+            <File>
+              <FileName>robot_arm_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\robot_arm_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor_4310.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\motor_4310.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor_4310.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\motor_4310.h</FilePath>
+            </File>
+            <File>
+              <FileName>motor_feedback.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\motor_feedback.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor_feedback.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\motor_feedback.h</FilePath>
+            </File>
+            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/main.c</FilePath>
@@ -681,41 +726,6 @@
               <FileName>stm32f4xx_hal_msp.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/stm32f4xx_hal_msp.c</FilePath>
-            </File>
-            <File>
-              <FileName>ht_10a_remote_control.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Core\Inc\ht_10a_remote_control.h</FilePath>
-            </File>
-            <File>
-              <FileName>ht_10a_remote_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\ht_10a_remote_control.c</FilePath>
-            </File>
-            <File>
-              <FileName>remote_control.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Core\Inc\remote_control.h</FilePath>
-            </File>
-            <File>
-              <FileName>robot_arm_control.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Core\Inc\robot_arm_control.h</FilePath>
-            </File>
-            <File>
-              <FileName>robot_arm_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\robot_arm_control.c</FilePath>
-            </File>
-            <File>
-              <FileName>motor_4310.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\motor_4310.c</FilePath>
-            </File>
-            <File>
-              <FileName>motor_4310.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Core\Inc\motor_4310.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -991,5 +1001,14 @@
     </components>
     <files/>
   </RTE>
+
+  <LayerInfo>
+    <Layers>
+      <Layer>
+        <LayName>1</LayName>
+        <LayPrjMark>1</LayPrjMark>
+      </Layer>
+    </Layers>
+  </LayerInfo>
 
 </Project>

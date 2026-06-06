@@ -41,7 +41,6 @@
 #include "pwm_app.h"
 #include "ht_10a_remote_control.h"
 #include "robot_arm_control.h"
-#include "motor_feedback.h"
 
 /* USER CODE END Includes */
 
@@ -109,8 +108,8 @@ hposition4 : hmotor7(α) , hmotor8(β)
 
 
 /* 引入 usart.c 的全局变量 */
-//extern volatile uint8_t RS485_RxBuf[16];
-//extern volatile uint8_t Receive_OK;
+extern volatile uint8_t RS485_RxBuf[16];
+extern volatile uint8_t Receive_OK;
 
 int temp_state = 0;
 //static int up_trigger_count = 0;
@@ -126,7 +125,7 @@ void SystemClock_Config(void);
 
 
 /* USER CODE END PFP */
-
+	
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
@@ -180,9 +179,9 @@ int main(void)
 
 	init_motor_parameters();// 初始化电机参数
 	remap_motor_ids(); // 重映射id
- Motor_Feedback_Init();
+	
 // motor_release();
-
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -190,15 +189,13 @@ int main(void)
   while (1)
   {  
   
-		
-		
     // -------------急停模式调试------------------
 //  if (motor_release_flag == 1){
 //	motor_release_flag=0;
 //	init_motor_parameters();
 //  }
 
-    // -------------机械臂调试------------------
+    // -------------机械臂6调试------------------
 //	while(1){
 //	hmotor4.Kp =0.1f;
 //	gimbal_send_unitree(60.0f); // 发送云台控制指令，参数为期望的云台角度
@@ -209,6 +206,107 @@ int main(void)
 
 
     // -------------位置控制测试-----------------
+
+
+//while(1){
+
+//	float x = 0.0f;
+//	float y = 25.0f;
+//	for (x = -5.0f;x<5.0f;x+=0.1f){
+//	y = x;
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//	HAL_Delay(5);
+//	}
+//	for (x = 5.0f;x>-5.0f;x-=0.1f){
+//	
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//	HAL_Delay(5);
+//	}
+//}
+	
+//	float x = 0.0f;
+//	float y =25.0f;
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//	HAL_Delay(10);
+//	
+//	 x = 0.0f;
+//	 y =24.0f;
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//	HAL_Delay(10);
+
+//while(1){
+
+//	float x=0.0f;
+//	float y=28.0f;
+//	float z = 25.0f;
+//	for(y=35.0f;y>=21.0f;y-=0.1f)
+//	{
+//		x=sqrtf(49.0-(y-28.0)*(y-28.0));
+//		hposition1.B_y = z;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = z;
+//		hposition2.B_x = x; 
+//		hposition3.B_y = z;
+//		hposition3.B_x = x; 
+//		hposition4.B_y = z;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//		HAL_Delay(30);
+//	}
+//	for(y=21.0f;y<=35.0f;y+=0.1f)
+//	{
+//		x=-sqrtf(49.0-(y-28.0)*(y-28.0));
+//		hposition1.B_y = z;
+//		hposition1.B_x = x; 
+//		hposition2.B_y = z;
+//		hposition2.B_x = x; 
+//		hposition3.B_y = z;
+//		hposition3.B_x = x; 
+//		hposition4.B_y = z;
+//		hposition4.B_x = x;
+//		crawl_inverseKinematic_All();
+//		Motor_SendCmd_AllAngle(); 
+//		HAL_Delay(30);
+//	}
+//	
+//}
 
 //while(1){
 //	float x_start = -10.0f;
@@ -242,7 +340,7 @@ int main(void)
 //		Motor_SendCmd_AllAngle(); 
 //	}
 //}
-	
+//	
 //  while(1){
 //	float y = 10.5f;
 //	for (float x = 12.5f;x<19.5f;x+=0.1f){
@@ -274,42 +372,53 @@ int main(void)
 //  }
 
 //	//----------4/4单电机通信调试----------
-//接收
 
-//while(1)
-//{
-//    Motor_Feedback_Process();    // 解析函数
-//    Motor_Feedback_TimeoutTask();// 离线检测
-////}
-
-//发送
-while(1){
-	MotorTest_Sweep(1, 0.4f);
-	MotorTest_Sweep(2, 0.4f);
-	MotorTest_Sweep(3, 0.4f);
-	MotorTest_Sweep(4, 0.4f);
-	MotorTest_Sweep(5, 0.4f);  
-	MotorTest_Sweep(6, 0.4f);
-	MotorTest_Sweep(7, 0.4f);
-	MotorTest_Sweep(8, 0.4f);
- 	MotorTest_Sweep(9, 0.4f); 
-	MotorTest_Sweep(10, 0.4f);
-//	
-}
+//while(1){
+////	MotorTest_Sweep(1, 0.4f);
+////	MotorTest_Sweep(2, 0.4f);
+//	MotorTest_Sweep(3, 0.4f);
+//	MotorTest_Sweep(4, 0.4f);
+////	MotorTest_Sweep(5, 0.4f);  
+////	MotorTest_Sweep(6, 0.4f);
+////	MotorTest_Sweep(7, 0.4f);
+////	MotorTest_Sweep(8, 0.4f);
+//// 	MotorTest_Sweep(9, 0.4f); 
+////	MotorTest_Sweep(10, 0.4f);
+////	MotorTest_Sweep(11, 0.4f);
+//// 	MotorTest_Sweep(12, 0.4f);
+//// 	MotorTest_Sweep(13, 0.4f); 
+////	MotorTest_Sweep(14, 0.4f);
+////	MotorTest_Sweep(15, 0.4f);
+//}
 
 
 
   // -------------遥控控制部分------------------
-	// 说明：此处主要控制非状态机函数
   // 遥控取值：0x0320,0x0000,0xFCE0
+  /* 功能说明
+  *    sw5    sw6    sw7    sw8    代码位置    功能
+  *   0xFCE0   -      -      -       tim10     急停
+  *   0x0000   -    0xFCE0   -       mian      站立
+  *   0x0000   -    0x0320   -       mian      跳跃
+  *   0x0320   -      -      0xFCE0  mian      遥控控制行走
+  *   0x0320   -      -      0x0000  mian      树莓派控制行走
+  *     -    0xFCE0   -      -       tim10     调腿高
+  *     -    0x0320   -      -       tim10     调步频
+
+  * 
+  */
+
+
+	if (rcData.sw5 == 0x0000){ temp_state=3;}	
+  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0xFCE0){{ temp_state=1;}} // 树莓派控制
+  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0x0000){{ temp_state=2;}} // 遥控控制
+
+
     if (rcData.sw5 == 0x0320&&rcData.sw7 == 0x0320){
 		temp_state=1;
 	}
     if (rcData.sw5 == 0x0320&&rcData.sw7 == 0xFCE0){
 		temp_state=5;
-	}	
-	if (rcData.sw5 == 0x0000){
-		temp_state=2;
 	}	
 	
 	//if (rcData.sw5 == 0xFCE0||imu_emergency_stop()){
@@ -356,19 +465,18 @@ if (emergency_stop==1){
     switch (temp_state)
     {
         case 1:
-		motion_Mix(walk_height, 8.000001f, max_stride*rcData.R_y);
-        //motion_Forward(walk_height, 0.001f,  max_stride*rcData.R_y);
-		//motion_Forward(26.0f, 13.0f, 10);
+        // 遥控版
+		    motion_Mix(walk_height, 8.0f, max_stride*rcData.R_y,rcData.R_x);
         break;
                 
         case 2:
-		//motion_Mix(walk_height, 0.0f, max_stride*rcData.R_y);
-		motion_StandBy(walk_height) ;
-
+        // 树莓派控版
+		    motion_Mix(walk_height, 8.0f, 0.0f, 0.0f);
         break;
 
         case 3:
-			// motor_release(); // 空
+        //motion_Mix(walk_height, 0.0f, max_stride*rcData.R_y);
+        motion_StandBy(walk_height) ;
         break;
                 
         case 4:
@@ -391,7 +499,7 @@ if (emergency_stop==1){
         break; 
 
         case 8:
-			test_circle();
+			//test_circle();
         break; 
 		
         default:
