@@ -21,8 +21,8 @@ float Forward_freq = 0.01f; // 0.004
 #define up_down_freq 0.004f
 #define crawl_freq 0.002f
 
-float support_Kp = 0.2f; // 0.6/0.7,0.25/0.3
-float swing_Kp = 0.2f;
+float support_Kp = 0.3f; // 0.6/0.7,0.25/0.3
+float swing_Kp = 0.3f;
 float Expect_kw = 0.01f;  // 直接用来初始化
 float support_tau_ff = 0.00f; // 0.10
 float swing_tau_ff = 0.0f;
