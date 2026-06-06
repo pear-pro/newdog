@@ -18,6 +18,7 @@ void Vofa_JustFloat(float *_data, uint8_t _num)
     memcpy(&tempData[_num * 4], &temp_end[0], 4);
 
     //....在此替换串口发送函数...........
-    HAL_UART_Transmit_DMA(&huart6, tempData, (_num + 1) * 4);
+    HAL_UART_Transmit_DMA(&huart7, tempData, (_num + 1) * 4);
     //......................................
 }
+

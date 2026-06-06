@@ -3,54 +3,86 @@
 <pre>
 <h1>�Vision Build Log</h1>
 <h2>Tool Versions:</h2>
-IDE-Version: ��Vision V5.31.0.0
-Copyright (C) 2020 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: 1 pear, 1, LIC=SDA0P-M1NRB-LQH0Q-N4HHD-NC0LJ-ZZJ6T
+IDE-Version: ��Vision V5.38.0.0
+Copyright (C) 2022 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: A Admin, A, LIC=FYKYW-QEAAW-NNQAF-6LTK5-WCZLZ-6TJWP
  
 Tool Versions:
-Toolchain:       MDK-ARM Plus  Version: 5.31.0.0
-Toolchain Path:  E:\Keil5 C51\ARM\ARMCC\Bin
-C Compiler:      Armcc.exe V5.06 update 6 (build 750)
-Assembler:       Armasm.exe V5.06 update 6 (build 750)
-Linker/Locator:  ArmLink.exe V5.06 update 6 (build 750)
-Library Manager: ArmAr.exe V5.06 update 6 (build 750)
-Hex Converter:   FromElf.exe V5.06 update 6 (build 750)
-CPU DLL:         SARMCM3.DLL V5.31.0.0
-Dialog DLL:      DCM.DLL V1.17.3.0
-Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.0.7.0
-Dialog DLL:      TCM.DLL V1.46.0.0
+Toolchain:       MDK-ARM Plus  Version: 5.43.0.0
+Toolchain Path:  D:\Keil_v5\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.06 update 5 (build 528)
+Assembler:       Armasm.exe V5.06 update 5 (build 528)
+Linker/Locator:  ArmLink.exe V5.06 update 5 (build 528)
+Library Manager: ArmAr.exe V5.06 update 5 (build 528)
+Hex Converter:   FromElf.exe V5.06 update 5 (build 528)
+CPU DLL:         SARMCM3.DLL V5.43.0.0
+Dialog DLL:      DCM.DLL V1.17.5.0
+Target DLL:      CMSIS_AGDI.dll V1.33.24.0
+Dialog DLL:      TCM.DLL V1.56.6.0
  
 <h2>Project:</h2>
-C:\Users\pear\Desktop\new\MDK-ARM\1.uvprojx
-Project File Date:  02/01/2026
+C:\Users\33303\Desktop\RC\newdog (4-24)\MDK-ARM\1.uvprojx
+Project File Date:  06/05/2026
 
 <h2>Output:</h2>
-*** Using Compiler 'V5.06 update 6 (build 750)', folder: 'E:\Keil5 C51\ARM\ARMCC\Bin'
+*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\Keil_v5\ARM\ARMCC\Bin'
 Build target '1'
 compiling main.c...
-../Core/Inc/motor.h(45): warning:  #1295-D: Deprecated declaration Motor_SendCmd_AllAngle - give arg types
-  void Motor_SendCmd_AllAngle();
-../Core/Inc/gait.h(31): warning:  #1295-D: Deprecated declaration motion_Jump - give arg types
-  void motion_Jump();
-../Core/Inc/gait.h(33): warning:  #1295-D: Deprecated declaration testCircle - give arg types
-  void testCircle();
-../Core/Inc/gait.h(34): warning:  #1295-D: Deprecated declaration testJump - give arg types
-  void testJump();
-../Core/Inc/kinematic.h(7): warning:  #1295-D: Deprecated declaration inverseKinematic_All - give arg types
-  void inverseKinematic_All();
-../Core/Src/main.c: 5 warnings, 0 errors
+../Core/Inc/ht_10a_remote_control.h(81): warning:  #1-D: last line of file ends without a newline
+   
+../Core/Inc/robot_arm_control.h(10): warning:  #1-D: last line of file ends without a newline
+   
+../Core/Src/main.c: 2 warnings, 0 errors
+compiling gait.c...
+../Core/Inc/ht_10a_remote_control.h(81): warning:  #1-D: last line of file ends without a newline
+   
+..\Core\Src\gait.c(808): warning:  #550-D: variable "temp"  was set but never used
+      uint8_t temp = 0;
+..\Core\Src\gait.c(740): warning:  #177-D: variable "front_skip_Pitch"  was declared but never referenced
+      float front_skip_Pitch = 100.0f; // 前空翻时身体前倾的角度
+..\Core\Src\gait.c(742): warning:  #177-D: variable "skip_Height"  was declared but never referenced
+      float skip_Height = 35.0f; // 前空翻时蹬地的高�?
+..\Core\Src\gait.c(745): warning:  #177-D: variable "front_support_angle_max"  was declared but never referenced
+  	float front_support_angle_max = 60.0f; // 前脚蹬地的最大角�?
+..\Core\Src\gait.c(769): warning:  #177-D: variable "start_h2_alpha2"  was declared but never referenced
+      float start_h2_alpha2 = hposition2.alpha; // 后推蹬地的坐标（3�?17）对应的角度  
+..\Core\Src\gait.c(770): warning:  #177-D: variable "start_h2_beta2"  was declared but never referenced
+      float start_h2_beta2 = hposition2.beta;
+..\Core\Src\gait.c(771): warning:  #177-D: variable "start_h3_alpha2"  was declared but never referenced
+      float start_h3_alpha2 = hposition3.alpha;
+..\Core\Src\gait.c(772): warning:  #177-D: variable "start_h3_beta2"  was declared but never referenced
+      float start_h3_beta2 = hposition3.beta;
+..\Core\Src\gait.c(784): warning:  #177-D: variable "start_h1_alpha3"  was declared but never referenced
+      float start_h1_alpha3 = hposition1.alpha;
+..\Core\Src\gait.c(785): warning:  #177-D: variable "start_h1_beta3"  was declared but never referenced
+      float start_h1_beta3 = hposition1.beta;
+..\Core\Src\gait.c(786): warning:  #177-D: variable "start_h2_alpha3"  was declared but never referenced
+      float start_h2_alpha3 = hposition2.alpha;
+..\Core\Src\gait.c(787): warning:  #177-D: variable "start_h2_beta3"  was declared but never referenced
+      float start_h2_beta3 = hposition2.beta;
+..\Core\Src\gait.c(788): warning:  #177-D: variable "start_h3_alpha3"  was declared but never referenced
+      float start_h3_alpha3 = hposition3.alpha;
+..\Core\Src\gait.c(789): warning:  #177-D: variable "start_h3_beta3"  was declared but never referenced
+      float start_h3_beta3 = hposition3.beta;
+..\Core\Src\gait.c(790): warning:  #177-D: variable "start_h4_alpha3"  was declared but never referenced
+      float start_h4_alpha3 = hposition4.alpha;
+..\Core\Src\gait.c(791): warning:  #177-D: variable "start_h4_beta3"  was declared but never referenced
+      float start_h4_beta3 = hposition4.beta;
+..\Core\Src\gait.c(1609): warning:  #1-D: last line of file ends without a newline
+   // ----------------------by LiShuai ,END
+..\Core\Src\gait.c: 18 warnings, 0 errors
 linking...
-Program Size: Code=15738 RO-data=1294 RW-data=40 ZI-data=2600  
+Program Size: Code=37356 RO-data=1868 RW-data=324 ZI-data=3244  
 FromELF: creating hex file...
-"1\1.axf" - 0 Error(s), 5 Warning(s).
+"1\1.axf" - 0 Error(s), 20 Warning(s).
 
 <h2>Software Packages used:</h2>
 
 Package Vendor: ARM
-                http://www.keil.com/pack/ARM.CMSIS.5.7.0.pack
-                ARM.CMSIS.5.7.0
-                CMSIS (Cortex Microcontroller Software Interface Standard)
-   * Component: CORE Version: 5.4.0
+                https://www.keil.com/pack/ARM.CMSIS.6.2.0.pack
+                ARM.CMSIS.6.2.0
+                CMSIS (Common Microcontroller Software Interface Standard)
+   * Component: CORE Version: 6.1.1
 
 Package Vendor: Keil
                 https://www.keil.com/pack/Keil.STM32F4xx_DFP.3.1.1.pack
@@ -58,13 +90,13 @@ Package Vendor: Keil
                 STMicroelectronics STM32F4 Series Device Support
 
 <h2>Collection of Component include folders:</h2>
-  .\RTE\_1
-  E:\Keil5 C51\ARM\PACK\ARM\CMSIS\5.7.0\CMSIS\Core\Include
+  ./RTE/_1
+  D:/Keil_v5/ARM/PACK/ARM/CMSIS/6.2.0/CMSIS/Core/Include
 
 <h2>Collection of Component Files used:</h2>
 
-   * Component: ARM::CMSIS:CORE:5.4.0
-      Include file:  CMSIS\Core\Include\tz_context.h
+   * Component: ARM::CMSIS:CORE:6.1.1
+      Include file:  CMSIS/Core/Include/tz_context.h
 Build Time Elapsed:  00:00:02
 </pre>
 </body>

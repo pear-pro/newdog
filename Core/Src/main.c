@@ -18,16 +18,30 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "can.h"
 #include "dma.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdint.h>
+#include <math.h>
 #include "motor.h"
+#include "gait.h"
+#include "crc_ccitt.h"
 #include "kinematic.h"
 #include "global_var.h"
-
+#include "remote_control.h"
+#include "key.h"
+#include "pg_led.h"
+#include "sucker.h"
+#include "imu.h"
+#include "pwm_app.h"
+#include "ht_10a_remote_control.h"
+#include "robot_arm_control.h"
+#include "usart_demo.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -39,22 +53,18 @@
 /* USER CODE BEGIN PD */
 
 
-// 统一设置电机控制参数
-#define Expect_Kp 0.1
-#define EXpect_kw 0.01 
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+uint32_t alive_tick = 0; 
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
 
-// 8个电机的结构体
+// 9个电机的结构体
 Motor_HandleTypeDef hmotor1;
 Motor_HandleTypeDef hmotor2;
 Motor_HandleTypeDef hmotor3;
@@ -62,7 +72,8 @@ Motor_HandleTypeDef hmotor4;
 Motor_HandleTypeDef hmotor5;
 Motor_HandleTypeDef hmotor6;
 Motor_HandleTypeDef hmotor7;
-Motor_HandleTypeDef hmotor8;
+Motor_HandleTypeDef hmotor8;  // 前8个都是腿部电机
+Motor_HandleTypeDef hmotor10; // 云台电机
 
 // 四只脚的位置相关结构体
 Position_HandleTypeDef hposition1;
@@ -100,10 +111,10 @@ hposition4 : hmotor7(α) , hmotor8(β)
 extern volatile uint8_t RS485_RxBuf[16];
 extern volatile uint8_t Receive_OK;
 
-int move_state = 0; // 运动状态
-float height = 30.0f;      // 支撑高度
-float step_height = 10.0f; // 摆动高度
-float stride = 10.0f;      // 步幅
+int temp_state = 0;
+//static int up_trigger_count = 0;
+//static int down_trigger_count = 0;
+
 
 /* USER CODE END PV */
 
@@ -114,7 +125,7 @@ void SystemClock_Config(void);
 
 
 /* USER CODE END PFP */
-
+	
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
@@ -135,7 +146,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+   HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -154,124 +165,187 @@ int main(void)
   MX_USART6_UART_Init();
   MX_UART7_Init();
   MX_USART1_UART_Init();
+  MX_CAN1_Init();
+  MX_TIM5_Init();
+  MX_TIM9_Init();
+  MX_TIM10_Init();
+  MX_UART8_Init();
   /* USER CODE BEGIN 2 */
+  
+	HAL_TIM_Base_Start_IT(&htim10);
+	HAL_TIM_Base_Start(&htim9);
+	PWM_Init(); 
 
-//  初始化电机结构体,角度环控制只需要初始化kp和kw
-    Motor_Init(&hmotor1, &huart6, 1);
-    hmotor1.Kp = Expect_Kp;
-    hmotor1.Kw = EXpect_kw;	
-    Motor_Init(&hmotor2, &huart6, 2);
-    hmotor2.Kp = Expect_Kp;
-    hmotor2.Kw = EXpect_kw;
-    Motor_Init(&hmotor3, &huart6, 3);
-    hmotor3.Kp = Expect_Kp;
-    hmotor3.Kw = EXpect_kw;	
-    Motor_Init(&hmotor4, &huart6, 4);
-    hmotor4.Kp = Expect_Kp;
-    hmotor4.Kw = EXpect_kw;    
-    Motor_Init(&hmotor5, &huart6, 5);
-    hmotor5.Kp = Expect_Kp;
-    hmotor5.Kw = EXpect_kw;	
-    Motor_Init(&hmotor6, &huart6, 4);
-    hmotor6.Kp = Expect_Kp;
-    hmotor6.Kw = EXpect_kw;    
-    Motor_Init(&hmotor7, &huart6, 5);
-    hmotor7.Kp = Expect_Kp;
-    hmotor7.Kw = EXpect_kw;	
-    Motor_Init(&hmotor8, &huart6, 4);
-    hmotor8.Kp = Expect_Kp;
-    hmotor8.Kw = EXpect_kw;  
+	//remote_control_init(); // 初始化遥控器
+	sbus_remote_control_init(); // 初始化遥控器hot rc
 
-
+	init_motor_parameters();// 初始化电机参数
+	remap_motor_ids(); // 重映射id
+  UART8_Demo_Init(); // 初始化 UART8 的 DMA 接收和中断
+	
+// motor_release();
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  { 
+  {  
+  // --------------循环配置----------------
+    UART8_Demo_Process(); // 处理 UART8 接收的树莓派数据，更新 rcData 结构体
 
-    // if (t >= Ts){t = 0;}
-    // 根据t给B点坐标赋值
-    // 注意下面的trot和StepInPlace一次只能取消注释其中一个，StepInPlace是原地踏步
-    // trot(1,30,15,40); // 前进
-    //StepInPlace(0.01,34,5); // 原地踏步
-    // testCircle();
-	// testStep();
-	// HAL_Delay(6);
+	  stab_roll = 0.0f;// 平衡角度归零
+  
 
-  //   // 根据B点坐标，逆解算出alpha和beta
-  //   inverseKinematic(&hposition1);
+    // -------------机械臂6调试------------------
+//	while(1){
+//	hmotor4.Kp =0.1f;
+//	gimbal_send_unitree(60.0f); // 发送云台控制指令，参数为期望的云台角度
+//	
+//	}
+//	
 
-  //   // 发送角度数据
-  //   hmotor5.Theta_des = motor5_bias / 6.33f + 6.28 * hposition1.alpha / 360.0f;;
-  //   Motor_SendCmd(&hmotor5);
-  //   hmotor4.Theta_des = motor4_bias / 6.33f + 6.28 * hposition1.beta / 360.0f;
-  //   Motor_SendCmd(&hmotor4);
+    // -------------位置控制测试-----------------
+
+// while(1){
+//	float x = 0.0f;
+//	float y =25.0f;
+//	hposition1.B_y = y;
+//	hposition1.B_x = x; 
+//	hposition2.B_y = y;
+//	hposition2.B_x = x; 
+//	hposition3.B_y = y;
+//	hposition3.B_x = x; 
+//	hposition4.B_y = y;
+//	hposition4.B_x = x;
+//	crawl_inverseKinematic_All();
+//	Motor_SendCmd_AllAngle(); 
+//	HAL_Delay(10);
+// }
 
 
-    /*
-    遥控传参：运动状态 move_state
-             支撑高度 height
-             抬腿高度 step_height
-             步幅 stride
-    动作说明：1.前进，后退，左转，右转
-                - 单足轨迹都是摆线方程
-                - 传入height决定支撑高度，stride决定步幅
-             2.motion_StandBy是原地站立
-                - 传入height决定站立的高度
-             3.StepInPlace是原地踏步
-                - 传入height决定支撑腿高度，step_height决定抬起高度
-    */
-    
-    move_state = 1; 
-	height = 25;
-	stride = 10;
+//	//----------4/4单电机通信调试----------
 
-    switch (move_state)
+//while(1){
+////	MotorTest_Sweep(1, 0.4f);
+////	MotorTest_Sweep(2, 0.4f);
+//	MotorTest_Sweep(3, 0.4f);
+//	MotorTest_Sweep(4, 0.4f);
+////	MotorTest_Sweep(5, 0.4f);  
+////	MotorTest_Sweep(6, 0.4f);
+////	MotorTest_Sweep(7, 0.4f);
+////	MotorTest_Sweep(8, 0.4f);
+//// 	MotorTest_Sweep(9, 0.4f); 
+////	MotorTest_Sweep(10, 0.4f);
+////	MotorTest_Sweep(11, 0.4f);
+//// 	MotorTest_Sweep(12, 0.4f);
+//// 	MotorTest_Sweep(13, 0.4f); 
+////	MotorTest_Sweep(14, 0.4f);
+////	MotorTest_Sweep(15, 0.4f);
+//}
+
+
+  // -------------遥控控制部分------------------
+	// 说明：此处主要控制非状态机函数
+  UART8_Demo_Process(); //
+
+  // // 树莓派请求行走，没用到，看后续怎么进入行走状态
+  // if (uart8_walk_request) {
+  //     rcData.sw5 = 0x0320;
+  //     rcData.sw7 = 0x0320;
+  //     uart8_walk_request = 0;
+  // }
+
+  // 遥控取值：0x0320,0x0000,0xFCE0
+  /* 功能说明
+  *    sw5    sw6    sw7    sw8    代码位置    功能              state
+  *   0xFCE0   -      -      -       tim10     急停               -(不在switch中)
+  *   0x0000   -    0xFCE0   -       mian      跳跃               3
+  *   0x0000   -    0x0320   -       mian      站立               4
+  *   0x0320   -      -      0xFCE0  mian      遥控控制行走        1
+  *   0x0320   -      -      0x0000  mian      树莓派控制行走      2
+  *     -    0xFCE0   -      -       tim10     调腿高
+  *     -    0x0320   -      -       tim10     调步频
+  * 
+  */
+
+	//if (rcData.sw5 == 0xFCE0||imu_emergency_stop()){emergency_stop = 1;} // 侧翻急停开启版
+	if (rcData.sw5 == 0xFCE0){ emergency_stop = 1;} // 侧翻急停关闭版
+  else{ emergency_stop = 0;}
+
+  if (rcData.sw5 == 0x0000 && rcData.sw7 == 0xFCE0){ temp_state=3;} // 跳跃，注意是非状态机函数
+	if (rcData.sw5 == 0x0000 && rcData.sw7 == 0x0320){ temp_state=4;}	// 站立
+  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0xFCE0){ temp_state=1;} // 树莓派控制
+  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0x0000){ temp_state=2;} // 遥控控制
+
+
+  // -------------一些未用上的功能------------------
+// 捡箱子功能
+//		static int16_t sucker_state_count = 0;
+//		sucker_state_count++;
+//		motion_Down(15.0f, walk_height);
+//		PWM_Set((sucker_state_count % 2 == 1) ? PWM_OUT : PWM_IN);
+//		HAL_Delay(2000);
+//		motion_Up(walk_height, 15.0f);
+
+// 过限高杆
+//		temp_state=6; 
+	
+// 坐标系翻转
+// flip_body();
+// HAL_Delay(1000);
+
+// 		Body_Roll_Stabilizer();// 体滚转稳定
+
+
+	// -----------状态机函数----------------
+	//temp_state=1;
+	
+if (emergency_stop==1){
+	motor_release();
+}else{
+    switch (temp_state)
     {
         case 1:
-
-            motion_Forward(height, 8.0f, stride);
+        // 遥控控制行走
+		    motion_Mix(walk_height, 8.0f, max_stride*rcData.R_y,rcData.R_x);
         break;
                 
         case 2:
-
-            motion_Backward(height,  8.0f, stride);
+        // 树莓派控制行走
+		    motion_Mix(walk_height, 8.0f, max_stride*front_speed, turn_omega);
         break;
 
-        case 3:
-      
-            motion_TurnRight(height,  8.0f, stride);
+        case 3: // 跳跃
+        motion_Jump(28.0f);
         break;
                 
-        case 4:
-
-            motion_TurnLeft(height,  8.0f, stride);
+        case 4: // 站立
+		    motion_Mix(walk_height, 0.0000001f, 0.0f, 0.0f);
         break;   
           
         case 5:
 
-            StepInPlace(height, step_height);
         break;
                 
-        case 6:
-            motion_Jump();
-			move_state = 0;
+        case 6: // 匍匐，过限高杆
+			motion_Crawl(5.0f,6.0f);
         break;     
 
-        case 7:
-            testCircle(); // 测试画圆用，实际上没有这个动作
+        case 7:// 前空翻
+			motion_Frontflip();
+
         break; 
 
         case 8:
-            testJump(); // 测试跳跃用，实际上没有这个动作
+			//test_circle();
         break; 
-
+		
         default:
-            motion_StandBy(height) ;
+			motion_StandBy(walk_height) ;
             break;
     }
-
+}
 
 	  
     /* USER CODE END WHILE */
@@ -298,12 +372,11 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 6;
   RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
@@ -328,6 +401,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+// --------private functions---------
 
 /* USER CODE END 4 */
 
