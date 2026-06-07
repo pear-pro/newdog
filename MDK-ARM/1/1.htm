@@ -5,9 +5,9 @@
 <H1>Static Call Graph for image 1\1.axf</H1><HR>
 <BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060528: Last Updated: Sat Jun 06 20:40:45 2026
 <BR><P>
-<H3>Maximum Stack Usage =        224 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
+<H3>Maximum Stack Usage =        488 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
-EXTI2_IRQHandler &rArr; HAL_GPIO_EXTI_IRQHandler &rArr; HAL_GPIO_EXTI_Callback &rArr; key_exti_callback &rArr; Motor_InitBias &rArr; HAL_UART_Transmit &rArr; UART_WaitOnFlagUntilTimeout
+main &rArr; motion_Crawl &rArr; crawl_gaitGenerator &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dsub &rArr; __aeabi_dadd &rArr; _double_epilogue &rArr; _double_round
 <P>
 <H3>
 Mutually Recursive functions
@@ -28,13 +28,13 @@ Function Pointers
  <LI><a href="#[4d]">CAN2_SCE_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[4a]">CAN2_TX_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[59]">DCMI_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
- <LI><a href="#[16]">DMA1_Stream0_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
+ <LI><a href="#[16]">DMA1_Stream0_IRQHandler</a> from stm32f4xx_it.o(i.DMA1_Stream0_IRQHandler) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[17]">DMA1_Stream1_IRQHandler</a> from stm32f4xx_it.o(i.DMA1_Stream1_IRQHandler) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[18]">DMA1_Stream2_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[19]">DMA1_Stream3_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[1a]">DMA1_Stream4_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[1b]">DMA1_Stream5_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
- <LI><a href="#[1c]">DMA1_Stream6_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
+ <LI><a href="#[1c]">DMA1_Stream6_IRQHandler</a> from stm32f4xx_it.o(i.DMA1_Stream6_IRQHandler) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[3a]">DMA1_Stream7_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[62]">DMA2D_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[43]">DMA2_Stream0_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
@@ -45,6 +45,7 @@ Function Pointers
  <LI><a href="#[4f]">DMA2_Stream5_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[50]">DMA2_Stream6_IRQHandler</a> from stm32f4xx_it.o(i.DMA2_Stream6_IRQHandler) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[51]">DMA2_Stream7_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
+ <LI><a href="#[67]">DMA_NoOpCallback</a> from usart_demo.o(i.DMA_NoOpCallback) referenced from usart_demo.o(i.UART8_Demo_Init)
  <LI><a href="#[8]">DebugMon_Handler</a> from stm32f4xx_it.o(i.DebugMon_Handler) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[48]">ETH_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[49]">ETH_WKUP_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
@@ -109,7 +110,7 @@ Function Pointers
  <LI><a href="#[3f]">UART4_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[40]">UART5_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[5c]">UART7_IRQHandler</a> from stm32f4xx_it.o(i.UART7_IRQHandler) referenced from startup_stm32f427xx.o(RESET)
- <LI><a href="#[5d]">UART8_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
+ <LI><a href="#[5d]">UART8_IRQHandler</a> from stm32f4xx_it.o(i.UART8_IRQHandler) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[66]">UART_DMAAbortOnError</a> from stm32f4xx_hal_uart.o(i.UART_DMAAbortOnError) referenced from stm32f4xx_hal_uart.o(i.HAL_UART_IRQHandler)
  <LI><a href="#[69]">UART_DMAError</a> from stm32f4xx_hal_uart.o(i.UART_DMAError) referenced from stm32f4xx_hal_uart.o(i.HAL_UART_Transmit_DMA)
  <LI><a href="#[69]">UART_DMAError</a> from stm32f4xx_hal_uart.o(i.UART_DMAError) referenced from stm32f4xx_hal_uart.o(i.UART_Start_Receive_DMA)
@@ -187,9 +188,6 @@ Global Symbols
 <P><STRONG><a name="[59]"></a>DCMI_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_stm32f427xx.o(.text))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
 </UL>
-<P><STRONG><a name="[16]"></a>DMA1_Stream0_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_stm32f427xx.o(.text))
-<BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
-</UL>
 <P><STRONG><a name="[18]"></a>DMA1_Stream2_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_stm32f427xx.o(.text))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
 </UL>
@@ -200,9 +198,6 @@ Global Symbols
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
 </UL>
 <P><STRONG><a name="[1b]"></a>DMA1_Stream5_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_stm32f427xx.o(.text))
-<BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
-</UL>
-<P><STRONG><a name="[1c]"></a>DMA1_Stream6_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_stm32f427xx.o(.text))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
 </UL>
 <P><STRONG><a name="[3a]"></a>DMA1_Stream7_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_stm32f427xx.o(.text))
@@ -377,9 +372,6 @@ Global Symbols
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
 </UL>
 <P><STRONG><a name="[40]"></a>UART5_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_stm32f427xx.o(.text))
-<BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
-</UL>
-<P><STRONG><a name="[5d]"></a>UART8_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_stm32f427xx.o(.text))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
 </UL>
 <P><STRONG><a name="[31]"></a>USART2_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_stm32f427xx.o(.text))
@@ -675,6 +667,7 @@ Global Symbols
 <LI><a href="#[45]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DMA2_Stream2_IRQHandler
 <LI><a href="#[44]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DMA2_Stream1_IRQHandler
 <LI><a href="#[17]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DMA1_Stream1_IRQHandler
+<LI><a href="#[16]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DMA1_Stream0_IRQHandler
 </UL>
 
 <P><STRONG><a name="[91]"></a>HAL_DMA_Init</STRONG> (Thumb, 232 bytes, Stack size 24 bytes, stm32f4xx_hal_dma.o(i.HAL_DMA_Init))
@@ -1032,6 +1025,7 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;USART6_IRQHandler
 <LI><a href="#[30]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;USART1_IRQHandler
+<LI><a href="#[5d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART8_IRQHandler
 <LI><a href="#[5c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART7_IRQHandler
 </UL>
 

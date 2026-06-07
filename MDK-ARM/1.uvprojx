@@ -10,7 +10,7 @@
       <TargetName>1</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060528::V5.06 update 5 (build 528)::.\ARMCC</pCCUsed>
+      <pCCUsed>5060528::V5.06 update 5 (build 528)::ARMCC</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -726,6 +726,11 @@
               <FileName>stm32f4xx_hal_msp.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/stm32f4xx_hal_msp.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart_demo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\usart_demo.c</FilePath>
             </File>
           </Files>
         </Group>
