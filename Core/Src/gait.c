@@ -38,8 +38,8 @@ float Frontflip_freq3 = 0.004f; //
 #define jump_freq4 0.005f   // 0.01  0.005
 #define jump_freq5 0.003f   // 0.01
 
-float walk_height = 22.0f; //32.0
-float max_stride = 13.0f;
+float walk_height = 22.0f; //32.0   // 步高，直接影响通过性，过大可能过不了，过小可能容易绊倒
+float max_stride = 13.0f;// 13.0f  // 步幅，直接影响速度，过大可能打滑，过小可能慢
 
 float tau = 0.0f;
 float t = 0.0f;    
@@ -417,7 +417,7 @@ void motion_Mix(float height, float step_height, float stride, float turn_omega)
 		}
 	}
 
-    if (tau <= 0.5f)
+    if (tau <= 0.5f)  //
     {
         GaitPhasesPoints RightState = gaitGenerator(0, height, step_height, R_stride);
         GaitPhasesPoints LeftState = gaitGenerator(0, height, step_height, L_stride);
@@ -432,7 +432,7 @@ void motion_Mix(float height, float step_height, float stride, float turn_omega)
         hposition4.B_x  =  -LeftState.xSupport; 
         set_Motor_Kp(0,1,0,1);
     }
-    else if (tau > 0.5f && tau <= 1.0f)
+    else if (tau > 0.5f && tau <= 1.0f)  //
     {
         GaitPhasesPoints RightState = gaitGenerator(1, height, step_height, R_stride);
         GaitPhasesPoints LeftState = gaitGenerator(1, height, step_height, L_stride);
@@ -445,11 +445,11 @@ void motion_Mix(float height, float step_height, float stride, float turn_omega)
         hposition3.B_x  =  LeftState.xSupport;
         hposition4.B_y  = LeftState.ySwing * (1.0f-tanf(pi*stab_roll/180.0f));
         hposition4.B_x  =  -LeftState.xSwing;
-        set_Motor_Kp(1,0,1,0);
+        set_Motor_Kp(1,0,1,0);  // 设置电机Kp参数
     }
 
-    inverseKinematic_All();
-    Motor_SendCmd_AllAngle();  
+    inverseKinematic_All(); // 计算每个电机的目标角度
+    Motor_SendCmd_AllAngle();   // 发送命令给电机
 }
 
 void motion_StandBy(float height)

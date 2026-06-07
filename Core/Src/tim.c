@@ -305,7 +305,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 // time不要超过65535
 void MY_delay_us(uint16_t time){
 	uint16_t start = TIM9->CNT;
-    while ((uint16_t)(TIM9->CNT - start) < time) 
+     while ((uint16_t)(TIM9->CNT - start) < time) 
     {
     }
 }

@@ -247,7 +247,7 @@ int main(void)
 
   // -------------遥控控制部分------------------
 	// 说明：此处主要控制非状态机函数
-  UART8_Demo_Process(); //
+ 
 
   // // 树莓派请求行走，没用到，看后续怎么进入行走状态
   // if (uart8_walk_request) {
@@ -275,8 +275,8 @@ int main(void)
 
   if (rcData.sw5 == 0x0000 && rcData.sw7 == 0xFCE0){ temp_state=3;} // 跳跃，注意是非状态机函数
 	if (rcData.sw5 == 0x0000 && rcData.sw7 == 0x0320){ temp_state=4;}	// 站立
-  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0xFCE0){ temp_state=1;} // 树莓派控制
-  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0x0000){ temp_state=2;} // 遥控控制
+  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0xFCE0){ temp_state=1;} // 遥控控制
+  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0x0000){ temp_state=2;} // 树莓派控制
 
 
   // -------------一些未用上的功能------------------
@@ -317,7 +317,7 @@ if (emergency_stop==1){
         break;
 
         case 3: // 跳跃
-        motion_Jump(28.0f);
+       //树莓派测试的时候不用，安全起见 motion_Jump(28.0f);
         break;
                 
         case 4: // 站立
