@@ -317,7 +317,7 @@ if (emergency_stop==1){
         break;
 
         case 3: // 跳跃
-        motion_Jump(28.0f);
+        //motion_Jump(22.0f);
         break;
                 
         case 4: // 站立

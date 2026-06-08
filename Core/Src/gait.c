@@ -21,7 +21,7 @@ float Forward_freq = 0.01f; // 0.004
 #define up_down_freq 0.004f
 #define crawl_freq 0.002f
 
-float support_Kp = 0.3f; // 0.6/0.7,0.25/0.3
+float support_Kp = 0.5f; // 0.6/0.7,0.25/0.3
 float swing_Kp = 0.3f;
 float Expect_kw = 0.01f;  // 直接用来初始化
 float support_tau_ff = 0.00f; // 0.10
@@ -33,7 +33,7 @@ float Frontflip_freq3 = 0.004f; //
 
 #define jump_freq0 0.08f   // 0.01
 #define jump_freq1 0.01f   // 0.01
-#define jump_freq2 0.2499f   // 0.40 跳 //0.4999
+#define jump_freq2 0.999f   // 0.40 跳 //0.4999 // 0.2499
 #define jump_freq3 0.039f   // 0.07  0.0372
 #define jump_freq4 0.005f   // 0.01  0.005
 #define jump_freq5 0.003f   // 0.01
@@ -59,14 +59,14 @@ float stride_max = 20.0f;
 // float motor7_kp_offset = 0.37f;
 // float motor8_kp_offset = 0.50f;
 
-float motor1_kp_offset = 0.15f;
+float motor1_kp_offset = 0.5f;
 float motor2_kp_offset = 0.0f;
 float motor3_kp_offset = 0.1f;
 float motor4_kp_offset = 0.1f;
 float motor5_kp_offset = 0.15f;
 float motor6_kp_offset = 0.0f;
-float motor7_kp_offset = 0.0f;
-float motor8_kp_offset = 0.0f;
+float motor7_kp_offset = 0.25f;
+float motor8_kp_offset = 0.4f;
 
 // state == 1 支撑相 ; state == 0 摆动相
 void set_Motor_Kp(int hposition1_state, int hposition2_state, int hposition3_state, int hposition4_state)
@@ -423,13 +423,13 @@ void motion_Mix(float height, float step_height, float stride, float turn_omega)
         GaitPhasesPoints LeftState = gaitGenerator(0, height, step_height, L_stride);
 
         hposition1.B_y  = RightState.ySwing * (1.0f+tanf(pi*stab_roll/180.0f)) ;
-        hposition1.B_x  =  -RightState.xSwing; 
+        hposition1.B_x  =  RightState.xSwing; 
         hposition2.B_y  = RightState.ySupport * (1.0f+tanf(pi*stab_roll/180.0f));
         hposition2.B_x  =  RightState.xSupport; 
         hposition3.B_y  = LeftState.ySwing * (1.0f-tanf(pi*stab_roll/180.0f));
         hposition3.B_x  =  LeftState.xSwing; 
         hposition4.B_y  = LeftState.ySupport * (1.0f-tanf(pi*stab_roll/180.0f));
-        hposition4.B_x  =  -LeftState.xSupport; 
+        hposition4.B_x  =  LeftState.xSupport; 
         set_Motor_Kp(0,1,0,1);
     }
     else if (tau > 0.5f && tau <= 1.0f)
@@ -438,13 +438,13 @@ void motion_Mix(float height, float step_height, float stride, float turn_omega)
         GaitPhasesPoints LeftState = gaitGenerator(1, height, step_height, L_stride);
 
         hposition1.B_y  = RightState.ySupport * (1.0f+tanf(pi*stab_roll/180.0f));
-        hposition1.B_x  =  -RightState.xSupport; 
+        hposition1.B_x  =  RightState.xSupport; 
         hposition2.B_y  = RightState.ySwing * (1.0f+tanf(pi*stab_roll/180.0f));
         hposition2.B_x  =  RightState.xSwing;
         hposition3.B_y  = LeftState.ySupport * (1.0f-tanf(pi*stab_roll/180.0f));
         hposition3.B_x  =  LeftState.xSupport;
         hposition4.B_y  = LeftState.ySwing * (1.0f-tanf(pi*stab_roll/180.0f));
-        hposition4.B_x  =  -LeftState.xSwing;
+        hposition4.B_x  =  LeftState.xSwing;
         set_Motor_Kp(1,0,1,0);
     }
 
@@ -631,11 +631,18 @@ void motion_Jump(float stride)
         
 		
 	// state 2 蹬腿
+// ---------MIT版本蹬腿--------
 	float y_start2 = k2 * x_start2;
 	float x_stop2 = sqrt(height_des*height_des/(1+k2*k2));
 	// float y_des = k2 * x_stop2;
 
-	quick_set_kp(1.0f,0.01f); // 跳跃时增大Kp，提升响应速度
+	motor1_kp_offset *= 1.45f;
+	motor2_kp_offset *= 1.35f;
+	motor7_kp_offset *= 1.9f;
+	motor8_kp_offset *= 1.9f;
+
+
+	quick_set_kp(9.0f,0.00f); // 跳跃时增大Kp，提升响应速度
 	for (float x = x_start2;x < x_stop2; x += jump_freq2*(fabsf(x_start2 - x_stop2))){
 	if (emergency_stop==1){return;}
 	
@@ -653,10 +660,19 @@ void motion_Jump(float stride)
 	 Motor_SendCmd_AllAngle(); 
 	 //HAL_Delay(3);
 	}
-	HAL_Delay(90); // 等完全蹬直
+	HAL_Delay(130); // 等完全蹬直
+	
+	motor1_kp_offset /= 1.3f;
+	motor2_kp_offset /= 1.2f;
+	motor7_kp_offset /= 1.3f;
+	motor8_kp_offset /= 1.3f;
+	
+// ---------异步力矩版蹬腿----------
+
+	
 	
 	// state 3收腿前送
-	quick_set_kp(2.0f,Expect_kw); 
+	quick_set_kp(1.0f,Expect_kw); 
 	 for (float angle = 0.0f;angle <=pi; angle += jump_freq3 * pi){
 		if (emergency_stop==1){return;}
 
