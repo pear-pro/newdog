@@ -276,7 +276,9 @@ int main(void)
   if (rcData.sw5 == 0x0000 && rcData.sw7 == 0xFCE0){ temp_state=3;} // 跳跃，注意是非状态机函数
 	if (rcData.sw5 == 0x0000 && rcData.sw7 == 0x0320){ temp_state=4;}	// 站立
   if (rcData.sw5 == 0x0320 && rcData.sw8 == 0xFCE0){ temp_state=1;} // 遥控控制
-  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0x0000){ temp_state=2;} // 树莓派控制
+  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0x0000){                  // 树莓派控制
+      temp_state = uart8_walk_request ? 2 : 12;                     // 有数据→走(case2)，超时→站(case12)
+  }
 
 
   // -------------一些未用上的功能------------------
@@ -327,7 +329,7 @@ if (emergency_stop==1){
         case 5:
 
         break;
-                
+                   
         case 6: // 匍匐，过限高杆
 			motion_Crawl(5.0f,6.0f);
         break;     
@@ -340,7 +342,11 @@ if (emergency_stop==1){
         case 8:
 			//test_circle();
         break; 
-		
+
+	    	case 12: // RPi 超时自动站立
+            motion_Mix(walk_height, 0.0000001f, 0.0f, 0.0f);
+        break;
+
         default:
 			motion_StandBy(walk_height) ;
             break;

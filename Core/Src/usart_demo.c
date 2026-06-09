@@ -66,12 +66,17 @@ extern Remote_Control_struct rcData;
 /*                           可调参数                                           */
 /* ========================================================================== */
 
-/* 调通后如果想“断线自动停狗”，改成 1；当前先关闭，避免影响测试 */
-#define UART8_ENABLE_LOST_TIMEOUT    0
-#define UART8_LOST_TIMEOUT_MS        300u
+/* 1000ms 无数据 → 自动站立（RPi 模式） */
+#define UART8_ENABLE_LOST_TIMEOUT    1
+#define UART8_LOST_TIMEOUT_MS        1000u
 
 /* 给运动层的速度限幅，保持原工程逻辑：[-1, 1] */
 #define CMD_SPEED_LIMIT              1.0f
+
+/* 速度映射：velocity_v / VELOCITY_SCALE → front_speed ∈ [-1, 1]
+   V_PHYSICAL_MAX=0.6m/s, VELOCITY_SCALE=1000×0.6=600
+   例：600→1.0, 300→0.5, 60→0.1 */
+#define VELOCITY_SCALE               600.0f
 
 /* 是否在重启接收时强制把 DMA 模式设为 Circular。建议保持 1。 */
 #define UART8_FORCE_DMA_CIRCULAR     1
@@ -443,9 +448,10 @@ static void DispatchCommand(const CmdFrame_TypeDef *cmd)
     switch (cmd->ctrl_mode) {
 
     case CTRL_SPEED:
-        /* 上位机协议：v/w = 实际物理量 * 1000。这里恢复成浮点。 */
-        front_speed = (float)cmd->velocity_v / 1000.0f;
-        turn_omega  = (float)cmd->velocity_w / 1000.0f;
+        /* 速度映射：velocity_v / VELOCITY_SCALE → front_speed
+           VELOCITY_SCALE = 300.0，即 300(0.3m/s) 映射到 1.0(全步幅) */
+        front_speed = (float)cmd->velocity_v / VELOCITY_SCALE;
+        turn_omega  = (float)cmd->velocity_w / VELOCITY_SCALE;
 
         /* 保持原工程逻辑：给后级运动层的输入限制在 [-1, 1]。 */
         front_speed = LimitFloat(front_speed, -CMD_SPEED_LIMIT, CMD_SPEED_LIMIT);
@@ -544,56 +550,91 @@ void UART8_Demo_Process(void)
         return;
     }
 
+    /* ── 记录 IDLE 事件（仅用于调试统计，不影响数据解析） ── */
     if (uart8_idle_flag) {
         uart8_idle_flag = 0;
         dbg_uart_idle_count++;
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+     *  主数据解析循环
+     *
+     *  流程：DMA 缓冲区 → 逐字节 → 状态机组帧 → 校验 → 分发
+     *
+     *  为什么不用 "if (uart8_idle_flag) 才处理" ？
+     *    持续高速发送时 IDLE 中断不会每帧都触发。如果依赖 IDLE，
+     *    数据会在 DMA 缓冲区中堆积，最终触发 ORE 导致硬件卡死。
+     *    轮询方式（RingBuf_Available > 0）响应更快且不丢数据。
+     *
+     *  为什么 PARSE_COLLECT 阶段不检测 0x55 ？
+     *    int16 速度值的低字节和高字节都可能等于 0x55。如果中途
+     *    遇到 0x55 就跳回 SYNC_2，包含 0x55 字节的合法帧会被
+     *    永久丢弃。V2 改为直接收集全部 6 字节，靠校验和过滤错位帧。
+     * ══════════════════════════════════════════════════════════════════ */
     while (RingBuf_Available() > 0u) {
         uint8_t byte = RingBuf_ReadByte();
 
-        if (Parser_FeedByte(byte)) {
-            memcpy((void *)dbg_last_frame, parser.buf, FRAME_LEN);
+        if (Parser_FeedByte(byte)) {                             /* 状态机收满 8 字节 → 完整帧，return 1; */
+            memcpy((void *)dbg_last_frame, parser.buf, FRAME_LEN); // 记录最后一帧，便于调试观察
 
-            if (Parser_ValidateFrame(parser.buf)) {
-                CmdFrame_TypeDef cmd;
+            if (Parser_ValidateFrame(parser.buf)) {              /* 校验和通过 → 有效帧 */
+                CmdFrame_TypeDef cmd;                           
 
+                /* 大端序拼装 int16: V_H<<8 | V_L */
                 cmd.ctrl_mode = parser.buf[POS_CTRL];
                 cmd.velocity_v = (int16_t)(((uint16_t)parser.buf[POS_V_HIGH] << 8)
                                          |  ((uint16_t)parser.buf[POS_V_LOW]));
                 cmd.velocity_w = (int16_t)(((uint16_t)parser.buf[POS_W_HIGH] << 8)
                                          |  ((uint16_t)parser.buf[POS_W_LOW]));
 
+                /* 更新调试快照 */
                 dbg_last_v = cmd.velocity_v;
                 dbg_last_w = cmd.velocity_w;
-
                 dbg_frame_ok_count++;
                 dbg_frame_ok_total++;
 
-                if (!dbg_freeze) {
+                if (!dbg_freeze) {                               /* 未冻结时持续更新抓帧快照 */
                     memcpy((void *)dbg_frozen_frame, parser.buf, FRAME_LEN);
                     dbg_frozen_v = cmd.velocity_v;
                     dbg_frozen_w = cmd.velocity_w;
                     dbg_frozen_tick = HAL_GetTick();
                 }
 
-                DispatchCommand(&cmd);
-            } else {
+                DispatchCommand(&cmd);                           /* → front_speed / turn_omega */
+            } else {                                             /* 校验和失败 → 帧错位或数据损坏 */
                 memcpy((void *)dbg_err_frame, parser.buf, FRAME_LEN);
                 dbg_frame_err_count++;
                 dbg_frame_err_total++;
             }
 
-            Parser_Reset();
+            Parser_Reset();                                      /* 收完一帧（无论对错）→ 回 SYNC_1 等下一帧 */
         }
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+     *  通信超时保护
+     *
+     *  场景：算法发送最后一帧 (0,0) 后停止发送 → 期望狗站立
+     *
+     *  超时后执行的动作（DispatchCommand 的反向操作）：
+     *    front_speed = 0       ← 线速度归零
+     *    turn_omega  = 0       ← 角速度归零
+     *    uart8_walk_request=0  ← 通知 main.c 切换至 case 12 站立
+     *    last_rx_tick = 0      ← 防止每周期重复触发
+     *
+     *  main.c 侧配合逻辑（第 279 行）：
+     *    temp_state = uart8_walk_request ? 2 : 12;
+     *    → 有数据=行走(case2)，超时=站立(case12)
+     * ══════════════════════════════════════════════════════════════════ */
 #if UART8_ENABLE_LOST_TIMEOUT
-    if ((last_rx_tick != 0u) && ((HAL_GetTick() - last_rx_tick) > UART8_LOST_TIMEOUT_MS)) {
-        front_speed = 0.0f;
-        turn_omega = 0.0f;
-        uart8_walk_request = 0;
-        last_rx_tick = 0u;
+    /* last_rx_tick != 0 ：上电后至少收到过一帧数据，防止上电 500ms 误触发 */
+    /* HAL_GetTick() - last_rx_tick > 500 ：距离最后一帧已超过超时阈值             */
+    if ((last_rx_tick != 0u) && ((HAL_GetTick() - last_rx_tick) > UART8_LOST_TIMEOUT_MS))
+    {
+        front_speed = 0.0f;          /* 线速度归零 */
+        turn_omega  = 0.0f;          /* 角速度归零 */
+        uart8_walk_request = 0;      /* → main.c 第 279 行: temp_state = 0?2:12 = 12 (站立) */
+        last_rx_tick = 0u;           /* 清空时间戳，防止每周期重复进入此分支 */
     }
 #endif
 }
