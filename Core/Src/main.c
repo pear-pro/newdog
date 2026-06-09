@@ -41,6 +41,8 @@
 #include "pwm_app.h"
 #include "ht_10a_remote_control.h"
 #include "robot_arm_control.h"
+#include "motor_feedback.h"
+
 #include "usart_demo.h"
 /* USER CODE END Includes */
 
@@ -108,8 +110,8 @@ hposition4 : hmotor7(α) , hmotor8(β)
 
 
 /* 引入 usart.c 的全局变量 */
-extern volatile uint8_t RS485_RxBuf[16];
-extern volatile uint8_t Receive_OK;
+//extern volatile uint8_t RS485_RxBuf[16];
+//extern volatile uint8_t Receive_OK;
 
 int temp_state = 0;
 //static int up_trigger_count = 0;
@@ -181,10 +183,11 @@ int main(void)
 
 	init_motor_parameters();// 初始化电机参数
 	remap_motor_ids(); // 重映射id
+ Motor_Feedback_Init();
   UART8_Demo_Init(); // 初始化 UART8 的 DMA 接收和中断
 	
 // motor_release();
-	
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -196,6 +199,11 @@ int main(void)
 
 	  stab_roll = 0.0f;// 平衡角度归零
   
+    // -------------急停模式调试------------------
+//  if (motor_release_flag == 1){
+//	motor_release_flag=0;
+//	init_motor_parameters();
+//  }
 
     // -------------机械臂6调试------------------
 //	while(1){
@@ -225,6 +233,7 @@ int main(void)
 
 
 //	//----------4/4单电机通信调试----------
+//接收
 
 //while(1){
 ////	MotorTest_Sweep(1, 0.4f);

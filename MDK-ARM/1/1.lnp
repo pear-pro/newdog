@@ -16,6 +16,7 @@
 "1\ht_10a_remote_control.o"
 "1\robot_arm_control.o"
 "1\motor_4310.o"
+"1\motor_feedback.o"
 "1\main.o"
 "1\gpio.o"
 "1\can.o"

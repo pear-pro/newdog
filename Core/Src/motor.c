@@ -11,8 +11,11 @@
 #include "gait.h"
 #include "string.h"
 #include "kinematic.h"
+#include "motor_feedback.h"
+
 
 #define TRANSNIT_DELAY 500
+#define WAIT_TIME 20
  
 float motor1_bias = 6.15f;
 float motor2_bias = 1.15f;
@@ -23,6 +26,8 @@ float motor6_bias = 4.43f;
 float motor7_bias = -2.65f;
 float motor8_bias = 4.80f;
 float motor10_bias = 3.10f;// 云台偏置
+
+volatile uint8_t uart6_tx_busy = 0;
 
 
 float flip_offset = 0.0f; // 3.165f 狗腿翻身对应的电机反转角度
@@ -101,6 +106,8 @@ void remap_motor_ids(void)
     hmotor8.MotorID = 3;
 }
 
+
+
 // 电机通信测试，使其匀速扫过一定范围的角度
 void MotorTest_Sweep(int id, float step)
 {
@@ -129,13 +136,23 @@ void MotorTest_Sweep(int id, float step)
         {
             motor->Theta_des = bias / 6.33f + 6.28f * angle / 360.0f;
             Motor_SendCmd(motor);
-            HAL_Delay(1);
+					uint32_t tick = HAL_GetTick();
+           while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
         }
         for(float angle = 110.0f; angle >= 20.0f; angle -= step)
         {
             motor->Theta_des = bias / 6.33f + 6.28f * angle / 360.0f;
             Motor_SendCmd(motor);
-            HAL_Delay(1);
+          uint32_t tick = HAL_GetTick();
+           while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
         }
     }
     // 负角度电机 (5-8)
@@ -145,13 +162,23 @@ void MotorTest_Sweep(int id, float step)
         {
             motor->Theta_des = bias / 6.33f + 6.28f * angle / 360.0f;
             Motor_SendCmd(motor);
-            HAL_Delay(1);
+         uint32_t tick = HAL_GetTick();
+           while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
         }
         for(float angle = -100.0f; angle <= -20.0f; angle += step)
         {
             motor->Theta_des = bias / 6.33f + 6.28f * angle / 360.0f;
             Motor_SendCmd(motor);
-            HAL_Delay(1);
+         uint32_t tick = HAL_GetTick();
+           while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
         }
     }
 }
@@ -270,13 +297,31 @@ void Motor_SendCmd(Motor_HandleTypeDef *hmotor)
 //    if (Motor_PackCmd(hmotor) != HAL_OK){
 //        //
 //    };
+	 if(uart6_tx_busy) return;
 	Motor_PackCmd(hmotor);
 
-	HAL_UART_Transmit(&huart6, hmotor->TxData, 17, 1000);
+//	HAL_UART_Transmit(&huart6, hmotor->TxData, 17, 1000);
 
-    //RS485_SendFrame_Blocking(&huart6,hmotor->TxData);
+
+	uart6_tx_busy=1;
+
+  if(HAL_UART_Transmit_DMA(&huart6, hmotor->TxData, 17) != HAL_OK)
+    {
+        uart6_tx_busy = 0;
+    }
+//    RS485_SendFrame_Blocking(&huart6,hmotor->TxData);
 }
 
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if(huart == &huart6)
+    {
+      
+        uart6_tx_busy = 0;
+	    USART6_RestartRxDMA();
+      
+    }
+}
 
 static HAL_StatusTypeDef Motor_PackCmd(Motor_HandleTypeDef *hmotor)
 {
@@ -327,9 +372,13 @@ void gimbal_send_unitree(float angel){
 
     hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * angel / 360.0f;
 	Motor_SendCmd(&hmotor4);
-    hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * angel / 360.0f;
-	Motor_SendCmd(&hmotor4);
-	MY_delay_us(TRANSNIT_DELAY);
+	uint32_t tick = HAL_GetTick();
+           while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
+//	MY_delay_us(TRANSNIT_DELAY);
 }
 
 /*
@@ -362,19 +411,75 @@ void Motor_SendCmd_AllAngle()
 	Motor_SendCmd(&hmotor1);
 	MY_delay_us(TRANSNIT_DELAY);	
 	Motor_SendCmd(&hmotor3);
-	MY_delay_us(TRANSNIT_DELAY);
+	uint32_t tick = HAL_GetTick();
+   while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
+//	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor8);
-	MY_delay_us(TRANSNIT_DELAY);
+				 tick = HAL_GetTick();
+           while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
+//	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor2);
-	MY_delay_us(TRANSNIT_DELAY);
+						Motor_SendCmd(&hmotor8);
+				 tick = HAL_GetTick();
+           while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
+//	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor7);
-	MY_delay_us(TRANSNIT_DELAY);
+						Motor_SendCmd(&hmotor8);
+				 tick = HAL_GetTick();
+           while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
+//	MY_delay_us(TRANSNIT_DELAY);
+	Motor_SendCmd(&hmotor1);
+						Motor_SendCmd(&hmotor8);
+				 tick = HAL_GetTick();
+           while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
+//	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor6);
-	MY_delay_us(TRANSNIT_DELAY);
+						Motor_SendCmd(&hmotor8);
+				 tick = HAL_GetTick();
+           while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
+//	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor4);
-	MY_delay_us(TRANSNIT_DELAY);
+						Motor_SendCmd(&hmotor8);
+				 tick = HAL_GetTick();
+           while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
+//	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor5);
-	MY_delay_us(TRANSNIT_DELAY);
+						Motor_SendCmd(&hmotor8);
+				 tick = HAL_GetTick();
+           while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
+                Motor_Feedback_Process();    
+                Motor_Feedback_TimeoutTask();
+            }
+          if (uart6_tx_busy)uart6_tx_busy=0;
+//	MY_delay_us(TRANSNIT_DELAY);
 }
 
 // ---------4310控制代码开始------------
