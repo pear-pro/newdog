@@ -72,7 +72,7 @@ extern UART_HandleTypeDef huart8;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN EV */
-volatile uint32_t uart8_rx_count = 0;  // �����ԡ�IDLE �жϴ���������Watch ���ڲ鿴
+volatile uint32_t uart8_rx_count = 0;  // 调试用：IDLE 中断触发计数，在 Watch 窗口查看
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -378,12 +378,12 @@ void UART8_IRQHandler(void)
   HAL_UART_IRQHandler(&huart8); //
   /* USER CODE BEGIN UART8_IRQn 1 */
 
-  // ��� UART8 �Ƿ񴥷��� IDLE��������·���ж�
-  // IDLE = һ֡���ݷ�������߿��г��� 1 �ֽ�ʱ��
-  if (__HAL_UART_GET_FLAG(&huart8, UART_FLAG_IDLE)) {   // �ж��Ƿ�Ϊ IDLE �����жϣ�һ֡���ݽ�����ϣ�
-      __HAL_UART_CLEAR_IDLEFLAG(&huart8);    // ��� IDLE ��־���� SR + �� DR��Ӳ���涨��
-      uart8_idle_flag = 1;        // �ñ�־λ��֪ͨ��ѭ���ĺ���ȥ�����λ�����
-      uart8_rx_count++;           // �����ԡ�IDLE �жϼ�����Watch ���ڲ鿴�˱���
+  // 检查 UART8 是否触发了 IDLE（线路空闲）中断
+  // IDLE = 一帧数据发送完毕，线路空闲超过 1 字节时间
+  if (__HAL_UART_GET_FLAG(&huart8, UART_FLAG_IDLE)) {   // 判断是否为 IDLE 线路空闲中断（一帧数据接收完毕）
+      __HAL_UART_CLEAR_IDLEFLAG(&huart8);    // 清除 IDLE 标志（读 SR + 读 DR，硬件规定）
+      uart8_idle_flag = 1;        // 设置标志位，通知主循环的函数去解析环形缓冲区
+      uart8_rx_count++;           // 调试用：IDLE 中断计数，在 Watch 窗口查看此变量
   }
   /* USER CODE END UART8_IRQn 1 */
 }
@@ -395,15 +395,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 }
 
 /**
-  * @brief  CAN1 FIFO0 ??????????��???????
-  * @param  hcan CAN ??????
-  * @details 
-  *   - ?��????? CAN1 FIFO0 ?????????????????
-  *   - ?????????? HWT901B IMU ???????? CAN ?????
-  *   - ????????????????????????????????? IMU ????????
+  * @brief  CAN1 FIFO0 消息待处理回调函数
+  * @param  hcan CAN 句柄指针
+  * @details
+  *   - 当 CAN1 FIFO0 有新消息到达时由 HAL 库自动调用
+  *   - 当前仅处理 HWT901B IMU 传感器的 CAN 数据
+  *   - 如需扩展支持其他 CAN 设备，请在此添加对应的 IMU 或其他传感器回调
   * @note
-  *   - ???? CAN1_RX0_IRQHandler() ?��?????
-  *   - ???????????????????????????????????
+  *   - 运行在 CAN1_RX0_IRQHandler() 中断上下文
+  *   - 回调执行时间不宜过长，避免堵塞其他中断
   * @return None
   */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)

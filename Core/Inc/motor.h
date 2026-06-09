@@ -19,14 +19,14 @@ typedef struct
     uint8_t              MotorID;
     UART_HandleTypeDef*  huart;
 
-    // 物理量的�?点形�?
+    // 物理量的浮点形式
     float Tau_ff;       
     float Omega_des;     // rad/s
     float Theta_des;     // rad
     float Kp;
     float Kw;
 
-    // 报文�?16进制形式
+    // 报文的16进制形式
     int16_t Tau_set;
     int16_t Omega_set;
     int32_t Theta_set;

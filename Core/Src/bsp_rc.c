@@ -7,15 +7,15 @@ extern DMA_HandleTypeDef hdma_usart1_rx;
 void RC_init(uint8_t *rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num)
 {
     //enable the DMA transfer for the receiver request
-    //Ê¹ÄÜDMA´®¿Ú½ÓÊÕ
+    //ä½¿èƒ½DMAä¸²å£æŽ¥æ”¶
     SET_BIT(huart1.Instance->CR3, USART_CR3_DMAR);
 
-    //enalbe idle interrupt
-    //Ê¹ÄÜ¿ÕÏÐÖÐ¶Ï
+    //enable idle interrupt
+    //ä½¿èƒ½ç©ºé—²ä¸­æ–­
     __HAL_UART_ENABLE_IT(&huart1, UART_IT_IDLE);
 
     //disable DMA
-    //Ê§Ð§DMA
+    //å¤±èƒ½DMA
     __HAL_DMA_DISABLE(&hdma_usart1_rx);
     while(hdma_usart1_rx.Instance->CR & DMA_SxCR_EN)
     {
@@ -24,26 +24,20 @@ void RC_init(uint8_t *rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num)
 
     hdma_usart1_rx.Instance->PAR = (uint32_t) & (USART1->DR);
     //memory buffer 1
-    //ÄÚ´æ»º³åÇø1
+    //å†…å­˜ç¼“å†²åŒº1
     hdma_usart1_rx.Instance->M0AR = (uint32_t)(rx1_buf);
     //memory buffer 2
-    //ÄÚ´æ»º³åÇø2
+    //å†…å­˜ç¼“å†²åŒº2
     hdma_usart1_rx.Instance->M1AR = (uint32_t)(rx2_buf);
     //data length
-    //Êý¾Ý³¤¶È
+    //æ•°æ®é•¿åº¦
     hdma_usart1_rx.Instance->NDTR = dma_buf_num;
     //enable double memory buffer
-    //Ê¹ÄÜË«»º³åÇø
+    //ä½¿èƒ½åŒç¼“å†²åŒº
     SET_BIT(hdma_usart1_rx.Instance->CR, DMA_SxCR_DBM);
 
     //enable DMA
-    //Ê¹ÄÜDMA
+    //ä½¿èƒ½DMA
     __HAL_DMA_ENABLE(&hdma_usart1_rx);
 
 }
-
-
-
-
-
-

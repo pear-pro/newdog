@@ -1,5 +1,5 @@
 #include "motor_4310.h"
-/**************´ïÃîµç»ú******** */
+/**************è¾¾å¦™ç”µæœº ******** */
 motor_info_t damiao[4];
 
 
@@ -45,9 +45,9 @@ void Set_dm_mit(CAN_HandleTypeDef* hcan,int16_t ID)
     tor_tmp = float_to_uint(damiao[ID].tor, -10,10, 12);
     kp_tmp  = float_to_uint(damiao[ID].KP, 0.0, 500.0, 12);
     kd_tmp  = float_to_uint(damiao[ID].KD,  0.0, 5.0, 12);
-  can1TxMsg.IDE   = CAN_ID_STD;//±ê×¼ID
-  can1TxMsg.RTR   = CAN_RTR_DATA;//Êı¾İÖ¡
-  can1TxMsg.DLC   = 8;//Êı¾İ³¤¶È
+  can1TxMsg.IDE   = CAN_ID_STD;//æ ‡å‡†ID
+  can1TxMsg.RTR   = CAN_RTR_DATA;//æ•°æ®å¸§
+  can1TxMsg.DLC   = 8;//æ•°æ®é•¿åº¦
 
     can1TxData[0] = (pos_tmp >> 8);
     can1TxData[1] = pos_tmp;
@@ -58,10 +58,10 @@ void Set_dm_mit(CAN_HandleTypeDef* hcan,int16_t ID)
     can1TxData[6] = ((kd_tmp&0xF)<<4)|(tor_tmp>>8);
     can1TxData[7] = tor_tmp;
 
-	/* ÏÈ¼ì²éÊÇ·ñÓĞ¿ÕµÄ TX mailbox£¬Ö»ÓĞÓĞ¿ÕÎ»²Å·¢ËÍ±¨ÎÄ */
+	/* å…ˆæ£€æŸ¥æ˜¯å¦æœ‰ç©ºé—²çš„ TX mailboxï¼Œåªæœ‰æœ‰ç©ºä½æ‰å‘é€æŠ¥æ–‡ */
 	if(HAL_CAN_GetTxMailboxesFreeLevel(hcan) > 0)
 	{
- 			HAL_CAN_AddTxMessage(hcan, &can1TxMsg, can1TxData, (uint32_t*)CAN_TX_MAILBOX0);//·¢ËÍ±¨ÎÄ
+ 			HAL_CAN_AddTxMessage(hcan, &can1TxMsg, can1TxData, (uint32_t*)CAN_TX_MAILBOX0);//å‘é€æŠ¥æ–‡
 	}
 }
 
@@ -71,10 +71,10 @@ void Set_dm_speed(CAN_HandleTypeDef* hcan,int16_t ID,float  speed)
     CAN_TxHeaderTypeDef tx_msg;
     uint8_t tx_data[8] = {0};
 
-    tx_msg.StdId = 0x200 + ID;  //±¨ÎÄID µÈÓÚÉè¶¨µÄ CAN ID Öµ + 0x200
+    tx_msg.StdId = 0x200 + ID;  //ç”µæœºID è¯·æ ¹æ®ä½ è®¾å®šçš„ CAN ID å€¼ + 0x200
     tx_msg.IDE = CAN_ID_STD;
     tx_msg.RTR = CAN_RTR_DATA;
-    tx_msg.DLC = 4;   // ËÙ¶ÈÄ£Ê½Ö»ĞèÒª·¢ËÍ4×Ö½ÚÊı¾İ
+    tx_msg.DLC = 4;   // é€Ÿåº¦æ¨¡å¼åªéœ€è¦å‘é€4å­—èŠ‚æµ®ç‚¹æ•°
 
     uint8_t *p = (uint8_t *)&speed;
 
@@ -95,10 +95,10 @@ void Set_dm_pos(CAN_HandleTypeDef* hcan,uint16_t ID,float pos,float vel)
 	CAN_TxHeaderTypeDef tx_msg;
 	uint8_t tx_data[8] = {0};
 
-	tx_msg.StdId = 0x100 + ID;  //±¨ÎÄID µÈÓÚÉè¶¨µÄ CAN ID Öµ + 0x100
+	tx_msg.StdId = 0x100 + ID;  //ç”µæœºID è¯·æ ¹æ®ä½ è®¾å®šçš„ CAN ID å€¼ + 0x100
 	tx_msg.IDE = CAN_ID_STD;
 	tx_msg.RTR = CAN_RTR_DATA;
-	tx_msg.DLC = 8;   // Î»ÖÃÄ£Ê½ĞèÒª·¢ËÍ8×Ö½ÚÊı¾İ
+	tx_msg.DLC = 8;   // ä½ç½®æ¨¡å¼éœ€è¦å‘é€8å­—èŠ‚æ•°æ®
 
 	uint8_t *p_pos = (uint8_t *)&pos;
 	uint8_t *p_vel = (uint8_t *)&vel;
@@ -123,10 +123,10 @@ void Set_dm_enable(CAN_HandleTypeDef* hcan,uint8_t ID)
   CAN_TxHeaderTypeDef can1TxMsg;
   uint8_t             can1TxData[8] = {0};
 
-  can1TxMsg.StdId = 0x00+ID;  //Ä£Ê½Æ«ÒÆID£ºMITÄ£Ê½Æ«ÒÆ0x00£¬Î»ÖÃËÙ¶ÈÄ£Ê½Æ«ÒÆ0x100£¬ËÙ¶ÈÄ£Ê½Æ«ÒÆ0x200£¬Á¦Î»»ì¿ØÄ£Ê½Æ«ÒÆ0x300
-  can1TxMsg.IDE   = CAN_ID_STD;//±ê×¼ID
-  can1TxMsg.RTR   = CAN_RTR_DATA;//Êı¾İÖ¡
-  can1TxMsg.DLC   = 8;//Êı¾İ³¤¶È
+  can1TxMsg.StdId = 0x00+ID;  //æ¨¡å¼åç§»IDï¼šMITæ¨¡å¼åç§»0x00ï¼Œä½ç½®é€Ÿåº¦æ¨¡å¼åç§»0x100ï¼Œé€Ÿåº¦æ¨¡å¼åç§»0x200ï¼Œçº¯ä½ç½®æ¨¡å¼åç§»0x300
+  can1TxMsg.IDE   = CAN_ID_STD;//æ ‡å‡†ID
+  can1TxMsg.RTR   = CAN_RTR_DATA;//æ•°æ®å¸§
+  can1TxMsg.DLC   = 8;//æ•°æ®é•¿åº¦
 
     can1TxData[0] = 0xFF;
     can1TxData[1] = 0xFF;
@@ -140,7 +140,7 @@ void Set_dm_enable(CAN_HandleTypeDef* hcan,uint8_t ID)
 
 	if(HAL_CAN_GetTxMailboxesFreeLevel(hcan) > 0)
 	{
-			HAL_CAN_AddTxMessage(hcan, &can1TxMsg, can1TxData, (uint32_t*)CAN_TX_MAILBOX0);//¡¤¡é?¨ª¡À¡§??
+			HAL_CAN_AddTxMessage(hcan, &can1TxMsg, can1TxData, (uint32_t*)CAN_TX_MAILBOX0);
 	}
 }
 
@@ -149,9 +149,9 @@ void Set_dm_disable(CAN_HandleTypeDef* hcan,uint8_t ID)
   CAN_TxHeaderTypeDef can1TxMsg;
   uint8_t             can1TxData[8] = {0};
   can1TxMsg.StdId = 0x00+ID;
-  can1TxMsg.IDE   = CAN_ID_STD;//±ê×¼ID
-  can1TxMsg.RTR   = CAN_RTR_DATA;//Êı¾İÖ¡
-  can1TxMsg.DLC   = 8;//Êı¾İ³¤¶È
+  can1TxMsg.IDE   = CAN_ID_STD;//æ ‡å‡†ID
+  can1TxMsg.RTR   = CAN_RTR_DATA;//æ•°æ®å¸§
+  can1TxMsg.DLC   = 8;//æ•°æ®é•¿åº¦
 
 	can1TxData[0] = 0xFF;
 	can1TxData[1] = 0xFF;
@@ -174,9 +174,9 @@ void Set_dm_zeropoint(CAN_HandleTypeDef* hcan,uint16_t CAN_ID)
   CAN_TxHeaderTypeDef can1TxMsg;
   uint8_t             can1TxData[8] = {0};
   can1TxMsg.StdId = CAN_ID;
-  can1TxMsg.IDE   = CAN_ID_STD;//±ê×¼ID
-  can1TxMsg.RTR   = CAN_RTR_DATA;//Êı¾İÖ¡
-  can1TxMsg.DLC   = 8;//Êı¾İ³¤¶È
+  can1TxMsg.IDE   = CAN_ID_STD;//æ ‡å‡†ID
+  can1TxMsg.RTR   = CAN_RTR_DATA;//æ•°æ®å¸§
+  can1TxMsg.DLC   = 8;//æ•°æ®é•¿åº¦
   can1TxData[0]=0xff;
   can1TxData[1]=0xff;
   can1TxData[2]=0xff;
@@ -186,30 +186,29 @@ void Set_dm_zeropoint(CAN_HandleTypeDef* hcan,uint16_t CAN_ID)
   can1TxData[6]=0xff;
   can1TxData[7]=0xfe;
 
-	/* ÏÈ¼ì²éÊÇ·ñÓĞ¿ÕµÄ TX mailbox£¬Ö»ÓĞÓĞ¿ÕÎ»²Å·¢ËÍ±¨ÎÄ */
+	/* å…ˆæ£€æŸ¥æ˜¯å¦æœ‰ç©ºé—²çš„ TX mailboxï¼Œåªæœ‰æœ‰ç©ºä½æ‰å‘é€æŠ¥æ–‡ */
 	if(HAL_CAN_GetTxMailboxesFreeLevel(hcan) > 0)
 	{
-			HAL_CAN_AddTxMessage(hcan, &can1TxMsg, can1TxData, (uint32_t*)CAN_TX_MAILBOX0);//·¢ËÍ±¨ÎÄ
+			HAL_CAN_AddTxMessage(hcan, &can1TxMsg, can1TxData, (uint32_t*)CAN_TX_MAILBOX0);//å‘é€æŠ¥æ–‡
 	}
 }
 
-void dm_motor_fbdata(motor_info_t *motor, uint8_t *rx_data) //master_idÄ¬ÈÏÎª0(²»Ó°Ïì½âÎö)
+void dm_motor_fbdata(motor_info_t *motor, uint8_t *rx_data) //master_idé»˜è®¤ä¸º0(ä¸å½±å“è§£ç®—)
 {
-//    // ½âÎöµç»úIDºÍ×´Ì¬£¨Ò»°ãÓÃ²»µ½£¬µ«Ğ­ÒéÀïÓĞ£©
+//    // ç”µæœºç¼–å·IDå’ŒçŠ¶æ€ï¼ˆä¸€èˆ¬ä¸ç”¨ï¼Œçœ‹åè®®å°±æœ‰ï¼‰
 //    motor->para.id = (rx_data[0]) & 0x0F;
 //    motor->para.state = (rx_data[0]) >> 4;
 
-    // ½âÎöÎ»ÖÃÔ­Ê¼Öµ£¨¸ß×Ö½Ú+µÍ×Ö½Ú£©
+    // è¯»å–ä½ç½®åŸå§‹å€¼ï¼ˆé«˜å­—èŠ‚+ä½å­—èŠ‚ï¼‰
     uint16_t p_int = (rx_data[1] << 8) | rx_data[2];
-    // ½âÎöËÙ¶ÈÔ­Ê¼Öµ£¨¿ç×Ö½ÚÆ´½Ó£©
+    // è¯»å–é€Ÿåº¦åŸå§‹å€¼ï¼ˆé«˜å­—èŠ‚æ‹¼æ¥ï¼‰
     uint16_t v_int = (rx_data[3] << 4) | (rx_data[4] >> 4);
-    // ½âÎö×ª¾ØÔ­Ê¼Öµ£¨¿ç×Ö½ÚÆ´½Ó£©
+    // è¯»å–è½¬çŸ©åŸå§‹å€¼ï¼ˆé«˜å­—èŠ‚æ‹¼æ¥ï¼‰
     uint16_t t_int = ((rx_data[4] & 0x0F) << 8) | rx_data[5];
 
-    // °ÑÔ­Ê¼Öµ×ª»»³ÉÊµ¼ÊÎïÀíÖµ
+    // å°†åŸå§‹å€¼è½¬æ¢ä¸ºå®é™…ç‰©ç†å€¼
     motor->Rxmsg.Angle = uint_to_float(p_int, -12.5,12.5,16);
     motor->Rxmsg.Speed = uint_to_float(v_int, -30,30,12);
     motor->Rxmsg.Torque = uint_to_float(t_int, -10,10,12);
 	//motor->Angle_pid.get = motor->Rxmsg.Angle;
 }
-

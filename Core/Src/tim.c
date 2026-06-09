@@ -26,6 +26,7 @@
 #include "gait.h"
 #include "global_var.h"
 #include "ht_10a_remote_control.h"
+#include "debug_uart.h"
 
 /*
 定时器说明：TIM9->1us计数周期，用来写delay_us;TIM10->10ms一次中断用来，更新veloY
@@ -262,7 +263,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
   {
   /* USER CODE BEGIN TIM10_MspDeInit 0 */
 
-  /* USER CODE END TIM10_MspDeInit 0 */
+  /* USER CODE END TIM10_MspDeInit 0 */                                                          
     /* Peripheral clock disable */
     __HAL_RCC_TIM10_CLK_DISABLE();
 
@@ -278,6 +279,14 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     if (htim->Instance == TIM10) {
+		/* ── VOFA 遥测: 20Hz 发送 IMU 姿态 (100Hz / 5) ── */
+		static uint8_t vofa_div = 0;
+		if (++vofa_div >= 5) {
+			vofa_div = 0;
+			float imu_buf[9] = {body_roll, body_pitch, body_yaw, GyroX, GyroY, GyroZ, AccX, AccY, AccZ};
+			Vofa_JustFloat(imu_buf, 9);
+		}
+
 		float AccY_correct=(AccY-0.0045f);
 		if (AccY_correct>0.003f||AccY_correct<-0.003f) {
 			VeloY += AccY_correct*0.01f;

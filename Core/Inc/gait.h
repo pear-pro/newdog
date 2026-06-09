@@ -4,7 +4,7 @@
 #define Ts 1.00f          // 控制周期
 #include "stm32f4xx.h"
 
-/*某只脚的两个电机�?动的角度，alpha和beta*/
+/*某只脚的两个电机驱动的角度，alpha和beta*/
 typedef struct
 {
 	float alpha;
@@ -32,7 +32,7 @@ typedef struct
   float ySwing;    // 前半周期生成的摆动相的y坐标
   float xSupport;  // 前半周期生成的支撑相的x坐标
   float ySupport;  // 前半周期生成的支撑相的y坐标
-  float sigma;     // 轨迹生成三�?�函数中的相�?
+  float sigma;     // 轨迹生成三角函数中的相位
 }GaitPhasesPoints;
 
 typedef enum

@@ -8,7 +8,7 @@
 
 void Vofa_JustFloat(float *_data, uint8_t _num)
 {
-    uint8_t tempData[100];
+    static uint8_t tempData[100];  /* static: DMA 异步发送，不能随函数返回释放 */
     uint8_t temp_end[4] = {0, 0, 0x80, 0x7F};
     float temp_copy[_num];
 

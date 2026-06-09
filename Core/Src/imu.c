@@ -1,57 +1,57 @@
 
 /**
  * @file    IMU.c
- * @brief   Î¬ÌØÖÇÄÜ HWT901B ×ËÌ¬´«¸ĞÆ÷ CAN Ğ­Òé½âÎö
- * @note    ÒÑÊÊÅä coreimu ¹¤³ÌÊµ¼ÊÊ¹ÓÃµÄ 0x50 ±êÊ¶·û + 0x55 Ö¡Í·Í¸´«Ğ­Òé·â×°
+ * @brief   ç»´ç‰¹æ™ºèƒ½ HWT901B å§¿æ€ä¼ æ„Ÿå™¨ CAN åè®®æ ˆ
+ * @note    åŸºäºæ—§ç‰ˆæœ¬ coreimuï¼Œå®é™…ä½¿ç”¨ 0x50 æ ‡è¯†ç¬¦ + 0x55 å¸§å¤´é€ä¼ åè®®å°è£…
  */
 #include "IMU.h"
-#include "gpio.h" // ÒıÈëÌ½ÕëÒı½Å¶¨Òå
-#include "main.h" // ÒıÈë»ñÈ¡ÏµÍ³Ê±¼äµÄ HAL_GetTick() 
+#include "gpio.h" // GPIOæ¢é’ˆå¼•è„šå®šä¹‰
+#include "main.h" // ç”¨äºè·å–ç³»ç»Ÿæ—¶é’Ÿ HAL_GetTick()
 
-/* * Ç¿ÖÆÉùÃ÷Îª volatile£¬·ÀÓù±àÒëÆ÷¼¤½øÓÅ»¯ÏİÚå¡£
- * È·±£Ó¦ÓÃ²ãËã·¨Ã¿´Î¶ÁÈ¡µ½µÄ¶¼ÊÇÖĞ¶Ï¸Õ¸ÕĞ´Èë RAM µÄÏÊ»îÊı¾İ¡£
+/* å¼ºåˆ¶å£°æ˜ä¸º volatileï¼Œé˜²æ­¢ç¼–è¯‘å™¨ä¼˜åŒ–å¯¼è‡´å–å€¼å¼‚å¸¸ã€‚
+ * ç¡®ä¿åº”ç”¨å±‚ç®—æ³•æ¯æ¬¡è¯»å–çš„éƒ½æ˜¯ä¸­æ–­åˆšåˆšå†™å…¥ RAM çš„æœ€æ–°æ•°æ®ã€‚
  */
 
 volatile IMU_Info_t IMU_rx_data = {0};
 
-// ----------speed of x,y,z---------
-float VeloY=0.0f;
+// ---------- Yè½´é€Ÿåº¦ ---------
+volatile float VeloY=0.0f;
 
-// ----Ë®Æ½Æ½ºâpid²ÎÊı---
-float stab_roll = 0.0f; 
-float kp_roll = 0.01f; // 0.03
+// ---- æ°´å¹³å¹³è¡¡PIDå‚æ•° ---
+float stab_roll = 0.0f;
+float kp_roll = 0.01f;
 float kd_roll = 0.001f;
 
-// ----½Ç¶È--------------
-float body_roll = 0.0f; 
-float body_pitch = 0.0f; 
-float body_yaw = 0.0f;
+// ---- å§¿æ€è§’ ---------------
+volatile float body_roll = 0.0f;
+volatile float body_pitch = 0.0f;
+volatile float body_yaw = 0.0f;
 float prev_body_roll = 0.0f;
 
-// ----½ÇËÙ¶È--------------
-float GyroX=0.0f;
-float GyroY=0.0f;
-float GyroZ=0.0f;
+// ---- è§’é€Ÿåº¦ ---------------
+volatile float GyroX=0.0f;
+volatile float GyroY=0.0f;
+volatile float GyroZ=0.0f;
 
-// ----½Ç¼ÓËÙ¶È--------------
-float AccX=0.0f;
-float AccY=0.0f;
-float AccZ=0.0f;
+// ---- åŠ é€Ÿåº¦ ---------------
+volatile float AccX=0.0f;
+volatile float AccY=0.0f;
+volatile float AccZ=0.0f;
 
 /**
- * @brief IMU Êı¾İ½ÓÊÕÍê³ÉºóµÄÓ¦ÓÃ²ã´¦Àí»Øµ÷
+ * @brief IMU æ•°æ®æ¥æ”¶å®Œæˆåçš„åº”ç”¨å±‚å¤„ç†å›è°ƒ
  * @details
- *   - ´Ó½ÓÊÕ»º³åÇø (IMU_rx_data) ¸üĞÂÓ¦ÓÃ²ãÈ«¾Ö±äÁ¿
- *   - ÔÚÖĞ¶ÏÉÏÏÂÎÄÖĞ¸ßÓÅÏÈ¼¶Ö´ĞĞ
- *   - ¿ÉÔÚ´ËÌí¼ÓÂË²¨¡¢²¹³¥¡¢ÈÚºÏµÈÊµÊ±Ëã·¨
+ *   - ä»æ¥æ”¶ç¼“å†²åŒº (IMU_rx_data) å¤åˆ¶åˆ°åº”ç”¨å±‚å…¨å±€å˜é‡
+ *   - åœ¨ä¸­æ–­ä¸Šä¸‹æ–‡ä¸­ä»¥æœ€é«˜ä¼˜å…ˆçº§æ‰§è¡Œ
+ *   - ç”¨äºåç»­æ»¤æ³¢ã€å§¿æ€èåˆç­‰å®æ—¶ç®—æ³•
  */
 static void IMU_App_Update(void)
 {
-    /* ½«×îĞÂ½ÓÊÕµÄÅ·À­½Ç¸´ÖÆµ½Ó¦ÓÃ²ãÈ«¾Ö±äÁ¿ */
+    /* å°†æœ€æ–°æ¥æ”¶çš„æ¬§æ‹‰è§’å¤åˆ¶åˆ°åº”ç”¨å±‚å…¨å±€å˜é‡ */
     body_roll = IMU_rx_data.Roll;
     body_pitch = IMU_rx_data.Pitch-90.0f;
     body_yaw = IMU_rx_data.Yaw;
-    
+
     GyroX = IMU_rx_data.GyroX;
     GyroY = IMU_rx_data.GyroY;
     GyroZ = IMU_rx_data.GyroZ;
@@ -60,10 +60,11 @@ static void IMU_App_Update(void)
     AccY = IMU_rx_data.AccY;
     AccZ = IMU_rx_data.AccZ;
 
-     /* ÆäËûÊµÊ±¼ÆËã£¨Èç PID µ÷Õû£©¿ÉÔÚ´ËÌí¼Ó£¬È·±£¼ÆËãĞ§ÂÊÒÔÊÊÓ¦¸ßÆµÖĞ¶Ï */
+    /* ä»¥ä¸‹ä¸ºå®æ—¶è®¡ç®—é¢„ç•™ä½ç½®ï¼ˆå¦‚ PID æ§åˆ¶ã€å¡å°”æ›¼æ»¤æ³¢ç­‰ï¼‰ï¼Œ
+     * ç¡®ä¿æ‰€æœ‰æ•°å€¼è¿ç®—éƒ½åœ¨é«˜é¢‘ç‡ä¸­æ–­ä¸­å®Œæˆ */
 
-    /* ¿ÉÔÚ´ËÌí¼ÓÊµÊ±¼ÆËã
-     * ÀıÈç£º»ùÓÚÎÈ¶¨Óà¶ÈµÄ PID µ÷Õû£¬ºóĞøPID¼ÆËã»¹Ã»Íê³É£¬ÏÈ·Å¸öÕ¼Î»
+    /* å¾…å®ç°çš„å®æ—¶è®¡ç®—
+     * ä¾‹å¦‚ï¼šæ¨ªæ»šç¨³å®šåº¦çš„ PID æ§åˆ¶ï¼ˆPIDè®¡ç®—è¿˜æœªå®Œæˆï¼Œå…ˆæ”¾ä¸ªå ä½ï¼‰
      * kp_roll = body_roll * 0.6f + ...
      */
     // stab_roll = body_roll * kp_roll + ...
@@ -71,10 +72,9 @@ static void IMU_App_Update(void)
 
 
 /**
- * @brief  HWT901B CAN Ğ­Òé³¬¸ßËÙ±¨ÎÄ½âÎöº¯Êı
- * @param  can_id: CAN ±ê×¼Ö¡ ID (ÒÑÔÚÉÏÒ»²ãÂ·ÓÉĞ£Ñé£¬´Ë´¦×÷ÎªÕ¼Î»£¬±£ÁôÎ´À´À©Õ¹)
- * @param  rx_data:   8 ×Ö½ÚµÄ CAN Êı¾İÓòÖ¸Õë
- * @note   ¸Ãº¯ÊıÔËĞĞÔÚ¼«¸ßÆµµÄ CAN RX0 ÖĞ¶ÏÉÏÏÂÎÄÖĞ£¬ÑÏ½ûÔÚ´ËÌí¼ÓÑÓÊ±»ò printf£¡
+ * @brief  HWT901B CAN åè®®æ ˆè¶…å¿«é€Ÿçš„æ¥æ”¶å›è°ƒ
+ * @param  hcan: CAN å¥æŸ„æŒ‡é’ˆ
+ * @note   è¯¥å‡½æ•°è¿è¡Œåœ¨æé«˜é¢‘çš„ CAN RX0 ä¸­æ–­æœåŠ¡ç¨‹åºä¸­ï¼Œä¸¥ç¦åœ¨æ­¤å¤„ä½¿ç”¨è€—æ—¶çš„ printfã€‚
  */
 
 void IMU_CAN_RXCALLback(CAN_HandleTypeDef *hcan)
@@ -82,72 +82,72 @@ void IMU_CAN_RXCALLback(CAN_HandleTypeDef *hcan)
 
     CAN_RxHeaderTypeDef rx_header;
     uint8_t rx_data[8];
-     int16_t raw_x, raw_y, raw_z;
-    
+    int16_t raw_x, raw_y, raw_z;
+
     if (hcan->Instance == CAN1)
     {
-       
+
         if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data) == HAL_OK)
-        {                       
-                /* Î¬ÌØ±ê×¼Ğ­Òé¶ş´ÎĞ£Ñé£ºÖ¡Í·±ØĞëÎª 0x55 */           
+        {
+                /* ç»´ç‰¹æ ‡å‡†åè®®æ ¡éªŒï¼šå¸§å¤´å¿…é¡»ä¸º 0x55 */
               if ( rx_header.IDE == CAN_ID_STD && rx_data[0] == 0x55 && rx_header.StdId == 0x50)
                 {
-                    /* Ë¢ĞÂÈ«¾ÖÊ±¼ä´ÁÓëÖ¡¼ÆÊı£¬ÎªÉÏ²ãËÀ»ú/ÀëÏß¿´ÃÅ¹·Ìá¹©ÅĞ¶¨ÒÀ¾İ */
+                    /* åˆ·æ–°å…¨å±€æ—¶é—´æˆ³å’Œå¸§è®¡æ•°å™¨ï¼Œä¸ºä¸Šå±‚åº”ç”¨/ç¦»çº¿åˆ†ææä¾›æ—¶é—´åŸºå‡† */
                     IMU_rx_data.last_update_time = HAL_GetTick();
                     IMU_rx_data.FrameCount++;
 
-                   /* ½âÎö²»Í¬±¨ÎÄÀàĞÍ */
+                   /* æŒ‰å¸§ç±»å‹åˆ†å‘å¤„ç† */
                  switch (rx_data[1])
-                  {                /* Ê¹ÓÃ±àÒëÆÚÕÛµş³Ë·¨´úÌæÔËĞĞÊ±³ı·¨£¬Ñ¹Õ¥ FPU ĞÔÄÜ */
-                        case 0x51: /* ¼ÓËÙ¶ÈÖ¡ (Ax, Ay, Az) */
+                  {                /* ä½¿ç”¨é¢„è®¡ç®—çš„é™¤æ³•å€’æ•°ï¼Œå¤§å¹…å‹æ¦¨ FPU å¼€é”€ */
+                        case 0x51: /* åŠ é€Ÿåº¦å¸§ (Ax, Ay, Az) */
                             raw_x = (int16_t)((rx_data[3] << 8) | rx_data[2]);
                             raw_y = (int16_t)((rx_data[5] << 8) | rx_data[4]);
                             raw_z = (int16_t)((rx_data[7] << 8) | rx_data[6]);
-                            
-                         
-                            // Á¿³Ì 16g£¬Ô­Ê¼ÖµÎª 16 Î»ÓĞ·ûºÅÕûÊı£¬·¶Î§ -32768~32767
+
+
+                            // é‡ç¨‹ 16gï¼ŒåŸå§‹å€¼ä¸º 16 ä½æœ‰ç¬¦å·æ•´æ•°ï¼ŒèŒƒå›´ -32768~32767
                             IMU_rx_data.AccX = (float)raw_x * IMU_ACC_RATIO;
                             IMU_rx_data.AccY = (float)raw_y * IMU_ACC_RATIO;
                             IMU_rx_data.AccZ = (float)raw_z * IMU_ACC_RATIO;
                             break;
 
-                        case 0x52: /* ½ÇËÙ¶ÈÖ¡ (Wx, Wy, Wz) */
+                        case 0x52: /* è§’é€Ÿåº¦å¸§ (Wx, Wy, Wz) */
                             raw_x = (int16_t)((rx_data[3] << 8) | rx_data[2]);
                             raw_y = (int16_t)((rx_data[5] << 8) | rx_data[4]);
                             raw_z = (int16_t)((rx_data[7] << 8) | rx_data[6]);
-                            
-                            // Á¿³Ì 2000¡ã/s
+
+                            // é‡ç¨‹ 2000Â°/s
                             IMU_rx_data.GyroX = (float)raw_x * IMU_GYRO_RATIO;
                             IMU_rx_data.GyroY = (float)raw_y * IMU_GYRO_RATIO;
                             IMU_rx_data.GyroZ = (float)raw_z * IMU_GYRO_RATIO;
                             break;
 
-                        case 0x53: /* Å·À­½ÇÖ¡ (Roll, Pitch, Yaw) */
+                        case 0x53: /* æ¬§æ‹‰è§’å¸§ (Roll, Pitch, Yaw) */
                             raw_x = (int16_t)((rx_data[3] << 8) | rx_data[2]);
                             raw_y = (int16_t)((rx_data[5] << 8) | rx_data[4]);
                             raw_z = (int16_t)((rx_data[7] << 8) | rx_data[6]);
-                            
-                            // Á¿³Ì 180¡ã
+
+                            // é‡ç¨‹ 180Â°
                             IMU_rx_data.Roll  = (float)raw_x * IMU_ANGLE_RATIO;
                             IMU_rx_data.Pitch = (float)raw_y * IMU_ANGLE_RATIO;
                             IMU_rx_data.Yaw   = (float)raw_z * IMU_ANGLE_RATIO;
                             break;
 
                         default:
-                            /* ÆäËû±¨ÎÄ (Èç´Å³¡µÈ) Ä¿Ç°ÏµÍ³ÎŞĞè¹Ø×¢£¬Ö±½Ó·ÅĞĞ
-                            ºóĞøÈôÓĞĞèÇó¿ÉÔÙÌí¼Ó´¦Àí
+                            /* æœªæ”¯æŒå¸§ç±»å‹ (å¦‚ç£åœºç­‰)ï¼Œç›®å‰ç³»ç»Ÿå¯¹æ­¤æ— éœ€æ±‚ï¼Œç›´æ¥ä¸¢å¼ƒ
+                               å¦‚éœ€æ‰©å±•ï¼Œè¯·åœ¨æ­¤æ·»åŠ å¤„ç†ä»£ç 
                             */
                             break;
                     }
-                    
-                    /* Êı¾İÍê³Éºó£¬Á¢¼´¸üĞÂÓ¦ÓÃ²ã±äÁ¿ */
-                    /* ½« IMU_rx_data ½ÓÊÕµ½µÄÊı¾İ¸³Öµ¸øÓ¦ÓÃ²ã±äÁ¿£¬ÓÃÓÚºóĞø¿ØÖÆ¼ÆËã */
+
+                    /* è§£æå®Œæˆåç«‹å³è°ƒç”¨åº”ç”¨å±‚å›è°ƒ */
+                    /* å°† IMU_rx_data æ¥æ”¶åˆ°çš„æ–°æ•°æ®èµ‹å€¼ç»™åº”ç”¨å±‚å˜é‡ï¼Œç”¨äºåç»­æ§åˆ¶è®¡ç®— */
                     IMU_App_Update();
-                            
+
                     /* ==============================================================
-                     * Ì½ÕëµÍ¿ªÏú·­×ª£º¼ÆÊıµ½ 20 Ö¡·´×ªÒ»´ÎÒı½Å
-                     * ÓÃÍ¾£ºÈâÑÛ¹Û²ì GPIO_PIN_14£¨PF14£©µÄÉÁË¸ÆµÂÊ£¬ÆÀ¹À IMU CAN Í¨ĞÅ½¡¿µ¶È
-                     * Ô­Àí£ºÃ¿ÊÕµ½ 20 Ö¡ÏûÏ¢·­×ªÒ»´Î£¬½¡¿µÍ¨ĞÅÊ±Ô¼ 50Hz ·­×ªÆµÂÊ
+                     * è°ƒè¯•ç”¨ LED ç¿»è½¬ï¼šæ¯æ”¶åˆ° 20 å¸§ç¿»è½¬ä¸€æ¬¡ç”µå¹³
+                     * ç”¨é€”ï¼šè‚‰çœ¼è§‚å¯Ÿ GPIO_PIN_14(PF14) çš„é—ªçƒé¢‘ç‡ï¼ŒéªŒè¯ IMU CAN é€šä¿¡æ˜¯å¦æ­£å¸¸
+                     * åŸç†ï¼šæ¯æ”¶åˆ° 20 å¸§æ¶ˆæ¯ç¿»è½¬ä¸€æ¬¡ï¼Œæ­£å¸¸é€šä¿¡æ—¶çº¦ 50Hz çš„ç¿»è½¬é¢‘ç‡
                      * ============================================================== */
                     if (IMU_rx_data.FrameCount >= 20)
                     {
@@ -156,8 +156,7 @@ void IMU_CAN_RXCALLback(CAN_HandleTypeDef *hcan)
                     }
 
                }
-           } 
+           }
 
       }
 }
-
