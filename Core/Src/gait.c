@@ -17,7 +17,7 @@
 
 #define pi 3.141592f
 
-float Forward_freq = 0.01f; // 0.004 
+float Forward_freq = 0.0099f; // 0.004 
 #define up_down_freq 0.004f
 #define crawl_freq 0.002f
 
