@@ -1,7 +1,3 @@
-build
-mx.scratch
-!.settings
-
 # Build outputs
 build/
 cmake/build/
@@ -11,6 +7,8 @@ cmake-build-*/
 .vscode/
 .clangd/
 .idea/
+.settings/
+.history/
 
 # STM32CubeMX
 *.mxproject
@@ -25,6 +23,8 @@ mx.scratch
 *.uvguix.*
 *.bak
 *.dep
+*.htm
+*.lnp
 *.lst
 *.map
 *.o
@@ -35,6 +35,7 @@ mx.scratch
 *.hex
 *.bin
 *.crf
+
 # GCC/Clang outputs
 *.d
 *.a

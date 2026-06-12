@@ -408,8 +408,8 @@ void Motor_SendCmd_AllAngle()
 	hmotor7.Theta_des = motor7_bias / 6.33f + 6.28f * hposition4.alpha / 360.0f + flip_offset;
 	hmotor8.Theta_des = motor8_bias / 6.33f + 6.28f * hposition4.beta / 360.0f - flip_offset;
 	
-	Motor_SendCmd(&hmotor1);
-	MY_delay_us(TRANSNIT_DELAY);	
+	// Motor_SendCmd(&hmotor1);
+	// MY_delay_us(TRANSNIT_DELAY);	
 	Motor_SendCmd(&hmotor3);
 	uint32_t tick = HAL_GetTick();
    while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
@@ -427,7 +427,7 @@ void Motor_SendCmd_AllAngle()
           if (uart6_tx_busy)uart6_tx_busy=0;
 //	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor2);
-						Motor_SendCmd(&hmotor8);
+					//	Motor_SendCmd(&hmotor8);
 				 tick = HAL_GetTick();
            while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
                 Motor_Feedback_Process();    
@@ -436,7 +436,7 @@ void Motor_SendCmd_AllAngle()
           if (uart6_tx_busy)uart6_tx_busy=0;
 //	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor7);
-						Motor_SendCmd(&hmotor8);
+					//	Motor_SendCmd(&hmotor8);
 				 tick = HAL_GetTick();
            while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
                 Motor_Feedback_Process();    
@@ -445,7 +445,7 @@ void Motor_SendCmd_AllAngle()
           if (uart6_tx_busy)uart6_tx_busy=0;
 //	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor1);
-						Motor_SendCmd(&hmotor8);
+						//	Motor_SendCmd(&hmotor8);
 				 tick = HAL_GetTick();
            while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
                 Motor_Feedback_Process();    
@@ -454,7 +454,7 @@ void Motor_SendCmd_AllAngle()
           if (uart6_tx_busy)uart6_tx_busy=0;
 //	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor6);
-						Motor_SendCmd(&hmotor8);
+						//Motor_SendCmd(&hmotor8);
 				 tick = HAL_GetTick();
            while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
                 Motor_Feedback_Process();    
@@ -463,7 +463,7 @@ void Motor_SendCmd_AllAngle()
           if (uart6_tx_busy)uart6_tx_busy=0;
 //	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor4);
-						Motor_SendCmd(&hmotor8);
+					//	Motor_SendCmd(&hmotor8);
 				 tick = HAL_GetTick();
            while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
                 Motor_Feedback_Process();    
@@ -472,7 +472,7 @@ void Motor_SendCmd_AllAngle()
           if (uart6_tx_busy)uart6_tx_busy=0;
 //	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor5);
-						Motor_SendCmd(&hmotor8);
+						//	Motor_SendCmd(&hmotor8);
 				 tick = HAL_GetTick();
            while(uart6_tx_busy&&(HAL_GetTick()-tick< WAIT_TIME)){
                 Motor_Feedback_Process();    

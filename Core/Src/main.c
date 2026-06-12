@@ -127,7 +127,7 @@ void SystemClock_Config(void);
 
 
 /* USER CODE END PFP */
-	
+
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
@@ -148,7 +148,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-   HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -265,7 +265,9 @@ int main(void)
   //     uart8_walk_request = 0;
   // }
 
-  // 遥控取值：0x0320,0x0000,0xFCE0
+  // 遥控取值：上   0xFCE0
+  //                0x0320
+  //           下   0x0000
   /* 功能说明
   *    sw5    sw6    sw7    sw8    代码位置    功能              state
   *   0xFCE0   -      -      -       tim10     急停               -(不在switch中)

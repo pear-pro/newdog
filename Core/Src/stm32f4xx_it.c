@@ -68,10 +68,9 @@ extern DMA_HandleTypeDef hdma_uart7_tx;
 extern DMA_HandleTypeDef hdma_uart8_rx;
 extern DMA_HandleTypeDef hdma_uart8_tx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
-extern DMA_HandleTypeDef hdma_usart6_tx;
 extern DMA_HandleTypeDef hdma_usart6_rx;
+extern DMA_HandleTypeDef hdma_usart6_tx;
 extern UART_HandleTypeDef huart7;
-extern UART_HandleTypeDef huart8;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN EV */
@@ -400,27 +399,6 @@ void UART7_IRQHandler(void)
   /* USER CODE BEGIN UART7_IRQn 1 */
 
   /* USER CODE END UART7_IRQn 1 */
-}
-
-/**
-  * @brief This function handles UART8 global interrupt.
-  */
-void UART8_IRQHandler(void)
-{
-  /* USER CODE BEGIN UART8_IRQn 0 */
-
-  /* USER CODE END UART8_IRQn 0 */
-  HAL_UART_IRQHandler(&huart8); //
-  /* USER CODE BEGIN UART8_IRQn 1 */
-
-  // 检查 UART8 是否触发了 IDLE（线路空闲）中断
-  // IDLE = 一帧数据发送完毕，线路空闲超过 1 字节时间
-  if (__HAL_UART_GET_FLAG(&huart8, UART_FLAG_IDLE)) {   // 判断是否为 IDLE 线路空闲中断（一帧数据接收完毕）
-      __HAL_UART_CLEAR_IDLEFLAG(&huart8);    // 清除 IDLE 标志（读 SR + 读 DR，硬件规定）
-      uart8_idle_flag = 1;        // 设置标志位，通知主循环的函数去解析环形缓冲区
-      uart8_rx_count++;           // 调试用：IDLE 中断计数，在 Watch 窗口查看此变量
-  }
-  /* USER CODE END UART8_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
