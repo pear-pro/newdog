@@ -11,7 +11,7 @@
 #include "gait.h"
 #include "string.h"
 #include "kinematic.h"
-#include "motor_feedbback.h"
+#include "motor_feedback.h"
 #define TRANSNIT_DELAY 500
 #define WAIT_TIME 20
  
