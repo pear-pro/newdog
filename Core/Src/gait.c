@@ -17,6 +17,12 @@
 
 #define pi 3.141592f
 
+// imu闭环用到的变量
+float turn_omega_des =0.0f;// 目标旋转角度
+float kp_turn_omega = 1.0f;
+float turn_omega_corr = 0.0f; // 旋转纠正值
+float deta_angle=0.0f;
+
 float Forward_freq = 0.01f; // 0.004 
 #define up_down_freq 0.004f
 #define crawl_freq 0.002f
@@ -49,6 +55,7 @@ float kp_VeloY = 10.0f; // 2.0输入，20.0左右输出
 float GyroZ_max = 130.0f; // 转动角速度指令上限
 float stride_max = 20.0f;
 
+
 // 每个电机的发力表现不同
 // float motor1_kp_offset = 0.35f;
 // float motor2_kp_offset = 0.15f;
@@ -67,6 +74,10 @@ float motor5_kp_offset = 0.15f;
 float motor6_kp_offset = 0.0f;
 float motor7_kp_offset = 0.0f;
 float motor8_kp_offset = 0.0f;
+
+void Init_turn_omega_des(){
+	turn_omega_des = body_yaw;
+}
 
 // state == 1 支撑相 ; state == 0 摆动相
 void set_Motor_Kp(int hposition1_state, int hposition2_state, int hposition3_state, int hposition4_state)
@@ -338,9 +349,9 @@ void motion_Crawl(float step_height, float stride){
 
 /* 参数说明：
 * stride：步幅，参数范围（-max_stride 到 max_stride）
-* turn_omega：转弯角速度，参数范围（-1.0f 到 1.0f）
+* turn_stride：转弯角速度，参数范围（-1.0f 到 1.0f）
 */
-void motion_Mix(float height, float step_height, float stride, float turn_omega)
+void motion_Mix(float height, float step_height, float stride, float turn_stride)
 {    
 //	static float _t = 0.0f;
 //	_t += Forward_freq;  
@@ -389,32 +400,34 @@ void motion_Mix(float height, float step_height, float stride, float turn_omega)
 //       }
 //   }
 
-	// 开环左右转控制
+// 开环左右转控制
     float R_stride = stride;
     float L_stride = stride;
 	
-	if (rcData.sw5==0x0320&&rcData.sw7==0xFCE0){
-		float yaw_correction = kp_GyroZ * (0 - GyroZ);
-		if (yaw_correction> stride_max) {yaw_correction = stride_max;}
+	float turn_curr_max = 30.0f;//需要实际测量
+	
+	 deta_angle=turn_omega_des-body_yaw;
+	if(deta_angle>180.0f) deta_angle-=360.0f;
+	else if(deta_angle<-180.0f) deta_angle+=360.0f;
+	
+	// 从turn_omega_des 映射到 turn_omega_corr
+	turn_omega_corr = kp_turn_omega*(deta_angle);
+                   if (turn_omega_corr>turn_curr_max){turn_omega_corr=turn_curr_max;}
+                   if (turn_omega_corr<-turn_curr_max){turn_omega_corr=-turn_curr_max;}
+	turn_omega_corr = turn_omega_corr/turn_curr_max;
+
 		
-		if (turn_omega > 0.005f){
-			R_stride = stride * (1.0f - 2.0f * turn_omega);
-			L_stride = stride;
-		}else if (turn_omega < -0.005f){
-			R_stride = stride;
-			L_stride = stride * (1.0f + 2.0f * turn_omega);
-		}else{ // GyroZ逆时针为正
-			R_stride = stride + yaw_correction;
-			L_stride = stride - yaw_correction;
-		}	
-	}else {
-		if (turn_omega > 0.005f){
-			R_stride = stride * (1.0f - 2.0f * turn_omega);
-			L_stride = stride;
-		}else if (turn_omega < -0.005f){
-			R_stride = stride;
-			L_stride = stride * (1.0f + 2.0f * turn_omega);
-		}
+	// turn_omega_corr 映射到 turn_stride
+	turn_stride = turn_omega_corr;
+
+
+	// turn_stride从-1到1，控制转动的差速步长
+	if (turn_stride > 0.005f){
+		R_stride = stride * (1.0f - 2.0f * turn_stride);
+		L_stride = stride;
+	}else if (turn_stride < -0.005f){
+		R_stride = stride;
+		L_stride = stride * (1.0f + 2.0f * turn_stride);
 	}
     // 限制步幅在合理范围内
     if (tau <= 0.5f)  

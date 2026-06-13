@@ -27,7 +27,7 @@
 #include "global_var.h"
 #include "ht_10a_remote_control.h"
 #include "debug_uart.h"
-
+#include "math.h"
 /*
 定时器说明：TIM9->1us计数周期，用来写delay_us;TIM10->10ms一次中断用来，更新veloY
 */
@@ -308,6 +308,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		}else{
 			emergency_stop = 0;
 		}
+		
+		if(rcData.sw5==0x0320 && rcData.sw8 == 0xFCE0)
+		{
+			if(fabs(deta_angle)<60.0f){
+				if(fabs(rcData.R_x)<0.01) rcData.R_x=0;
+			turn_omega_des-=0.1*rcData.R_x;
+			}
+			if(turn_omega_des>180.0f) turn_omega_des=-180.0f;
+			else if(turn_omega_des<-180.0f) turn_omega_des=180.0f;
+			
+			
+		}
+		
     }
 }
 

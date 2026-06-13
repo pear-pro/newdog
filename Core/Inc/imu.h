@@ -66,7 +66,7 @@ typedef struct
 
 /* 全局暴露的 IMU 实例 (请注意 volatile 关键字) */
 extern volatile IMU_Info_t IMU_rx_data;
-
+static void IMU_App_Update(void);
 /* 中断层级专用的加速回调函数 */
 void IMU_CAN_RXCALLback(CAN_HandleTypeDef *hcan);
 #endif /* __IMU_H */

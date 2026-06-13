@@ -42,6 +42,9 @@
 #include "ht_10a_remote_control.h"
 #include "robot_arm_control.h"
 #include "motor_feedback.h"
+#include "debug_uart.h"
+#include "IMU.h"
+#include "filter.h"
 
 #include "usart_demo.h"
 /* USER CODE END Includes */
@@ -123,7 +126,6 @@ int temp_state = 0;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-/* USER CODE BEGIN PFP */
 
 
 /* USER CODE END PFP */
@@ -177,6 +179,7 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim10);
 	HAL_TIM_Base_Start(&htim9);
 	PWM_Init(); 
+	
 
 	//remote_control_init(); // 初始化遥控器
 	sbus_remote_control_init(); // 初始化遥控器hot rc
@@ -186,14 +189,41 @@ int main(void)
  Motor_Feedback_Init();
   UART8_Demo_Init(); // 初始化 UART8 的 DMA 接收和中断
 	
+//	HAL_Delay(100);
+	Init_turn_omega_des();
+	
 // motor_release();
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
+  
+float GyroZ_filtered = 0.0f;
+// 滤波系数，0~1，越小越平滑，也越滞后
+float alpha = 0.008f;
+
+while (1)
   {  
+	  
+
+	  //      滤波测试
+//	  while(1)
+//	  {
+//	  GyroZ_filtered = alpha * GyroZ + (1 - alpha) * GyroZ_filtered;
+////	  float yaw_Kalman;
+////	  yaw_Kalman = Kalman_Filter(&KF_Yaw, body_yaw,GyroZ );
+////		float f[3]={yaw_Kalman,body_yaw,GyroZ};
+////		  Vofa_JustFloat(f,3);
+////     Kalman(&GyroZ_Kalman,body_yaw);
+////		body_yaw=GyroZ_Kalman.Out;
+////		       Kalman(&GyroZ_Kalman,GyroZ_filtered);
+////		GyroZ_filtered=GyroZ_Kalman.Out;
+
+//	  float f[3]={GyroZ,GyroZ_filtered,body_yaw};
+//		  Vofa_JustFloat(f,3);
+//	  HAL_Delay(1);
+//  }
   // --------------循环配置----------------
     UART8_Demo_Process(); // 处理 UART8 接收的树莓派数据，更新 rcData 结构体
 

@@ -24,7 +24,8 @@ extern float swing_Kp;
 extern float Expect_kw; 
 extern float support_tau_ff; 
 extern float swing_tau_ff;
-
+extern float turn_omega_des;
+extern float deta_angle;
 
 typedef struct 
 {
@@ -50,12 +51,13 @@ typedef enum
   FILP_WALK_STATE
 }filp_jump_state_t;
 
+void Init_turn_omega_des(void);
 void Body_Roll_Stabilizer(void);
 void motion_Forward(float height, float step_height, float stride);
 void motion_StandBy(float height);
 void StepInPlace(float height, float step_height);
 void motion_Jump(float stride);
-void motion_Mix(float height, float step_height, float stride, float turn_omega);
+void motion_Mix(float height, float step_height, float stride, float turn_stride);
 void flip_body(void);
 void motion_Down(float start,float des);
 void motion_Up(float start,float des);
@@ -64,6 +66,7 @@ uint8_t imu_emergency_stop(void);
 void motion_Frontflip(void);
 void test_circle(void);
  void motion_Crawl1(float step_height, float stride);
+void Init_turn_omega_des();
 
 
 #endif

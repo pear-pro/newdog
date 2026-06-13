@@ -1,66 +1,69 @@
 <html>
 <body>
 <pre>
-<h1>ï¿½Vision Build Log</h1>
+<h1>µVision Build Log</h1>
 <h2>Tool Versions:</h2>
-IDE-Version: ï¿½ï¿½Vision V5.37.0.0
+IDE-Version: ¦ÌVision V5.38.0.0
 Copyright (C) 2022 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: 1 Loong, 1, LIC=----
+License Information: A Admin, A, LIC=FYKYW-QEAAW-NNQAF-6LTK5-WCZLZ-6TJWP
  
 Tool Versions:
-Toolchain:       MDK-Lite  Version: 5.37.0.0
-Toolchain Path:  D:\STM32\oldmax\core\ARM\ARMCC\Bin
+Toolchain:       MDK-ARM Plus  Version: 5.43.0.0
+Toolchain Path:  D:\Keil_v5\ARM\ARMCC\Bin
 C Compiler:      Armcc.exe V5.06 update 5 (build 528)
 Assembler:       Armasm.exe V5.06 update 5 (build 528)
 Linker/Locator:  ArmLink.exe V5.06 update 5 (build 528)
 Library Manager: ArmAr.exe V5.06 update 5 (build 528)
 Hex Converter:   FromElf.exe V5.06 update 5 (build 528)
-CPU DLL:         SARMCM3.DLL V5.37.0.0
+CPU DLL:         SARMCM3.DLL V5.43.0.0
 Dialog DLL:      DCM.DLL V1.17.5.0
-Target DLL:      CMSIS_AGDI.dll V1.33.12.0
-Dialog DLL:      TCM.DLL V1.56.1.0
+Target DLL:      CMSIS_AGDI.dll V1.33.24.0
+Dialog DLL:      TCM.DLL V1.56.6.0
  
 <h2>Project:</h2>
-C:\Users\Loong\Desktop\newdog\MDK-ARM\1.uvprojx
-Project File Date:  06/04/2026
+C:\Users\33303\Desktop\RC\newdog (4-24)\MDK-ARM\1.uvprojx
+Project File Date:  06/10/2026
 
 <h2>Output:</h2>
-*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\STM32\oldmax\core\ARM\ARMCC\Bin'
+*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\Keil_v5\ARM\ARMCC\Bin'
 Build target '1'
-compiling motor.c...
-../Core/Inc/ht_10a_remote_control.h(81): warning:  #1-D: last line of file ends without a newline
+compiling main.c...
+../Core/Inc/gait.h(69): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
+  void Init_turn_omega_des();
+../Core/Inc/robot_arm_control.h(10): warning:  #1-D: last line of file ends without a newline
    
-..\Core\Src\motor.c(213): warning:  #550-D: variable "success"  was set but never used
-          uint8_t success = 0;
-..\Core\Src\motor.c: 2 warnings, 0 errors
+../Core/Src/main.c(202): warning:  #177-D: variable "GyroZ_filtered"  was declared but never referenced
+  float GyroZ_filtered = 0.0f;
+../Core/Src/main.c(204): warning:  #177-D: variable "alpha"  was declared but never referenced
+  float alpha = 0.008f;
+../Core/Src/main.c: 4 warnings, 0 errors
 linking...
-Program Size: Code=21280 RO-data=1548 RW-data=268 ZI-data=3388  
+Program Size: Code=38408 RO-data=1872 RW-data=440 ZI-data=4528  
 FromELF: creating hex file...
-"1\1.axf" - 0 Error(s), 2 Warning(s).
+"1\1.axf" - 0 Error(s), 4 Warning(s).
 
 <h2>Software Packages used:</h2>
 
 Package Vendor: ARM
-                http://www.keil.com/pack/ARM.CMSIS.5.9.0.pack
-                ARM.CMSIS.5.9.0
+                https://www.keil.com/pack/ARM.CMSIS.6.2.0.pack
+                ARM.CMSIS.6.2.0
                 CMSIS (Common Microcontroller Software Interface Standard)
-   * Component: CORE Version: 5.6.0
+   * Component: CORE Version: 6.1.1
 
 Package Vendor: Keil
                 https://www.keil.com/pack/Keil.STM32F4xx_DFP.3.1.1.pack
-                Keil.STM32F4xx_DFP.3.1.1
                 Keil.STM32F4xx_DFP.3.1.1
                 STMicroelectronics STM32F4 Series Device Support
 
 <h2>Collection of Component include folders:</h2>
   ./RTE/_1
-  D:/STM32/oldmax/pack/ARM/CMSIS/5.9.0/CMSIS/Core/Include
+  D:/Keil_v5/ARM/PACK/ARM/CMSIS/6.2.0/CMSIS/Core/Include
 
 <h2>Collection of Component Files used:</h2>
 
-   * Component: ARM::CMSIS:CORE:5.6.0
+   * Component: ARM::CMSIS:CORE:6.1.1
       Include file:  CMSIS/Core/Include/tz_context.h
-Build Time Elapsed:  00:00:03
+Build Time Elapsed:  00:00:01
 </pre>
 </body>
 </html>
