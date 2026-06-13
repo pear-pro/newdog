@@ -535,6 +535,11 @@
               <FilePath>..\Core\Inc\motor_feedback.h</FilePath>
             </File>
             <File>
+              <FileName>usart_demo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\usart_demo.c</FilePath>
+            </File>
+            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/main.c</FilePath>
@@ -1016,14 +1021,5 @@
     </components>
     <files/>
   </RTE>
-
-  <LayerInfo>
-    <Layers>
-      <Layer>
-        <LayName>1</LayName>
-        <LayPrjMark>1</LayPrjMark>
-      </Layer>
-    </Layers>
-  </LayerInfo>
 
 </Project>

@@ -27,6 +27,8 @@
 #include "global_var.h"
 #include "ht_10a_remote_control.h"
 #include "debug_uart.h"
+#include "motor_feedback.h"
+
 #include "math.h"
 /*
 定时器说明：TIM9->1us计数周期，用来写delay_us;TIM10->10ms一次中断用来，更新veloY
@@ -263,7 +265,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
   {
   /* USER CODE BEGIN TIM10_MspDeInit 0 */
 
-  /* USER CODE END TIM10_MspDeInit 0 */                                                          
+  /* USER CODE END TIM10_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_TIM10_CLK_DISABLE();
 
@@ -307,6 +309,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 			emergency_stop = 1;
 		}else{
 			emergency_stop = 0;
+		}
+		/* ── VOFA 电机诊断: 4Hz (100Hz / 25, offset=2) ── */
+		static uint8_t diag_div = 2;
+		if (++diag_div >= 25) {
+			diag_div = 0;
+			float diag_buf[33];
+			diag_buf[0] = 9.0f;
+			for (uint8_t i = 0; i < 8; i++) {
+				diag_buf[i*4 + 1] = motor_fb[i].theta;
+				diag_buf[i*4 + 2] = motor_fb[i].tau;
+				diag_buf[i*4 + 3] = (float)motor_fb[i].temp;
+				diag_buf[i*4 + 4] = (float)motor_fb[i].online;
+			}
+			Vofa_JustFloat(diag_buf, 33);
 		}
 		
 		if(rcData.sw5==0x0320 && rcData.sw8 == 0xFCE0)
