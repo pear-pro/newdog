@@ -301,6 +301,9 @@ int main(void)
 	// -----------状态机函数----------------
 	//temp_state=1;
 	
+	float turn_omega_s = 0.0f;
+	float front_speed_s = 0.0f;
+		
 if (emergency_stop==1){
 	motor_release();
 }else{
@@ -308,19 +311,28 @@ if (emergency_stop==1){
     {
         case 1:
         // 遥控控制行走
+		
 		    motion_Mix(walk_height, 8.0f, max_stride*rcData.R_y,rcData.R_x);
         break;
                 
         case 2:
         // 树莓派控制行走
-		    motion_Mix(walk_height, 8.0f, max_stride*front_speed, turn_omega);
+
+		turn_omega_s =10.0f*turn_omega;
+		front_speed_s =100.0f*front_speed;
+		if (turn_omega> 1.0f) {turn_omega= 1.0f; }
+		if (turn_omega<-1.0f) {turn_omega=-1.0f; }
+		if (front_speed_s> 1.0f) {front_speed_s= 1.0f; }
+		if (front_speed_s<-1.0f) {front_speed_s=-1.0f; }	
+
+		motion_Mix(walk_height, 8.0f, max_stride*front_speed_s, turn_omega_s);
         break;
 
         case 3: // 跳跃
         //motion_Jump(22.0f);
         break;
                 
-        case 4: // 站立
+        case 4: // 站立；
 		    motion_Mix(walk_height, 0.0000001f, 0.0f, 0.0f);
         break;   
           

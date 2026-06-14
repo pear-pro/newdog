@@ -17,11 +17,11 @@
 
 #define pi 3.141592f
 
-float Forward_freq = 0.0099f; // 0.004 
+float Forward_freq = 0.0075f; // 0.004 
 #define up_down_freq 0.004f
 #define crawl_freq 0.002f
 
-float support_Kp = 0.5f; // 0.6/0.7,0.25/0.3
+float support_Kp = 0.7f; // 0.6/0.7,0.25/0.3
 float swing_Kp = 0.3f;
 float Expect_kw = 0.01f;  // 直接用来初始化
 float support_tau_ff = 0.00f; // 0.10
@@ -355,6 +355,17 @@ void motion_Mix(float height, float step_height, float stride, float turn_omega)
 //	}else{
         tau += Forward_freq;  
         if(tau >= 1.0f) { tau -= 1.0f; }
+				
+		if (turn_omega>0.03f&&stride>=-0.03f&&stride<=0.03f){
+			turn_omega=1.0f;
+			stride = turn_omega*10.0f;
+			}
+		if (turn_omega<-0.03f&&stride>=-0.03f&&stride<=0.03f){
+		turn_omega=-1.0f;
+		stride = -turn_omega*10.0f;
+}
+
+		
 //    }
 
 //   // 带陀螺仪的前进闭环控制
