@@ -205,8 +205,18 @@ float alpha = 0.008f;
 
 while (1)
   {  
-	  
-
+	  Motor_Feedback_Process();    
+    Motor_Feedback_TimeoutTask();
+ 		
+//		for(int i=2;i<=9;i++){
+//			uint8_t err  = motor_fb[i].error;
+//			if(err!=0){
+//			motor_release();
+//				while(1){}
+//			}
+//		}
+		
+		
 	  //      滤波测试
 //	  while(1)
 //	  {
