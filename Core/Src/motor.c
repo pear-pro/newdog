@@ -14,14 +14,14 @@
 
 #define TRANSNIT_DELAY 500
  
-float motor1_bias = 5.35f;
-float motor2_bias = 1.35f;
-float motor3_bias = 5.87f;
-float motor4_bias = 3.4f;
-float motor5_bias = 0.30f;
-float motor6_bias = 3.63f;
-float motor7_bias = -0.05f;
-float motor8_bias = 3.10f;
+float motor1_bias = 6.15f;
+float motor2_bias = 1.15f;
+float motor3_bias = 4.87f;
+float motor4_bias = 1.4f;
+float motor5_bias = 3.30f;
+float motor6_bias = 4.43f;
+float motor7_bias = -2.65f;
+float motor8_bias = 4.80f;
 float motor10_bias = 3.10f;// 云台偏置
 
 
@@ -325,7 +325,9 @@ static HAL_StatusTypeDef Motor_PackCmd(Motor_HandleTypeDef *hmotor)
 // 给云台的宇树电机发送信号
 void gimbal_send_unitree(float angel){
 
-  hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * angel / 360.0f;
+    hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * angel / 360.0f;
+	Motor_SendCmd(&hmotor4);
+    hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * angel / 360.0f;
 	Motor_SendCmd(&hmotor4);
 	MY_delay_us(TRANSNIT_DELAY);
 }
@@ -348,15 +350,17 @@ void Motor_SendCmd_AllAngle()
 //    hmotor7.Theta_des = motor7_bias / 6.33f + 6.28f * 0.0f / 360.0f;
 //    hmotor8.Theta_des = motor8_bias / 6.33f + 6.28f * 0.0f / 360.0f;
    
-	hmotor1.Theta_des = motor1_bias / 6.33f + 6.28f * hposition1.alpha / 360.0f - flip_offset;
-	hmotor2.Theta_des = motor2_bias / 6.33f + 6.28f * hposition1.beta / 360.0f + flip_offset;
+	hmotor1.Theta_des = motor1_bias / 6.33f + 6.28f * -hposition1.alpha / 360.0f - flip_offset;
+	hmotor2.Theta_des = motor2_bias / 6.33f + 6.28f * -hposition1.beta / 360.0f + flip_offset;
 	hmotor3.Theta_des = motor3_bias / 6.33f + 6.28f * hposition2.alpha / 360.0f + flip_offset;
 	hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * hposition2.beta / 360.0f - flip_offset;
 	hmotor5.Theta_des = motor5_bias / 6.33f + 6.28f * -hposition3.alpha / 360.0f - flip_offset;
 	hmotor6.Theta_des = motor6_bias / 6.33f + 6.28f * -hposition3.beta / 360.0f + flip_offset;
-	hmotor7.Theta_des = motor7_bias / 6.33f + 6.28f * -hposition4.alpha / 360.0f + flip_offset;
-	hmotor8.Theta_des = motor8_bias / 6.33f + 6.28f * -hposition4.beta / 360.0f - flip_offset;
+	hmotor7.Theta_des = motor7_bias / 6.33f + 6.28f * hposition4.alpha / 360.0f + flip_offset;
+	hmotor8.Theta_des = motor8_bias / 6.33f + 6.28f * hposition4.beta / 360.0f - flip_offset;
 	
+	Motor_SendCmd(&hmotor1);
+	MY_delay_us(TRANSNIT_DELAY);	
 	Motor_SendCmd(&hmotor3);
 	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor8);
@@ -364,8 +368,6 @@ void Motor_SendCmd_AllAngle()
 	Motor_SendCmd(&hmotor2);
 	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor7);
-	MY_delay_us(TRANSNIT_DELAY);
-	Motor_SendCmd(&hmotor1);
 	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor6);
 	MY_delay_us(TRANSNIT_DELAY);

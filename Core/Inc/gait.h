@@ -4,7 +4,7 @@
 #define Ts 1.00f          // 控制周期
 #include "stm32f4xx.h"
 
-/*某只脚的两个电机�?动的角度，alpha和beta*/
+/*某只脚的两个电机驱动的角度，alpha和beta*/
 typedef struct
 {
 	float alpha;
@@ -24,7 +24,8 @@ extern float swing_Kp;
 extern float Expect_kw; 
 extern float support_tau_ff; 
 extern float swing_tau_ff;
-
+extern float turn_omega_des;
+extern float deta_angle;
 
 typedef struct 
 {
@@ -32,7 +33,7 @@ typedef struct
   float ySwing;    // 前半周期生成的摆动相的y坐标
   float xSupport;  // 前半周期生成的支撑相的x坐标
   float ySupport;  // 前半周期生成的支撑相的y坐标
-  float sigma;     // 轨迹生成三�?�函数中的相�?
+  float sigma;     // 轨迹生成三角函数中的相位
 }GaitPhasesPoints;
 
 typedef enum
@@ -50,12 +51,13 @@ typedef enum
   FILP_WALK_STATE
 }filp_jump_state_t;
 
-void  Body_Roll_Stabilizer(void);
+void Init_turn_omega_des(void);
+void Body_Roll_Stabilizer(void);
 void motion_Forward(float height, float step_height, float stride);
 void motion_StandBy(float height);
 void StepInPlace(float height, float step_height);
 void motion_Jump(float stride);
-void motion_Mix(float height, float step_height, float stride);
+void motion_Mix(float height, float step_height, float stride, float turn_stride);
 void flip_body(void);
 void motion_Down(float start,float des);
 void motion_Up(float start,float des);
@@ -63,6 +65,8 @@ void motion_Crawl(float step_height, float stride);
 uint8_t imu_emergency_stop(void);
 void motion_Frontflip(void);
 void test_circle(void);
+ void motion_Crawl1(float step_height, float stride);
+void Init_turn_omega_des();
 
 
 #endif

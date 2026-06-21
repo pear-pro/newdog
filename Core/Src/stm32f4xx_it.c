@@ -25,6 +25,9 @@
 #include "remote_control.h"
 #include "key.h"
 #include "imu.h"
+#include "usart_demo.h"
+#include "ht_10a_remote_control.h"
+#include "motor_feedback.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,12 +65,16 @@ extern CAN_HandleTypeDef hcan1;
 extern TIM_HandleTypeDef htim5;
 extern TIM_HandleTypeDef htim10;
 extern DMA_HandleTypeDef hdma_uart7_tx;
+extern DMA_HandleTypeDef hdma_uart8_rx;
+extern DMA_HandleTypeDef hdma_uart8_tx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
+extern DMA_HandleTypeDef hdma_usart6_rx;
+extern DMA_HandleTypeDef hdma_usart6_tx;
 extern UART_HandleTypeDef huart7;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN EV */
-
+volatile uint32_t uart8_rx_count = 0;  // 调试用：IDLE 中断触发计数，在 Watch 窗口查看
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -223,6 +230,20 @@ void EXTI2_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA1 stream0 global interrupt.
+  */
+void DMA1_Stream0_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream0_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream0_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_uart8_tx);
+  /* USER CODE BEGIN DMA1_Stream0_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream0_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA1 stream1 global interrupt.
   */
 void DMA1_Stream1_IRQHandler(void)
@@ -234,6 +255,20 @@ void DMA1_Stream1_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
 
   /* USER CODE END DMA1_Stream1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA1 stream6 global interrupt.
+  */
+void DMA1_Stream6_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream6_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream6_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_uart8_rx);
+  /* USER CODE BEGIN DMA1_Stream6_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream6_IRQn 1 */
 }
 
 /**
@@ -293,6 +328,20 @@ void TIM5_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA2 stream1 global interrupt.
+  */
+void DMA2_Stream1_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream1_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream1_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart6_rx);
+  /* USER CODE BEGIN DMA2_Stream1_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream1_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA2 stream2 global interrupt.
   */
 void DMA2_Stream2_IRQHandler(void)
@@ -307,6 +356,20 @@ void DMA2_Stream2_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA2 stream6 global interrupt.
+  */
+void DMA2_Stream6_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream6_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream6_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart6_tx);
+  /* USER CODE BEGIN DMA2_Stream6_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream6_IRQn 1 */
+}
+
+/**
   * @brief This function handles USART6 global interrupt.
   */
 void USART6_IRQHandler(void)
@@ -316,7 +379,11 @@ void USART6_IRQHandler(void)
   /* USER CODE END USART6_IRQn 0 */
   HAL_UART_IRQHandler(&huart6);
   /* USER CODE BEGIN USART6_IRQn 1 */
-
+if(__HAL_UART_GET_FLAG(&huart6, UART_FLAG_IDLE) != RESET)
+    {
+        __HAL_UART_CLEAR_IDLEFLAG(&huart6);  // 清除标志
+        DMA_CopyToRingBuf();                 // 搬运数据到环形缓冲
+    }
   /* USER CODE END USART6_IRQn 1 */
 }
 
@@ -341,15 +408,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 }
 
 /**
-  * @brief  CAN1 FIFO0 ��Ϣ�������жϻص�����
-  * @param  hcan CAN ���ָ��
-  * @details 
-  *   - �ú����� CAN1 FIFO0 ���յ�����Ϣʱ������
-  *   - ���������� HWT901B IMU �������� CAN ����֡
-  *   - ʵʱ���»���ŷ���ǣ���ת��������ƫ������ IMU ������״̬
+  * @brief  CAN1 FIFO0 消息待处理回调函数
+  * @param  hcan CAN 句柄指针
+  * @details
+  *   - 当 CAN1 FIFO0 有新消息到达时由 HAL 库自动调用
+  *   - 当前仅处理 HWT901B IMU 传感器的 CAN 数据
+  *   - 如需扩展支持其他 CAN 设备，请在此添加对应的 IMU 或其他传感器回调
   * @note
-  *   - ���� CAN1_RX0_IRQHandler() �б�����
-  *   - �����ٶ�ֱ��Ӱ����̬����Ƶ�ʺͿ���ϵͳ��Ӧʱ��
+  *   - 运行在 CAN1_RX0_IRQHandler() 中断上下文
+  *   - 回调执行时间不宜过长，避免堵塞其他中断
   * @return None
   */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)

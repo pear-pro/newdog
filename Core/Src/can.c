@@ -75,9 +75,9 @@ void MX_CAN1_Init(void)
    * 
    * 未来若需扩展接收其他 CAN ID（如 0x00~0x0F），可修改 Mask 参数扩大接收范围。
    */
-  can_filter_st.FilterIdHigh =(0x50 << 5); 
+  can_filter_st.FilterIdHigh =(0x50 << 5);
   can_filter_st.FilterIdLow = 0x0000;
-  can_filter_st.FilterMaskIdHigh =(0x7FF << 5); 
+  can_filter_st.FilterMaskIdHigh =(0x7FF << 5);
   can_filter_st.FilterMaskIdLow = 0x0000;
   
   can_filter_st.FilterFIFOAssignment = CAN_RX_FIFO0;
@@ -169,3 +169,4 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
+

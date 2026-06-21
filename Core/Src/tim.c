@@ -26,7 +26,10 @@
 #include "gait.h"
 #include "global_var.h"
 #include "ht_10a_remote_control.h"
+#include "debug_uart.h"
+#include "motor_feedback.h"
 
+#include "math.h"
 /*
 定时器说明：TIM9->1us计数周期，用来写delay_us;TIM10->10ms一次中断用来，更新veloY
 */
@@ -278,6 +281,14 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     if (htim->Instance == TIM10) {
+		/* ── VOFA 遥测: 20Hz 发送 IMU 姿态 (100Hz / 5) ── */
+		static uint8_t vofa_div = 0;
+		if (++vofa_div >= 5) {
+			vofa_div = 0;
+			float imu_buf[9] = {body_roll, body_pitch, body_yaw, GyroX, GyroY, GyroZ, AccX, AccY, AccZ};
+			Vofa_JustFloat(imu_buf, 9);
+		}
+
 		float AccY_correct=(AccY-0.0045f);
 		if (AccY_correct>0.003f||AccY_correct<-0.003f) {
 			VeloY += AccY_correct*0.01f;
@@ -299,16 +310,44 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		}else{
 			emergency_stop = 0;
 		}
+		/* ── VOFA 电机诊断: 4Hz (100Hz / 25, offset=2) ── */
+		static uint8_t diag_div = 2;
+		if (++diag_div >= 25) {
+			diag_div = 0;
+			float diag_buf[33];
+			diag_buf[0] = 9.0f;
+			for (uint8_t i = 0; i < 8; i++) {
+				diag_buf[i*4 + 1] = motor_fb[i].theta;
+				diag_buf[i*4 + 2] = motor_fb[i].tau;
+				diag_buf[i*4 + 3] = (float)motor_fb[i].temp;
+				diag_buf[i*4 + 4] = (float)motor_fb[i].online;
+			}
+			Vofa_JustFloat(diag_buf, 33);
+		}
+		
+		if(rcData.sw5==0x0320 && rcData.sw8 == 0xFCE0)
+		{
+			if(fabs(deta_angle)<60.0f){
+				if(fabs(rcData.R_x)<0.01) rcData.R_x=0;
+			turn_omega_des-=0.1*rcData.R_x;
+			}
+			if(turn_omega_des>180.0f) turn_omega_des=-180.0f;
+			else if(turn_omega_des<-180.0f) turn_omega_des=180.0f;
+			
+			
+		}
+		
     }
 }
 
 // time不要超过65535
 void MY_delay_us(uint16_t time){
 	uint16_t start = TIM9->CNT;
-    while ((uint16_t)(TIM9->CNT - start) < time) 
+     while ((uint16_t)(TIM9->CNT - start) < time) 
     {
     }
 }
 
 
 /* USER CODE END 1 */
+

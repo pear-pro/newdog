@@ -3,14 +3,14 @@
 
 #include "main.h"
 
-/* ËÅ·şĞÅºÅ±ê×¼¶¨Òå (1us/tick) */
-#define PWM_SERVO_HIGH  25000 // 25ms Âö¿í£ºÂß¼­¡°¿ª¡±
-#define PWM_SERVO_LOW   2500   // 2.5ms Âö¿í£ºÂß¼­¡°¹Ø¡±
+/* èˆµæœºä¿¡å·æ ‡å‡†å®šä¹‰ (1us/tick) */
+#define PWM_SERVO_HIGH  25000 // 25ms å¸åˆï¼ˆé«˜ç”µå¹³å¸åˆï¼‰
+#define PWM_SERVO_LOW   2500   // 2.5ms å…³é—­ï¼ˆé«˜ç”µå¹³å…³é—­ï¼‰
 
 typedef enum {
-    PWM_IDLE = 0, // ´ı»ú
-    PWM_IN   = 1, // ÎüÈ¡ (BÂ·¿ª)
-    PWM_OUT  = 2  // ÊÍ·Å (CÂ·¿ª)
+    PWM_IDLE = 0, // å¾…æœº
+    PWM_IN   = 1, // å¸å– (Bè·¯)
+    PWM_OUT  = 2  // é‡Šæ”¾ (Cè·¯)
 } PWM_State_e;
 
 void PWM_Init(void);

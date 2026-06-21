@@ -7,34 +7,34 @@
 #include "math_utils.h"
 
 typedef struct{
-	int16_t Voltage;//µçÑ¹Öµ
-	float Angle;//»úĞµ½Ç¶È
-	float Speed;//×ªËÙ
-	int16_t Torque;//Êµ¼ÊÅ¤¾Ø
-	uint8_t Temp;//ÎÂ¶È
+	int16_t Voltage;//ç”µå‹å€¼
+	float Angle;//æœºæ¢°è§’åº¦
+	float Speed;//è½¬é€Ÿ
+	int16_t Torque;//å®é™…æ‰­çŸ©
+	uint8_t Temp;//æ¸©åº¦
 	uint16_t ERR;
 }RxMsg_t;
 
 typedef struct{
-	//¿ØÖÆ½Ç¶ÈµÄ²ÎÊı
+	//æ§åˆ¶è§’åº¦çš„å‚æ•°
 	uint16_t			FirstEntre;
-	double			Target;//Ä¿±ê½Ç¶È
-	float 				lastRead;//ÉÏÒ»´Î¶ÁÈ¡Öµ
-	float 				currentRead;//µ±Ç°¶ÁÈ¡Öµ
-	float 				Zero;//ÉÏµçºóµÄµÚÒ»¸öÎ»ÖÃ×öÎªÁãµã
-	float 				totalAngle;//×Ü½Ç¶È
-	float				encoderAngle;//¾­¹ı´¦ÀíµÄµç»ú½Ç¶È
-	int16_t				Current;//Êä³öµçÁ÷
-	float				out;//Êä³öµçÑ¹
+	double			Target;//ç›®æ ‡è§’åº¦
+	float 			lastRead;//ä¸Šä¸€æ¬¡è¯»å–å€¼
+	float 			currentRead;//å½“å‰è¯»å–å€¼
+	float 			Zero;//ä¸Šç”µçš„ç¬¬ä¸€ä¸ªä½ç½®ä½œä¸ºé›¶ç‚¹
+	float 			totalAngle;//æ€»è§’åº¦
+	float				encoderAngle;//ç¼–ç å™¨è®¡ç®—çš„å•åœˆè§’åº¦
+	int16_t				Current;//å½“å‰ç”µæµ
+	float				out;//è¾“å‡ºç”µå‹
 
 	float               target_angle;
 	float               target_speed;
-	float				angle;//Ä¿±ê½Ç¶È
-	float				speed;//Ä¿±êËÙ¶È
+	float				angle;//ç›®æ ‡è§’åº¦
+	float				speed;//ç›®æ ‡é€Ÿåº¦
 	float            	KP;
 	float            	KD;
 	float            	tor;
-	uint32_t         	ID     ;//µç»úid
+	uint32_t         	ID     ;//ç”µæœºid
 
 	RxMsg_t 			Rxmsg;
 }motor_info_t;
