@@ -17,7 +17,7 @@
 float motor1_bias = 5.35f;
 float motor2_bias = 1.35f;
 float motor3_bias = 5.87f;
-float motor4_bias = 0.28f;
+float motor4_bias = 3.4f;
 float motor5_bias = 0.30f;
 float motor6_bias = 3.63f;
 float motor7_bias = -0.05f;
@@ -325,8 +325,8 @@ static HAL_StatusTypeDef Motor_PackCmd(Motor_HandleTypeDef *hmotor)
 // 给云台的宇树电机发送信号
 void gimbal_send_unitree(float angel){
 
-    hmotor10.Theta_des = motor10_bias / 6.33f + 6.28f * angel / 360.0f;
-	Motor_SendCmd(&hmotor10);
+  hmotor4.Theta_des = motor4_bias / 6.33f + 6.28f * angel / 360.0f;
+	Motor_SendCmd(&hmotor4);
 	MY_delay_us(TRANSNIT_DELAY);
 }
 

@@ -41,6 +41,7 @@
 #include "pwm_app.h"
 #include "ht_10a_remote_control.h"
 #include "robot_arm_control.h"
+#include "motor_4310.h"
 
 /* USER CODE END Includes */
 
@@ -125,7 +126,7 @@ void SystemClock_Config(void);
 
 
 /* USER CODE END PFP */
-
+	
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
@@ -181,11 +182,17 @@ int main(void)
 	remap_motor_ids(); // 重映射id
 	
 // motor_release();
+
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
 	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+    Set_dm_enable(&hcan1, 0);
+	  Set_dm_enable(&hcan1, 1);
   while (1)
   {  
   
@@ -197,9 +204,27 @@ int main(void)
 
     // -------------机械臂调试------------------
 	while(1){
-	gimbal_send_unitree(70.0f); // 发送云台控制指令，参数为期望的云台角度
-	
-	
+//	hmotor10.Kp =0.8f;
+//		gimbal_send_unitree(10.0f); // 发送云台控制指令，参数为期望的云台角度
+//	
+//		Set_DM_Motor(1, -50);//大臂调节
+//		Set_DM_Motor(0, -20);//小臂调节
+//		Arm_Move_To(46.2,0,34.629);//到达目标位置
+//		Arm_Move_To(40,0,50);
+//		Arm_Move_To(40,0,0);
+//		Arm_Move_To(0,0,80.829);//完全竖直	
+//		Test_Arm_Down_Posture();//测试
+//  	HAL_Delay(10);
+		
+		//摄像机舵机给值
+//		Set_Servo_Angle_TIM8(TIM_CHANNEL_1,30.0f);//w
+//    Set_Servo_Angle_TIM8(TIM_CHANNEL_2, 135.0f);//x
+		
+		//吸盘舵机
+//		Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 265.0f);//垂直
+//		Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 175.0f);//重合
+		
+    HAL_Delay(1000);
 	}
 	
 
@@ -272,21 +297,21 @@ int main(void)
 //	//----------4/4单电机通信调试----------
 
 //while(1){
-//	MotorTest_Sweep(1, 0.4f);
-//	MotorTest_Sweep(2, 0.4f);
-//	MotorTest_Sweep(3, 0.4f);
+////	MotorTest_Sweep(1, 0.4f);
+////	MotorTest_Sweep(2, 0.4f);
+////	MotorTest_Sweep(3, 0.4f);
 //	MotorTest_Sweep(4, 0.4f);
-//	MotorTest_Sweep(5, 0.4f);  
-//	MotorTest_Sweep(6, 0.4f);
-//	MotorTest_Sweep(7, 0.4f);
-//	MotorTest_Sweep(8, 0.4f);
-// 	MotorTest_Sweep(9, 0.4f); 
-//	MotorTest_Sweep(10, 0.4f);
-//	MotorTest_Sweep(11, 0.4f);
-// 	MotorTest_Sweep(12, 0.4f);
-// 	MotorTest_Sweep(13, 0.4f); 
-//	MotorTest_Sweep(14, 0.4f);
-//	MotorTest_Sweep(15, 0.4f);
+////	MotorTest_Sweep(5, 0.4f);  
+////	MotorTest_Sweep(6, 0.4f);
+////	MotorTest_Sweep(7, 0.4f);
+////	MotorTest_Sweep(8, 0.4f);
+//// 	MotorTest_Sweep(9, 0.4f); 
+////	MotorTest_Sweep(10, 0.4f);
+////	MotorTest_Sweep(11, 0.4f);
+//// 	MotorTest_Sweep(12, 0.4f);
+//// 	MotorTest_Sweep(13, 0.4f); 
+////	MotorTest_Sweep(14, 0.4f);
+////	MotorTest_Sweep(15, 0.4f);
 //}
 
 

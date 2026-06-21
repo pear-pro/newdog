@@ -74,6 +74,7 @@
  static void virtual_key_update(SBUS_ctrl_t *sbus_ctrl);
 
  #endif 
+ 
  // ---
 
  
