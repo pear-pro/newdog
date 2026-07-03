@@ -64,6 +64,14 @@ volatile uint8_t uart8_walk_request = 0;
 volatile uint8_t  dbg_last_frame[FRAME_LEN] = {0};   // 最近一帧原始字节（每次收到新帧会覆盖）
 volatile uint8_t  dbg_frame_ok_count = 0;    // 校验通过的帧计数
 volatile uint8_t  dbg_frame_err_count = 0;   // 校验失败的帧计数
+volatile uint8_t  dbg_idle_enter_count = 0;  // 进入idle处理的次数
+volatile uint16_t dbg_ringbuf_avail = 0;     // 最近一次RingBuf_Available值
+volatile uint8_t  dbg_raw_buf[16] = {0};     // 最近一次收到的原始字节（解析前）
+volatile uint8_t  dbg_raw_len = 0;           // 原始字节数
+volatile uint8_t  dbg_feedbyte_ret = 0;      // Parser_FeedByte最后一次返回值
+volatile uint8_t  dbg_validate_ret = 0;      // Parser_ValidateFrame返回值
+volatile uint8_t  dbg_cksum_computed = 0;    // 计算出的校验和
+volatile uint8_t  dbg_cksum_stored = 0;      // 帧里的校验和
 volatile int16_t  dbg_last_v = 0;            // 最近一次解析到的线速度
 volatile int16_t  dbg_last_w = 0;            // 最近一次解析到的角速度
 
@@ -196,6 +204,8 @@ static uint8_t Parser_FeedByte(uint8_t byte)
 static uint8_t Parser_ValidateFrame(const uint8_t *buf)
 {
     uint8_t cksum = CalcChecksum8(buf);
+    dbg_cksum_computed = cksum;
+    dbg_cksum_stored   = buf[POS_CKSUM];
     return (buf[POS_CKSUM] == cksum) ? 1u : 0u;
 }
 
@@ -265,13 +275,16 @@ void UART8_Demo_Process(void)
 {
     if (uart8_idle_flag) {
         uart8_idle_flag = 0;
+        dbg_idle_enter_count++;                         // 调试：确认进入
+        dbg_ringbuf_avail = RingBuf_Available();        // 调试：记录可用字节数
 
         while (RingBuf_Available() > 0) {
             uint8_t byte = RingBuf_ReadByte();
 
             if (Parser_FeedByte(byte)) {  // 收到完整一帧
                 memcpy((void*)dbg_last_frame, parser.buf, FRAME_LEN);  // 【调试】保存原始帧
-                if (Parser_ValidateFrame(parser.buf)) {
+                dbg_validate_ret = Parser_ValidateFrame(parser.buf);
+                if (dbg_validate_ret) {
                     CmdFrame_TypeDef cmd;
                     cmd.ctrl_mode  = parser.buf[POS_CTRL];
                     cmd.velocity_v = (int16_t)(((uint16_t)parser.buf[POS_V_HIGH] << 8)
