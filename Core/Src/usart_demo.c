@@ -1,26 +1,27 @@
 /**
  ******************************************************************************
  * @file    usart_demo.c
- * @brief   UART8 串口通信模块 - 树莓派速度指令接收
+ * @brief   UART8 串口通信模块 - 树莓派速度+摄像头指令接收
  ******************************************************************************
  *
- * 【协议格式】8 字节定长帧，收发统一
+ * 【协议格式】14 字节定长帧，收发统一
  *
- *   [0x55] [0xAA] [CTRL] [V_H] [V_L] [W_H] [W_L] [CKSUM]
+ *   [0x55][0xAA][CTRL][V_H][V_L][W_H][W_L][X_H][X_L][Y_H][Y_L][Z_H][Z_L][CKSUM]
  *
- *   - 双字节帧头 0x55+0xAA 
- *   - 校验和 = (Byte2 + Byte3 + Byte4 + Byte5 + Byte6) & 0xFF
- *   - 速度值大端序（高字节在前）
+ *   - 双字节帧头 0x55+0xAA
+ *   - 校验和 = (Byte2 ~ Byte12) 之和 & 0xFF，位于 Byte13
+ *   - 速度值大端序，缩放 /10000
+ *   - 摄像头坐标大端序，缩放 /100（单位：米）
  *
  * 【数据流】
  *
- *   RPi 下发速度指令 → DMA 循环接收 → IDLE 中断 → 主循环解析 → 应用速度 → 回复应答
+ *   RPi 下发速度+摄像头指令 → DMA 循环接收 → IDLE 中断 → 主循环解析 → 应用数据
  *
  * 【状态机】
  *
  *   PARSE_SYNC_1: 等待 0x55
  *   PARSE_SYNC_2: 等待 0xAA
- *   PARSE_COLLECT: 收集后续 6 字节 → 校验 → 分发
+ *   PARSE_COLLECT: 收集后续 12 字节 → 校验 → 分发
  *
  ******************************************************************************
  */
@@ -60,7 +61,7 @@ static uint32_t last_rx_tick = 0;
 volatile uint8_t uart8_walk_request = 0;
 
 /* ---- 【调试变量】Watch 窗口查看以下变量即可判断通信状态 ---- */
-volatile uint8_t  dbg_last_frame[8] = {0};   // 最近一帧原始字节（每次收到新帧会覆盖）
+volatile uint8_t  dbg_last_frame[FRAME_LEN] = {0};   // 最近一帧原始字节（每次收到新帧会覆盖）
 volatile uint8_t  dbg_frame_ok_count = 0;    // 校验通过的帧计数
 volatile uint8_t  dbg_frame_err_count = 0;   // 校验失败的帧计数
 volatile int16_t  dbg_last_v = 0;            // 最近一次解析到的线速度
@@ -68,7 +69,7 @@ volatile int16_t  dbg_last_w = 0;            // 最近一次解析到的角速�
 
 /* ---- 【抓帧】Watch 窗口操作：dbg_freeze=1 冻结，=0 解冻 ---- */
 volatile uint8_t  dbg_freeze = 1;            // 1=冻结快照，不再更新；0=正常跟踪（默认=1，自动抓首帧）
-volatile uint8_t  dbg_frozen_frame[8] = {0}; // 被冻结的那帧数据
+volatile uint8_t  dbg_frozen_frame[FRAME_LEN] = {0}; // 被冻结的那帧数据
 volatile int16_t  dbg_frozen_v = 0;          // 冻结时的线速度
 volatile int16_t  dbg_frozen_w = 0;          // 冻结时的角速度
 volatile uint32_t dbg_frozen_tick = 0;       // 冻结时的时间戳
@@ -111,14 +112,17 @@ static uint8_t RingBuf_ReadByte(void)
 /* ========================================================================== */
 
 /**
- * @brief  计算 8 位校验和
- * @param  buf: 完整帧缓冲区（8 字节）
- * @return (Byte2 + Byte3 + Byte4 + Byte5 + Byte6) & 0xFF
+ * @brief  计算 8 位校验和（bytes[2..12] 之和）
+ * @param  buf: 完整帧缓冲区（14 字节）
+ * @return (Byte2 + ... + Byte12) & 0xFF
  */
 static uint8_t CalcChecksum8(const uint8_t *buf)
 {
-    return (uint8_t)((buf[POS_CTRL] + buf[POS_V_HIGH] + buf[POS_V_LOW]
-                    + buf[POS_W_HIGH] + buf[POS_W_LOW]) & 0xFFu);
+    uint8_t sum = 0;
+    for (uint8_t i = POS_CTRL; i <= POS_CAM_Z_LOW; i++) {
+        sum += buf[i];
+    }
+    return sum & 0xFFu;
 }
 
 /**
@@ -137,7 +141,7 @@ static void Parser_Reset(void)
 /**
  * @brief  向解析器喂入一个字节
  *
- * 双字节帧头同步：先找 0x55，再找 0xAA，然后收集 6 字节数据。
+ * 双字节帧头同步：先找 0x55，再找 0xAA，然后收集 12 字节数据。
  * 不需要转义机制（帧头 0x55+0xAA 双字节组合在正常数据中几乎不会出现）。
  *
  * @param  byte: 从缓冲区读取的下一个字节
@@ -203,11 +207,17 @@ static uint8_t Parser_ValidateFrame(const uint8_t *buf)
  * @brief  根据控制指令类型执行动作
  *
  * 当前支持：
- *   CTRL_SPEED (0x01): 速度下发模式，注入 rcData 控制行走
+ *   CTRL_SPEED (0x01): 速度+摄像头数据，更新 front_speed/turn_omega 及 camera_obj_x/y/z
  */
 
  float front_speed=0.0f;
  float turn_omega=0.0f;
+
+/* 摄像头目标坐标全局变量 */
+volatile int16_t camera_obj_x = 0;
+volatile int16_t camera_obj_y = 0;
+volatile int16_t camera_obj_z = 0;
+volatile uint8_t camera_data_fresh = 0;
 
 static void DispatchCommand(const CmdFrame_TypeDef *cmd)
 {
@@ -215,9 +225,11 @@ static void DispatchCommand(const CmdFrame_TypeDef *cmd)
     case CTRL_SPEED:
         front_speed = (float)cmd->velocity_v / 10000.0f;  // 线速度 → 前进步幅 (±1.0)
         turn_omega = (float)cmd->velocity_w / 10000.0f;  // 角速度 → 转向差速 (±1.0)
-       //   rcData.sw5  = 0x0320;   // 触发行走状态
-       //  rcData.sw7  = 0x0320;   // temp_state=1 → motion_Mix()
-        uart8_walk_request = 1;   // 请求进入行走状态，如果你觉得不好
+        camera_obj_x = cmd->camera_x;  // 摄像头X轴（原始值/100=米）
+        camera_obj_y = cmd->camera_y;  // 摄像头Y轴
+        camera_obj_z = cmd->camera_z;  // 摄像头Z轴
+        camera_data_fresh = 1;         // 标记有新摄像头数据
+        uart8_walk_request = 1;        // 请求进入行走状态
         last_rx_tick = HAL_GetTick();
         break;
 
@@ -246,7 +258,7 @@ void UART8_Demo_Init(void)
 /**
  * @brief  主循环处理函数（非阻塞）
  *
- * 流程：检查 IDLE 标志 → 逐字节读取 → 双字节帧头同步 → 收集 8 字节 → 校验 → 分发
+ * 流程：检查 IDLE 标志 → 逐字节读取 → 双字节帧头同步 → 收集 14 字节 → 校验 → 分发
  */
 void UART8_Demo_Process(void)
 {
@@ -265,6 +277,12 @@ void UART8_Demo_Process(void)
                                             |   (uint16_t)parser.buf[POS_V_LOW]);
                     cmd.velocity_w = (int16_t)(((uint16_t)parser.buf[POS_W_HIGH] << 8)
                                             |   (uint16_t)parser.buf[POS_W_LOW]);
+                    cmd.camera_x   = (int16_t)(((uint16_t)parser.buf[POS_CAM_X_HIGH] << 8)
+                                            |   (uint16_t)parser.buf[POS_CAM_X_LOW]);
+                    cmd.camera_y   = (int16_t)(((uint16_t)parser.buf[POS_CAM_Y_HIGH] << 8)
+                                            |   (uint16_t)parser.buf[POS_CAM_Y_LOW]);
+                    cmd.camera_z   = (int16_t)(((uint16_t)parser.buf[POS_CAM_Z_HIGH] << 8)
+                                            |   (uint16_t)parser.buf[POS_CAM_Z_LOW]);
                     dbg_last_v = cmd.velocity_v;  // 【调试】记录解析结果
                     dbg_last_w = cmd.velocity_w;
                     dbg_frame_ok_count++;          // 【调试】成功帧计数
@@ -295,24 +313,34 @@ void UART8_Demo_Process(void)
 /**
  * @brief  发送应答帧给树莓派
  *
- * 帧格式：[0x55] [0xAA] [CTRL] [V_H] [V_L] [W_H] [W_L] [CKSUM]
+ * 帧格式：[0x55][0xAA][CTRL][V_H][V_L][W_H][W_L][X_H][X_L][Y_H][Y_L][Z_H][Z_L][CKSUM]
  *
- * @param  ctrl_mode: 控制指令类型（原样回传）
+ * @param  ctrl_mode: 控制指令类型
  * @param  v        : 目标线速度（大端序发送）
  * @param  w        : 目标角速度（大端序发送）
+ * @param  cam_x    : 摄像头X轴坐标
+ * @param  cam_y    : 摄像头Y轴坐标
+ * @param  cam_z    : 摄像头Z轴坐标
  */
-void UART8_Demo_SendResponse(uint8_t ctrl_mode, int16_t v, int16_t w)
+void UART8_Demo_SendResponse(uint8_t ctrl_mode, int16_t v, int16_t w,
+                             int16_t cam_x, int16_t cam_y, int16_t cam_z)
 {
     uint8_t frame[FRAME_LEN];
 
-    frame[POS_HEAD1]  = FRAME_HEADER_1;                         /* 0x55 */
-    frame[POS_HEAD2]  = FRAME_HEADER_2;                         /* 0xAA */
-    frame[POS_CTRL]   = ctrl_mode;                              /* 控制模式 */
-    frame[POS_V_HIGH] = (uint8_t)(((uint16_t)v >> 8) & 0xFFu); /* 线速度高字节 */
-    frame[POS_V_LOW]  = (uint8_t)((uint16_t)v & 0xFFu);        /* 线速度低字节 */
-    frame[POS_W_HIGH] = (uint8_t)(((uint16_t)w >> 8) & 0xFFu); /* 角速度高字节 */
-    frame[POS_W_LOW]  = (uint8_t)((uint16_t)w & 0xFFu);        /* 角速度低字节 */
-    frame[POS_CKSUM]  = CalcChecksum8(frame);                   /* 校验和 */
+    frame[POS_HEAD1]      = FRAME_HEADER_1;                             /* 0x55 */
+    frame[POS_HEAD2]      = FRAME_HEADER_2;                             /* 0xAA */
+    frame[POS_CTRL]       = ctrl_mode;                                  /* 控制模式 */
+    frame[POS_V_HIGH]     = (uint8_t)(((uint16_t)v >> 8) & 0xFFu);     /* 线速度高字节 */
+    frame[POS_V_LOW]      = (uint8_t)((uint16_t)v & 0xFFu);            /* 线速度低字节 */
+    frame[POS_W_HIGH]     = (uint8_t)(((uint16_t)w >> 8) & 0xFFu);     /* 角速度高字节 */
+    frame[POS_W_LOW]      = (uint8_t)((uint16_t)w & 0xFFu);            /* 角速度低字节 */
+    frame[POS_CAM_X_HIGH] = (uint8_t)(((uint16_t)cam_x >> 8) & 0xFFu); /* 摄像头X高字节 */
+    frame[POS_CAM_X_LOW]  = (uint8_t)((uint16_t)cam_x & 0xFFu);        /* 摄像头X低字节 */
+    frame[POS_CAM_Y_HIGH] = (uint8_t)(((uint16_t)cam_y >> 8) & 0xFFu); /* 摄像头Y高字节 */
+    frame[POS_CAM_Y_LOW]  = (uint8_t)((uint16_t)cam_y & 0xFFu);        /* 摄像头Y低字节 */
+    frame[POS_CAM_Z_HIGH] = (uint8_t)(((uint16_t)cam_z >> 8) & 0xFFu); /* 摄像头Z高字节 */
+    frame[POS_CAM_Z_LOW]  = (uint8_t)((uint16_t)cam_z & 0xFFu);        /* 摄像头Z低字节 */
+    frame[POS_CKSUM]      = CalcChecksum8(frame);                       /* 校验和 */
 
     HAL_UART_Transmit(&huart8, frame, FRAME_LEN, TX_TIMEOUT_MS);
 }
