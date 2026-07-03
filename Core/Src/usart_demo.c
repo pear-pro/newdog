@@ -171,7 +171,8 @@ static uint8_t Parser_FeedByte(uint8_t byte)
         break;
 
     case PARSE_COLLECT:
-        if (byte == FRAME_HEADER_1) {
+        if (byte == FRAME_HEADER_1)
+         {
             /* 收集过程中遇到 0x55，可能是新帧头，重新同步 */
             parser.buf[0] = FRAME_HEADER_1;
             parser.idx = FRAME_DATA_START;
