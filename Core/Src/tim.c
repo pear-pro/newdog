@@ -26,7 +26,7 @@
 #include "gait.h"
 #include "global_var.h"
 #include "ht_10a_remote_control.h"
-
+#include "math.h"
 /*
 定时器说明：TIM9->1us计数周期，用来写delay_us;TIM10->10ms一次中断用来，更新veloY
 */
@@ -276,6 +276,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 
 /* USER CODE BEGIN 1 */
 
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     if (htim->Instance == TIM10) {
 		float AccY_correct=(AccY-0.0045f);
@@ -299,6 +300,26 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		}else{
 			emergency_stop = 0;
 		}
+		
+		if(rcData.sw5==0x0320 && rcData.sw8 == 0xFCE0)
+		{
+			if(fabs(deta_angle)<22.5f){
+				if(fabs(rcData.R_x)<0.35) rcData.R_x=0;
+			turn_omega_des-=0.3*rcData.R_x;
+			}
+			if(turn_omega_des>180.0f) 
+			{
+				turn_omega_des=-180.0f;
+				if(turn_omega_des<=body_yaw)turn_omega_des=body_yaw+30.0f;
+			}
+			else if(turn_omega_des<-180.0f) 
+			{ 
+				turn_omega_des=180.0f;
+				if(turn_omega_des>=body_yaw)turn_omega_des=body_yaw-30.0f;
+			}
+		}
+		
+		
     }
 }
 

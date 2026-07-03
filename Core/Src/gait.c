@@ -17,6 +17,14 @@
 
 #define pi 3.141592f
 
+
+// imu闭环用到的变量
+float turn_omega_des =0.0f;// 目标旋转角度
+
+float turn_omega_corr = 0.0f; // 旋转纠正值
+float deta_angle=0.0f;
+float turn_stride=0.0f;
+
 float Forward_freq = 0.0075f; // 0.004 
 #define up_down_freq 0.004f
 #define crawl_freq 0.002f
@@ -39,8 +47,8 @@ float Frontflip_freq3 = 0.004f; //
 #define jump_freq5 0.003f   // 0.01
 
 float walk_height = 22.0f; //32.0
-float max_stride = 13.0f;
-
+float max_stride = 11.0f;
+float max_stride2 = 8.0f;
 float tau = 0.0f;
 float t = 0.0f;    
 
@@ -67,6 +75,12 @@ float motor5_kp_offset = 0.15f;
 float motor6_kp_offset = 0.0f;
 float motor7_kp_offset = 0.25f;
 float motor8_kp_offset = 0.4f;
+
+
+void Init_turn_omega_des(){
+	turn_omega_des = body_yaw;
+}
+
 
 // state == 1 支撑相 ; state == 0 摆动相
 void set_Motor_Kp(int hposition1_state, int hposition2_state, int hposition3_state, int hposition4_state)
@@ -340,94 +354,122 @@ void motion_Crawl(float step_height, float stride){
 * stride：步幅，参数范围（-max_stride 到 max_stride）
 * turn_omega：转弯角速度，参数范围（-1.0f 到 1.0f）
 */
-void motion_Mix(float height, float step_height, float stride, float turn_omega)
+
+
+void motion_Mix(float height, float step_height, float stride)
 {    
-//	static float _t = 0.0f;
-//	_t += Forward_freq;  
-//	if(_t >= 1.0f) { _t -= 1.0f; }
-
-//    if (rcData.sw8 == 0x0320){
-//        if (_t <= 0.5f) {
-//            tau = (cosf(pi * _t * 2.0f - pi) + 1.0f) / 4.0f;        // 0 → 0.5
-//        } else {
-//            tau = (cosf(pi * (_t - 0.5f) * 2.0f - pi) + 1.0f) / 4.0f + 0.5f;  // 0.5 → 1.0
-//        }		
-//	}else{
-        tau += Forward_freq;  
-        if(tau >= 1.0f) { tau -= 1.0f; }
-				
-		if (turn_omega>0.03f&&stride>=-0.03f&&stride<=0.03f){
-			turn_omega=1.0f;
-			stride = turn_omega*10.0f;
-			}
-		if (turn_omega<-0.03f&&stride>=-0.03f&&stride<=0.03f){
-		turn_omega=-1.0f;
-		stride = -turn_omega*10.0f;
-}
-
-		
-//    }
-
-//   // 带陀螺仪的前进闭环控制
-//    float R_stride = stride;
-//    float L_stride = stride;  
-//    float Exp_GZ = GyroZ_max*turn_omega;  
-//    float yaw_correction = kp_GyroZ * (Exp_GZ - GyroZ);
-//    float shift_suppression = kp_VeloY*(0-VeloY);
-//    if (yaw_correction> stride_max) {yaw_correction = stride_max;}
-
-//   if (rcData.R_y == 0){
-//       if (turn_omega == 0){ VeloY = 0.0f;} // 清除零漂
-//       if (turn_omega <-0.05f){ // 左转
-//           R_stride = 0 + yaw_correction + shift_suppression;
-//           L_stride = 0 - yaw_correction - shift_suppression;
-//       }
-//       if (turn_omega > 0.05f){ // 右转
-//           R_stride = 0 + yaw_correction - shift_suppression;
-//           L_stride = 0 - yaw_correction + shift_suppression;
-//       }    
-//       	if (R_stride> stride_max) {R_stride= stride_max; }
-// 		if (R_stride<-stride_max) {R_stride=-stride_max; }
-//       	if (L_stride> stride_max) {L_stride= stride_max; }
-// 		if (L_stride<-stride_max) {L_stride=-stride_max; }
-//   }else{
-//       if (turn_omega < 0){ // 左转
-//           R_stride = stride;
-//           L_stride = stride - 2.0f*yaw_correction;
-//       }else{ // 右转
-//           R_stride = stride + 2.0f*yaw_correction;
-//           L_stride = stride;
-//       }
-//   }
-
+    tau += Forward_freq;  
+    if(tau >= 1.0f) { tau -= 1.0f; }
+			
 	// 开环左右转控制
+	float kp_turn_omega = 1.60f;
+//	float turn_omega_integral = 0.0f;
+//	const float ki_turn = 0.0170f; // 积分系数
+//	const float integral_max =6.0f; // 积分限幅防饱和
+//	float last_deta_angle = 0.0f; // 上一次角度误差
+//	const float kd_turn = 0.35f;  // 微分系数
+	
     float R_stride = stride;
     float L_stride = stride;
 	
-	if (rcData.sw5==0x0320&&rcData.sw7==0xFCE0){
-		float yaw_correction = kp_GyroZ * (0 - GyroZ);
-		if (yaw_correction> stride_max) {yaw_correction = stride_max;}
+	float turn_curr_max = 30.0f;//需要实际测量
+	if((fabs(rcData.R_y)<0.35f)&&(fabs(rcData.R_x)<0.35f)&&rcData.sw5 == 0x0320)
+	{
+		turn_omega_des=body_yaw;
+//		turn_omega_integral=0;
+	}
+	
+	//解决陀螺仪转过180变号
+	deta_angle=turn_omega_des-body_yaw;
+	if(deta_angle>180.0f) deta_angle-=360.0f;
+	else if(deta_angle<-180.0f) deta_angle+=360.0f;
+	
+//	turn_omega_integral += ki_turn *deta_angle;
+//	// 积分限幅
+//	if(turn_omega_integral > integral_max) turn_omega_integral = integral_max;
+//	if(turn_omega_integral < -integral_max) turn_omega_integral = -integral_max;
+
+//	// PID输出
+//	float d_err = deta_angle - last_deta_angle;
+//	turn_omega_corr = kp_turn_omega * deta_angle + turn_omega_integral + kd_turn * d_err;
+//	last_deta_angle = deta_angle;
+	turn_omega_corr = kp_turn_omega * deta_angle;
+	// 从turn_omega_des 映射到 turn_omega_corr
+                   if (turn_omega_corr>turn_curr_max){turn_omega_corr=turn_curr_max;}
+                   if (turn_omega_corr<-turn_curr_max){turn_omega_corr=-turn_curr_max;}
+	turn_omega_corr = turn_omega_corr/turn_curr_max;
+				   
+	// turn_omega_corr 映射到 turn_stride
+	turn_stride = turn_omega_corr;
+
+	if ((fabs(rcData.R_y)<0.35f)&&(rcData.R_x>0.35f||rcData.R_x<-0.35f)&&rcData.sw5 == 0x0320){
 		
-		if (turn_omega > 0.005f){
-			R_stride = stride * (1.0f - 2.0f * turn_omega);
-			L_stride = stride;
-		}else if (turn_omega < -0.005f){
-			R_stride = stride;
-			L_stride = stride * (1.0f + 2.0f * turn_omega);
-		}else{ // GyroZ逆时针为正
-			R_stride = stride + yaw_correction;
-			L_stride = stride - yaw_correction;
-		}	
-	}else {
-		if (turn_omega > 0.005f){
-			R_stride = stride * (1.0f - 2.0f * turn_omega);
-			L_stride = stride;
-		}else if (turn_omega < -0.005f){
-			R_stride = stride;
-			L_stride = stride * (1.0f + 2.0f * turn_omega);
+       if (turn_stride >0.01f){ 
+           R_stride =  - turn_stride*max_stride2;
+           L_stride =  + turn_stride*max_stride2;
+       }
+	   if (turn_stride <-0.01f){
+		
+           R_stride =  - turn_stride*max_stride2;
+           L_stride =  + turn_stride*max_stride2;
+       }
+   }
+	else if((fabs(rcData.R_y)>0.35f)&&(fabs(rcData.R_x)<0.35f)&&rcData.sw5 == 0x0320)
+	{
+		if (turn_stride > 0.01f){
+			if(rcData.R_y>0.35)
+			{
+				R_stride = stride;
+				L_stride = stride*(1.0f + 1.25f * turn_stride);
+			}
+			else if(rcData.R_y<-0.35)
+			{
+				R_stride = stride*(1.0f + 1.25f * turn_stride);
+				L_stride = stride ;
+			}
+		}
+		if (turn_stride < -0.01f){
+			if(rcData.R_y>0.35)
+			{
+				R_stride = stride * (1.0f - 1.25f * turn_stride) ;
+				L_stride = stride;
+			}
+			else if(rcData.R_y<-0.35)
+			{
+				R_stride = stride;
+				L_stride = stride* (1.0f - 1.25f * turn_stride);
+			}
 		}
 	}
-
+	else if((fabs(rcData.R_y)>0.35f)&&(fabs(rcData.R_x)>0.18f)&&rcData.sw5 == 0x0320)
+	{
+		if (turn_stride > 0.01f){
+			if(rcData.R_y>0.35)
+			{
+				R_stride = stride;
+				L_stride = stride *(1.0f + 1.1f * turn_stride);
+			}
+			else if(rcData.R_y<-0.35)
+			{
+				R_stride = stride*(1.0f + 1.1f * turn_stride);
+				L_stride = stride ;
+			}
+		}
+		if (turn_stride < -0.01f){
+			if(rcData.R_y>0.35)
+			{
+				R_stride = stride * (1.0f - 1.1f * turn_stride);
+				L_stride = stride ;
+			}
+			else if(rcData.R_y<-0.35)
+			{
+				R_stride = stride;
+				L_stride = stride*(1.0f - 1.1f * turn_stride);
+			}
+		}
+	}
+	
+	
     if (tau <= 0.5f)
     {
         GaitPhasesPoints RightState = gaitGenerator(0, height, step_height, R_stride);
@@ -461,6 +503,7 @@ void motion_Mix(float height, float step_height, float stride, float turn_omega)
 
     inverseKinematic_All();
     Motor_SendCmd_AllAngle();  
+	
 }
 
 void motion_StandBy(float height)

@@ -183,6 +183,9 @@ int main(void)
 	remap_motor_ids(); // 重映射id
   UART8_Demo_Init(); // 初始化 UART8 的 DMA 接收和中断
 	
+	HAL_Delay(100);
+	Init_turn_omega_des();
+
 // motor_release();
 	
   /* USER CODE END 2 */
@@ -205,7 +208,7 @@ int main(void)
 //	}
 //	
 
-    // -------------位置控制测试-----------------
+//    // -------------位置控制测试-----------------
 
 // while(1){
 //	float x = 0.0f;
@@ -227,21 +230,21 @@ int main(void)
 //	//----------4/4单电机通信调试----------
 
 //while(1){
-////	MotorTest_Sweep(1, 0.4f);
-////	MotorTest_Sweep(2, 0.4f);
+//	MotorTest_Sweep(1, 0.4f);
+//	MotorTest_Sweep(2, 0.4f);
 //	MotorTest_Sweep(3, 0.4f);
 //	MotorTest_Sweep(4, 0.4f);
-////	MotorTest_Sweep(5, 0.4f);  
-////	MotorTest_Sweep(6, 0.4f);
-////	MotorTest_Sweep(7, 0.4f);
-////	MotorTest_Sweep(8, 0.4f);
-//// 	MotorTest_Sweep(9, 0.4f); 
-////	MotorTest_Sweep(10, 0.4f);
-////	MotorTest_Sweep(11, 0.4f);
-//// 	MotorTest_Sweep(12, 0.4f);
-//// 	MotorTest_Sweep(13, 0.4f); 
-////	MotorTest_Sweep(14, 0.4f);
-////	MotorTest_Sweep(15, 0.4f);
+//	MotorTest_Sweep(5, 0.4f);  
+//	MotorTest_Sweep(6, 0.4f);
+//	MotorTest_Sweep(7, 0.4f);
+//	MotorTest_Sweep(8, 0.4f);
+// 	MotorTest_Sweep(9, 0.4f); 
+//	MotorTest_Sweep(10, 0.4f);
+//	MotorTest_Sweep(11, 0.4f);
+// 	MotorTest_Sweep(12, 0.4f);
+// 	MotorTest_Sweep(13, 0.4f); 
+//	MotorTest_Sweep(14, 0.4f);
+//	MotorTest_Sweep(15, 0.4f);
 //}
 
 
@@ -311,8 +314,8 @@ if (emergency_stop==1){
     {
         case 1:
         // 遥控控制行走
-		
-		    motion_Mix(walk_height, 8.0f, max_stride*rcData.R_y,rcData.R_x);
+		if(fabs(rcData.R_y)<0.35) rcData.R_y=0.0f;
+		    motion_Mix(walk_height, 8.0f, max_stride*rcData.R_y);
         break;
                 
         case 2:
@@ -325,21 +328,22 @@ if (emergency_stop==1){
 		if (front_speed_s> 1.0f) {front_speed_s= 1.0f; }
 		if (front_speed_s<-1.0f) {front_speed_s=-1.0f; }	
 
-		motion_Mix(walk_height, 8.0f, max_stride*front_speed_s, turn_omega_s);
+		motion_Mix(walk_height, 8.0f, max_stride*front_speed_s);
         break;
 
         case 3: // 跳跃
         //motion_Jump(22.0f);
         break;
                 
-        case 4: // 站立；
-		    motion_Mix(walk_height, 0.0000001f, 0.0f, 0.0f);
+        case 4: // 站立:
+			Init_turn_omega_des();
+		    motion_Mix(walk_height, 0.0000001f, 0.0f);
         break;   
           
         case 5:
 
         break;
-                
+         
         case 6: // 匍匐，过限高杆
 			motion_Crawl(5.0f,6.0f);
         break;     

@@ -21,7 +21,7 @@ float motor4_bias = 2.2f;
 float motor5_bias = 2.00f;
 float motor6_bias = 5.15f;
 float motor7_bias = -2.65f;
-float motor8_bias = 4.40f;
+float motor8_bias = 2.50f;
 float motor10_bias = 3.10f;// 云台偏置
 
 
