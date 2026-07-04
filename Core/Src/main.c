@@ -41,6 +41,7 @@
 #include "pwm_app.h"
 #include "ht_10a_remote_control.h"
 #include "robot_arm_control.h"
+#include "motor_4310.h"
 #include "motor_feedback.h"
 #include "debug_uart.h"
 #include "IMU.h"
@@ -175,6 +176,7 @@ int main(void)
   MX_TIM10_Init();
   MX_UART8_Init();
   MX_CAN2_Init();
+  MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
   
 	HAL_TIM_Base_Start_IT(&htim10);
@@ -252,30 +254,15 @@ while (1)
 //	init_motor_parameters();
 //  }
 
-    // -------------机械臂调试------------------
-	while(1){
+    // -------------机械臂调试（注释保留）------------------
 //	hmotor10.Kp =0.8f;
-//		gimbal_send_unitree(10.0f); // 发送云台控制指令，参数为期望的云台角度
-//	
-//		Set_DM_Motor(1, -50);//大臂调节
-//		Set_DM_Motor(0, -20);//小臂调节
-//		Arm_Move_To(46.2,0,34.629);//到达目标位置
-//		Arm_Move_To(40,0,50);
-//		Arm_Move_To(40,0,0);
-//		Arm_Move_To(0,0,80.829);//完全竖直	
-//		Test_Arm_Down_Posture();//测试
-//  	HAL_Delay(10);
-		
-		//摄像机舵机给值
-//		Set_Servo_Angle_TIM8(TIM_CHANNEL_1,30.0f);//w
-//    Set_Servo_Angle_TIM8(TIM_CHANNEL_2, 135.0f);//x
-		
-		//吸盘舵机
-//		Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 265.0f);//垂直
-//		Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 175.0f);//重合
-		
-    HAL_Delay(1000);
-	}
+//	gimbal_send_unitree(10.0f);
+//	Set_DM_Motor(1, -50);//大臂调节
+//	Set_DM_Motor(0, -20);//小臂调节
+//	Arm_Move_To(40,0,50);
+//	Set_Servo_Angle_TIM8(TIM_CHANNEL_1,30.0f);//摄像机w
+//  Set_Servo_Angle_TIM8(TIM_CHANNEL_2, 135.0f);//摄像机x
+//	Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 265.0f);//吸盘垂直
 	
 
 

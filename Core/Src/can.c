@@ -39,11 +39,11 @@ void MX_CAN1_Init(void)
 
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 14;
+  hcan1.Init.Prescaler = 6;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_9TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_2TQ;
+  hcan1.Init.TimeSeg1 = CAN_BS1_5TQ;
+  hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = DISABLE;
   hcan1.Init.AutoWakeUp = DISABLE;
@@ -68,17 +68,10 @@ void MX_CAN1_Init(void)
   can_filter_st.FilterMode = CAN_FILTERMODE_IDMASK;
   can_filter_st.FilterScale = CAN_FILTERSCALE_32BIT;
   
-  /* * 放行 0x50 标准帧 ID 的报文，其他 ID 全丢弃
-   * 维特标准协议封装特点：ID 固定为 0x50，数据域前两字节为帧头和帧类型，后续 6 字节为有效载荷
-   * 因此只需对 ID 进行过滤，数据域无需过滤: 
-   *   can_filter_st.FilterIdHigh     = (0x50 << 5);   // 目标 ID 左移 5 位
-   *   can_filter_st.FilterMaskIdHigh = (0x7FF << 5);  // 11 位标准 ID 全掩码
-   * 
-   * 未来若需扩展接收其他 CAN ID（如 0x00~0x0F），可修改 Mask 参数扩大接收范围。
-   */
-  can_filter_st.FilterIdHigh =(0x50 << 5);
+  /* CAN1 过滤器: 全放行（达妙电机ID 0x00~0x03 + 其他设备） */
+  can_filter_st.FilterIdHigh = 0x0000;
   can_filter_st.FilterIdLow = 0x0000;
-  can_filter_st.FilterMaskIdHigh =(0x7FF << 5);
+  can_filter_st.FilterMaskIdHigh = 0x0000;
   can_filter_st.FilterMaskIdLow = 0x0000;
   
   can_filter_st.FilterFIFOAssignment = CAN_RX_FIFO0;
