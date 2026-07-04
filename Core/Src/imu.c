@@ -84,7 +84,7 @@ void IMU_CAN_RXCALLback(CAN_HandleTypeDef *hcan)
     uint8_t rx_data[8];
      int16_t raw_x, raw_y, raw_z;
     
-    if (hcan->Instance == CAN1)
+    if (hcan->Instance == CAN2)
     {
        
         if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data) == HAL_OK)

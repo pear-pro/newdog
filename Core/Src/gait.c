@@ -446,25 +446,25 @@ void motion_Mix(float height, float step_height, float stride)
 		if (turn_stride > 0.01f){
 			if(rcData.R_y>0.35)
 			{
-				R_stride = stride;
-				L_stride = stride *(1.0f + 1.1f * turn_stride);
+				R_stride = stride *(1.0f - 0.9f * turn_stride);
+				L_stride = stride *(1.0f + 1.0f * turn_stride);
 			}
 			else if(rcData.R_y<-0.35)
 			{
-				R_stride = stride*(1.0f + 1.1f * turn_stride);
-				L_stride = stride ;
+				R_stride = stride*(1.0f + 1.0f * turn_stride);
+				L_stride = stride *(1.0f - 0.9f * turn_stride);
 			}
 		}
 		if (turn_stride < -0.01f){
 			if(rcData.R_y>0.35)
 			{
-				R_stride = stride * (1.0f - 1.1f * turn_stride);
-				L_stride = stride ;
+				R_stride = stride * (1.0f - 1.0f * turn_stride);
+				L_stride = stride *(1.0f + 0.9f * turn_stride);
 			}
 			else if(rcData.R_y<-0.35)
 			{
-				R_stride = stride;
-				L_stride = stride*(1.0f - 1.1f * turn_stride);
+				R_stride = stride*(1.0f + 0.9f * turn_stride);
+				L_stride = stride*(1.0f - 1.0f * turn_stride);
 			}
 		}
 	}
