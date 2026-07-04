@@ -23,7 +23,7 @@ Function Pointers
  <LI><a href="#[20]">CAN1_RX1_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[21]">CAN1_SCE_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[1e]">CAN1_TX_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
- <LI><a href="#[4b]">CAN2_RX0_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
+ <LI><a href="#[4b]">CAN2_RX0_IRQHandler</a> from stm32f4xx_it.o(i.CAN2_RX0_IRQHandler) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[4c]">CAN2_RX1_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[4d]">CAN2_SCE_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
  <LI><a href="#[4a]">CAN2_TX_IRQHandler</a> from startup_stm32f427xx.o(.text) referenced from startup_stm32f427xx.o(RESET)
@@ -168,9 +168,6 @@ Global Symbols
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
 </UL>
 <P><STRONG><a name="[1e]"></a>CAN1_TX_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_stm32f427xx.o(.text))
-<BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
-</UL>
-<P><STRONG><a name="[4b]"></a>CAN2_RX0_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_stm32f427xx.o(.text))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
 </UL>
 <P><STRONG><a name="[4c]"></a>CAN2_RX1_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_stm32f427xx.o(.text))
@@ -407,7 +404,7 @@ Global Symbols
 
 <P><STRONG><a name="[146]"></a>__aeabi_memcpy8</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, memcpya.o(.text), UNUSED)
 
-<P><STRONG><a name="[71]"></a>__aeabi_memset</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, memseta.o(.text), UNUSED)
+<P><STRONG><a name="[71]"></a>__aeabi_memset</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, memseta.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[72]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_memset$wrapper
 <LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr
 </UL>
@@ -416,8 +413,10 @@ Global Symbols
 
 <P><STRONG><a name="[148]"></a>__aeabi_memset8</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, memseta.o(.text), UNUSED)
 
-<P><STRONG><a name="[70]"></a>__aeabi_memclr</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, memseta.o(.text), UNUSED)
+<P><STRONG><a name="[70]"></a>__aeabi_memclr</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, memseta.o(.text))
 <BR><BR>[Calls]<UL><LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memset
+</UL>
+<BR>[Called By]<UL><LI><a href="#[fe]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Parser_Reset
 </UL>
 
 <P><STRONG><a name="[97]"></a>__aeabi_memclr4</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, memseta.o(.text))
@@ -643,6 +642,13 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
 </UL>
+<P><STRONG><a name="[4b]"></a>CAN2_RX0_IRQHandler</STRONG> (Thumb, 10 bytes, Stack size 8 bytes, stm32f4xx_it.o(i.CAN2_RX0_IRQHandler))
+<BR><BR>[Stack]<UL><LI>Max Depth = 128<LI>Call Chain = CAN2_RX0_IRQHandler &rArr; HAL_CAN_IRQHandler &rArr; HAL_CAN_RxFifo0MsgPendingCallback &rArr; IMU_CAN_RXCALLback &rArr; HAL_CAN_GetRxMessage
+</UL>
+<BR>[Calls]<UL><LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_CAN_IRQHandler
+</UL>
+<BR>[Address Reference Count : 1]<UL><LI> startup_stm32f427xx.o(RESET)
+</UL>
 <P><STRONG><a name="[16]"></a>DMA1_Stream0_IRQHandler</STRONG> (Thumb, 10 bytes, Stack size 8 bytes, stm32f4xx_it.o(i.DMA1_Stream0_IRQHandler))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = DMA1_Stream0_IRQHandler &rArr; HAL_DMA_IRQHandler
 </UL>
@@ -733,7 +739,8 @@ Global Symbols
 <LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_CAN_ErrorCallback
 <LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_CAN_RxFifo0MsgPendingCallback
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN1_RX0_IRQHandler
+<BR>[Called By]<UL><LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN2_RX0_IRQHandler
+<LI><a href="#[1f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN1_RX0_IRQHandler
 </UL>
 
 <P><STRONG><a name="[95]"></a>HAL_CAN_Init</STRONG> (Thumb, 372 bytes, Stack size 16 bytes, stm32f4xx_hal_can.o(i.HAL_CAN_Init))
@@ -745,7 +752,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[ea]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_CAN1_Init
 </UL>
 
-<P><STRONG><a name="[96]"></a>HAL_CAN_MspInit</STRONG> (Thumb, 138 bytes, Stack size 32 bytes, can.o(i.HAL_CAN_MspInit))
+<P><STRONG><a name="[96]"></a>HAL_CAN_MspInit</STRONG> (Thumb, 330 bytes, Stack size 32 bytes, can.o(i.HAL_CAN_MspInit))
 <BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = HAL_CAN_MspInit &rArr; HAL_NVIC_SetPriority &rArr; __NVIC_SetPriority
 </UL>
 <BR>[Calls]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_NVIC_SetPriority
@@ -760,7 +767,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_CAN_IRQHandler
 </UL>
 
-<P><STRONG><a name="[8f]"></a>HAL_CAN_RxFifo0MsgPendingCallback</STRONG> (Thumb, 12 bytes, Stack size 8 bytes, stm32f4xx_it.o(i.HAL_CAN_RxFifo0MsgPendingCallback))
+<P><STRONG><a name="[8f]"></a>HAL_CAN_RxFifo0MsgPendingCallback</STRONG> (Thumb, 20 bytes, Stack size 8 bytes, stm32f4xx_it.o(i.HAL_CAN_RxFifo0MsgPendingCallback))
 <BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = HAL_CAN_RxFifo0MsgPendingCallback &rArr; IMU_CAN_RXCALLback &rArr; HAL_CAN_GetRxMessage
 </UL>
 <BR>[Calls]<UL><LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;IMU_CAN_RXCALLback
@@ -891,6 +898,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[130]"></a>HAL_GPIO_ReadPin</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, stm32f4xx_hal_gpio.o(i.HAL_GPIO_ReadPin))
+<P><STRONG><a name="[130]"></a>HAL_GPIO_ReadPin</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, stm32f4xx_hal_gpio.o(i.HAL_GPIO_ReadPin))
 <BR><BR>[Called By]<UL><LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;key_exti_callback
 </UL>
 
@@ -909,12 +917,13 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[e4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Transmit
 <LI><a href="#[dd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Receive
 <LI><a href="#[a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_Delay
-<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_DMA_Init
 <LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_CAN_Start
 <LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_CAN_Init
 <LI><a href="#[106]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART8_Demo_Process
 <LI><a href="#[b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_RCC_OscConfig
 <LI><a href="#[ad]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_RCC_ClockConfig
+<LI><a href="#[104]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART8_Demo_Process
+<LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DispatchCommand
 <LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;IMU_CAN_RXCALLback
 <LI><a href="#[a5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;key_exti_callback
 <LI><a href="#[de]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_WaitOnFlagUntilTimeout
@@ -972,6 +981,7 @@ Global Symbols
 <LI><a href="#[ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_GPIO_Init
 <LI><a href="#[ed]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_DMA_Init
 <LI><a href="#[a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_InitTick
+<LI><a href="#[d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_MspInit
 </UL>
 
 <P><STRONG><a name="[a7]"></a>HAL_NVIC_SetPriorityGrouping</STRONG> (Thumb, 32 bytes, Stack size 0 bytes, stm32f4xx_hal_cortex.o(i.HAL_NVIC_SetPriorityGrouping))
@@ -1068,9 +1078,11 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[132]"></a>HAL_TIM_Base_Start</STRONG> (Thumb, 126 bytes, Stack size 0 bytes, stm32f4xx_hal_tim.o(i.HAL_TIM_Base_Start))
+<P><STRONG><a name="[132]"></a>HAL_TIM_Base_Start</STRONG> (Thumb, 126 bytes, Stack size 0 bytes, stm32f4xx_hal_tim.o(i.HAL_TIM_Base_Start))
 <BR><BR>[Called By]<UL><LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
+<P><STRONG><a name="[131]"></a>HAL_TIM_Base_Start_IT</STRONG> (Thumb, 138 bytes, Stack size 0 bytes, stm32f4xx_hal_tim.o(i.HAL_TIM_Base_Start_IT))
 <P><STRONG><a name="[131]"></a>HAL_TIM_Base_Start_IT</STRONG> (Thumb, 138 bytes, Stack size 0 bytes, stm32f4xx_hal_tim.o(i.HAL_TIM_Base_Start_IT))
 <BR><BR>[Called By]<UL><LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -1219,8 +1231,7 @@ Global Symbols
 <P><STRONG><a name="[da]"></a>HAL_UART_MspInit</STRONG> (Thumb, 760 bytes, Stack size 32 bytes, usart.o(i.HAL_UART_MspInit))
 <BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = HAL_UART_MspInit &rArr; HAL_NVIC_SetPriority &rArr; __NVIC_SetPriority
 </UL>
-<BR>[Calls]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_DMA_Init
-<LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_NVIC_SetPriority
+<BR>[Calls]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_NVIC_SetPriority
 <LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_NVIC_EnableIRQ
 <LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_Init
 <LI><a href="#[dc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Error_Handler
@@ -1421,6 +1432,8 @@ Global Symbols
 </UL>
 <P><STRONG><a name="[12d]"></a>Motor_Init</STRONG> (Thumb, 62 bytes, Stack size 0 bytes, motor.o(i.Motor_Init))
 <BR><BR>[Called By]<UL><LI><a href="#[12c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_motor_parameters
+<P><STRONG><a name="[12d]"></a>Motor_Init</STRONG> (Thumb, 62 bytes, Stack size 0 bytes, motor.o(i.Motor_Init))
+<BR><BR>[Called By]<UL><LI><a href="#[12c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_motor_parameters
 </UL>
 
 <P><STRONG><a name="[f7]"></a>Motor_InitBias</STRONG> (Thumb, 254 bytes, Stack size 112 bytes, motor.o(i.Motor_InitBias))
@@ -1478,6 +1491,7 @@ Global Symbols
 <P><STRONG><a name="[13c]"></a>RC_init</STRONG> (Thumb, 142 bytes, Stack size 8 bytes, bsp_rc.o(i.RC_init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = RC_init
 </UL>
+<BR>[Called By]<UL><LI><a href="#[133]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sbus_remote_control_init
 <BR>[Called By]<UL><LI><a href="#[133]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sbus_remote_control_init
 </UL>
 
@@ -1570,6 +1584,8 @@ Global Symbols
 <LI><a href="#[105]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Parser_Reset
 <LI><a href="#[108]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Parser_FeedByte
 <LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DispatchCommand
+<LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
+<LI><a href="#[108]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
 </UL>
 <BR>[Called By]<UL><LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -1641,6 +1657,8 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inverseKinematic
 <LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crawl_inverseKinematic
+<BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inverseKinematic
+<LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crawl_inverseKinematic
 </UL>
 
 <P><STRONG><a name="[113]"></a>__hardfp_cos</STRONG> (Thumb, 180 bytes, Stack size 32 bytes, cos.o(i.__hardfp_cos))
@@ -1675,6 +1693,9 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[127]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;normalize_angle_deg
 <LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inverseKinematic
 <LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crawl_inverseKinematic
+<BR>[Called By]<UL><LI><a href="#[127]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;normalize_angle_deg
+<LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inverseKinematic
+<LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crawl_inverseKinematic
 </UL>
 
 <P><STRONG><a name="[11c]"></a>__hardfp_sin</STRONG> (Thumb, 180 bytes, Stack size 32 bytes, sin.o(i.__hardfp_sin))
@@ -1696,6 +1717,8 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[114]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__set_errno
 </UL>
+<BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inverseKinematic
+<LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crawl_inverseKinematic
 <BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inverseKinematic
 <LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crawl_inverseKinematic
 </UL>
@@ -1850,6 +1873,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[126]"></a>crawl_inverseKinematic</STRONG> (Thumb, 1016 bytes, Stack size 80 bytes, kinematic.o(i.crawl_inverseKinematic))
+<P><STRONG><a name="[126]"></a>crawl_inverseKinematic</STRONG> (Thumb, 1016 bytes, Stack size 80 bytes, kinematic.o(i.crawl_inverseKinematic))
 <BR><BR>[Stack]<UL><LI>Max Depth = 124<LI>Call Chain = crawl_inverseKinematic &rArr; normalize_angle_deg &rArr; __hardfp_fmodf &rArr; _frem &rArr; _float_epilogue
 </UL>
 <BR>[Calls]<UL><LI><a href="#[127]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;normalize_angle_deg
@@ -1862,8 +1886,10 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[128]"></a>crawl_inverseKinematic_All</STRONG> (Thumb, 64 bytes, Stack size 8 bytes, kinematic.o(i.crawl_inverseKinematic_All))
+<P><STRONG><a name="[128]"></a>crawl_inverseKinematic_All</STRONG> (Thumb, 64 bytes, Stack size 8 bytes, kinematic.o(i.crawl_inverseKinematic_All))
 <BR><BR>[Stack]<UL><LI>Max Depth = 132<LI>Call Chain = crawl_inverseKinematic_All &rArr; crawl_inverseKinematic &rArr; normalize_angle_deg &rArr; __hardfp_fmodf &rArr; _frem &rArr; _float_epilogue
 </UL>
+<BR>[Calls]<UL><LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crawl_inverseKinematic
 <BR>[Calls]<UL><LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crawl_inverseKinematic
 </UL>
 <BR>[Called By]<UL><LI><a href="#[137]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;motion_Crawl
@@ -1875,6 +1901,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ieee754_rem_pio2
 </UL>
 
+<P><STRONG><a name="[12b]"></a>gaitGenerator</STRONG> (Thumb, 542 bytes, Stack size 128 bytes, gait.o(i.gaitGenerator))
 <P><STRONG><a name="[12b]"></a>gaitGenerator</STRONG> (Thumb, 542 bytes, Stack size 128 bytes, gait.o(i.gaitGenerator))
 <BR><BR>[Stack]<UL><LI>Max Depth = 368<LI>Call Chain = gaitGenerator &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dsub &rArr; __aeabi_dadd &rArr; _double_epilogue &rArr; _double_round
 </UL>
@@ -1892,13 +1919,16 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[12c]"></a>init_motor_parameters</STRONG> (Thumb, 434 bytes, Stack size 4 bytes, motor.o(i.init_motor_parameters))
+<P><STRONG><a name="[12c]"></a>init_motor_parameters</STRONG> (Thumb, 434 bytes, Stack size 4 bytes, motor.o(i.init_motor_parameters))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = init_motor_parameters
 </UL>
+<BR>[Calls]<UL><LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Init
 <BR>[Calls]<UL><LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Init
 </UL>
 <BR>[Called By]<UL><LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
+<P><STRONG><a name="[12e]"></a>inverseKinematic</STRONG> (Thumb, 1196 bytes, Stack size 72 bytes, kinematic.o(i.inverseKinematic))
 <P><STRONG><a name="[12e]"></a>inverseKinematic</STRONG> (Thumb, 1196 bytes, Stack size 72 bytes, kinematic.o(i.inverseKinematic))
 <BR><BR>[Stack]<UL><LI>Max Depth = 116<LI>Call Chain = inverseKinematic &rArr; normalize_angle_deg &rArr; __hardfp_fmodf &rArr; _frem &rArr; _float_epilogue
 </UL>
@@ -1908,11 +1938,14 @@ Global Symbols
 <LI><a href="#[10f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__hardfp_atan2f
 </UL>
 <BR>[Called By]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inverseKinematic_All
+<BR>[Called By]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inverseKinematic_All
 </UL>
 
 <P><STRONG><a name="[12f]"></a>inverseKinematic_All</STRONG> (Thumb, 56 bytes, Stack size 8 bytes, kinematic.o(i.inverseKinematic_All))
+<P><STRONG><a name="[12f]"></a>inverseKinematic_All</STRONG> (Thumb, 56 bytes, Stack size 8 bytes, kinematic.o(i.inverseKinematic_All))
 <BR><BR>[Stack]<UL><LI>Max Depth = 124<LI>Call Chain = inverseKinematic_All &rArr; inverseKinematic &rArr; normalize_angle_deg &rArr; __hardfp_fmodf &rArr; _frem &rArr; _float_epilogue
 </UL>
+<BR>[Calls]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inverseKinematic
 <BR>[Calls]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inverseKinematic
 </UL>
 <BR>[Called By]<UL><LI><a href="#[139]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;motion_StandBy
@@ -1926,6 +1959,7 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[f7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_InitBias
 <LI><a href="#[e8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Led_Set
 <LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
+<LI><a href="#[130]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_ReadPin
 <LI><a href="#[130]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_ReadPin
 </UL>
 <BR>[Called By]<UL><LI><a href="#[a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_EXTI_Callback
@@ -2030,18 +2064,23 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[127]"></a>normalize_angle_deg</STRONG> (Thumb, 80 bytes, Stack size 8 bytes, kinematic.o(i.normalize_angle_deg))
+<P><STRONG><a name="[127]"></a>normalize_angle_deg</STRONG> (Thumb, 80 bytes, Stack size 8 bytes, kinematic.o(i.normalize_angle_deg))
 <BR><BR>[Stack]<UL><LI>Max Depth = 44<LI>Call Chain = normalize_angle_deg &rArr; __hardfp_fmodf &rArr; _frem &rArr; _float_epilogue
 </UL>
 <BR>[Calls]<UL><LI><a href="#[11a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__hardfp_fmodf
 </UL>
 <BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inverseKinematic
 <LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crawl_inverseKinematic
+<BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inverseKinematic
+<LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crawl_inverseKinematic
 </UL>
 
+<P><STRONG><a name="[134]"></a>remap_motor_ids</STRONG> (Thumb, 50 bytes, Stack size 0 bytes, motor.o(i.remap_motor_ids))
 <P><STRONG><a name="[134]"></a>remap_motor_ids</STRONG> (Thumb, 50 bytes, Stack size 0 bytes, motor.o(i.remap_motor_ids))
 <BR><BR>[Called By]<UL><LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
+<P><STRONG><a name="[133]"></a>sbus_remote_control_init</STRONG> (Thumb, 36 bytes, Stack size 8 bytes, ht_10a_remote_control.o(i.sbus_remote_control_init))
 <P><STRONG><a name="[133]"></a>sbus_remote_control_init</STRONG> (Thumb, 36 bytes, Stack size 8 bytes, ht_10a_remote_control.o(i.sbus_remote_control_init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = sbus_remote_control_init &rArr; RC_init
 </UL>
@@ -2062,6 +2101,7 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = unitree_crc_complete &rArr; crc_ccitt
 </UL>
 <BR>[Calls]<UL><LI><a href="#[129]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crc_ccitt
+<BR>[Calls]<UL><LI><a href="#[129]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crc_ccitt
 </UL>
 <BR>[Called By]<UL><LI><a href="#[cd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;motor_release
 <LI><a href="#[f7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_InitBias
@@ -2072,13 +2112,17 @@ Global Symbols
 Local Symbols
 </H3>
 <P><STRONG><a name="[129]"></a>crc_ccitt</STRONG> (Thumb, 40 bytes, Stack size 24 bytes, crc_ccitt.o(i.crc_ccitt))
+<P><STRONG><a name="[129]"></a>crc_ccitt</STRONG> (Thumb, 40 bytes, Stack size 24 bytes, crc_ccitt.o(i.crc_ccitt))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = crc_ccitt
 </UL>
+<BR>[Calls]<UL><LI><a href="#[12a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crc_ccitt_byte
 <BR>[Calls]<UL><LI><a href="#[12a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crc_ccitt_byte
 </UL>
 <BR>[Called By]<UL><LI><a href="#[f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;unitree_crc_complete
 </UL>
 
+<P><STRONG><a name="[12a]"></a>crc_ccitt_byte</STRONG> (Thumb, 20 bytes, Stack size 0 bytes, crc_ccitt.o(i.crc_ccitt_byte))
+<BR><BR>[Called By]<UL><LI><a href="#[129]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crc_ccitt
 <P><STRONG><a name="[12a]"></a>crc_ccitt_byte</STRONG> (Thumb, 20 bytes, Stack size 0 bytes, crc_ccitt.o(i.crc_ccitt_byte))
 <BR><BR>[Called By]<UL><LI><a href="#[129]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;crc_ccitt
 </UL>
@@ -2122,7 +2166,7 @@ Local Symbols
 <P><STRONG><a name="[67]"></a>DMA_NoOpCallback</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, usart_demo.o(i.DMA_NoOpCallback))
 <BR>[Address Reference Count : 1]<UL><LI> usart_demo.o(i.UART8_Demo_Init)
 </UL>
-<P><STRONG><a name="[85]"></a>DispatchCommand</STRONG> (Thumb, 84 bytes, Stack size 8 bytes, usart_demo.o(i.DispatchCommand))
+<P><STRONG><a name="[85]"></a>DispatchCommand</STRONG> (Thumb, 106 bytes, Stack size 8 bytes, usart_demo.o(i.DispatchCommand))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = DispatchCommand
 </UL>
 <BR>[Calls]<UL><LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick

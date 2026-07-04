@@ -125,7 +125,7 @@ void SystemClock_Config(void);
 
 
 /* USER CODE END PFP */
-	
+
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
@@ -146,7 +146,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-   HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -170,8 +170,8 @@ int main(void)
   MX_TIM9_Init();
   MX_TIM10_Init();
   MX_UART8_Init();
-  /* USER CODE BEGIN 2 */
-  
+  MX_CAN2_Init(); 
+
 	HAL_TIM_Base_Start_IT(&htim10);
 	HAL_TIM_Base_Start(&htim9);
 	PWM_Init(); 
@@ -250,7 +250,7 @@ int main(void)
 
   // -------------遥控控制部分------------------
 	// 说明：此处主要控制非状态机函数
-  UART8_Demo_Process(); //
+ // UART8_Demo_Process(); //
 
   // // 树莓派请求行走，没用到，看后续怎么进入行走状态
   // if (uart8_walk_request) {
