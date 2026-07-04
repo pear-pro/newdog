@@ -62,6 +62,7 @@
 
 /* External variables --------------------------------------------------------*/
 extern CAN_HandleTypeDef hcan1;
+extern CAN_HandleTypeDef hcan2;
 extern TIM_HandleTypeDef htim5;
 extern TIM_HandleTypeDef htim10;
 extern DMA_HandleTypeDef hdma_uart7_tx;
@@ -356,6 +357,20 @@ void DMA2_Stream2_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles CAN2 RX0 interrupts.
+  */
+void CAN2_RX0_IRQHandler(void)
+{
+  /* USER CODE BEGIN CAN2_RX0_IRQn 0 */
+
+  /* USER CODE END CAN2_RX0_IRQn 0 */
+  HAL_CAN_IRQHandler(&hcan2);
+  /* USER CODE BEGIN CAN2_RX0_IRQn 1 */
+
+  /* USER CODE END CAN2_RX0_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA2 stream6 global interrupt.
   */
 void DMA2_Stream6_IRQHandler(void)
@@ -422,10 +437,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
       /* USER CODE BEGIN CAN1_RX0_IRQn 0 */
+      if (hcan->Instance == CAN2) {
              IMU_CAN_RXCALLback(hcan);
-   
+      }
+      // 后续CAN1机械臂回调在这里加 else if (hcan->Instance == CAN1)
+
        /* USER CODE END CAN1_RX0_IRQn 0 */
-   
+
 }
 
 

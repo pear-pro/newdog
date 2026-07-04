@@ -129,7 +129,7 @@ void SystemClock_Config(void);
 
 
 /* USER CODE END PFP */
-	
+
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
@@ -174,6 +174,7 @@ int main(void)
   MX_TIM9_Init();
   MX_TIM10_Init();
   MX_UART8_Init();
+  MX_CAN2_Init();
   /* USER CODE BEGIN 2 */
   
 	HAL_TIM_Base_Start_IT(&htim10);
@@ -204,14 +205,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
     Set_dm_enable(&hcan1, 0);
 	  Set_dm_enable(&hcan1, 1);
-  while (1)
-  
 float GyroZ_filtered = 0.0f;
 // 滤波系数，0~1，越小越平滑，也越滞后
 float alpha = 0.008f;
 
 while (1)
-  {  
+  {
 		//电机接收
 	  Motor_Feedback_Process();    
     Motor_Feedback_TimeoutTask();
