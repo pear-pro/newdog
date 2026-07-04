@@ -1,7 +1,8 @@
 #ifndef __GAIT__
 #define __GAIT__
 
-#define Ts 1.00f          // 控制周期
+#define Ts 1.00f    // 控制周期
+#define Ts_crawl 1.00f   
 #include "stm32f4xx.h"
 
 /*某只脚的两个电机驱动的角度，alpha和beta*/
@@ -57,11 +58,13 @@ void motion_Forward(float height, float step_height, float stride);
 void motion_StandBy(float height);
 void StepInPlace(float height, float step_height);
 void motion_Jump(float stride);
+void motion_SmallJump(void);
 void motion_Mix(float height, float step_height, float stride, float turn_stride);
 void flip_body(void);
 void motion_Down(float start,float des);
 void motion_Up(float start,float des);
 void motion_Crawl(float step_height, float stride);
+void motion_Crawl_Reset(void);   // 进入匍匐时调用，触发缓慢下蹲过渡
 uint8_t imu_emergency_stop(void);
 void motion_Frontflip(void);
 void test_circle(void);

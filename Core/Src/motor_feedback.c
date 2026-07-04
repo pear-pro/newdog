@@ -87,7 +87,7 @@ void Motor_Feedback_TimeoutTask(void)
 {
     static uint32_t offline_cnt[MOTOR_NUM] = {0};
 
-    for (uint8_t i = 0; i < MOTOR_NUM; i++)
+    for (uint8_t i = 2; i < MOTOR_NUM; i++)
     {
         if (motor_fb[i].online)
         {

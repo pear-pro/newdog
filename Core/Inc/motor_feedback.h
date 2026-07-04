@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-#define MOTOR_NUM        8
+#define MOTOR_NUM        10
 #define MOTOR_FB_LEN     16
 
 extern volatile uint8_t motor_timeout_flag;

@@ -25,7 +25,7 @@ float deta_angle=0.0f;
 
 float Forward_freq = 0.01f; // 0.004 
 #define up_down_freq 0.004f
-#define crawl_freq 0.002f
+#define crawl_freq 0.005f
 
 float support_Kp = 0.5f; // 0.6/0.7,0.25/0.3
 float swing_Kp = 0.3f;
@@ -229,8 +229,10 @@ GaitPhasesPoints  gaitGenerator(int state, float height, float step_height, floa
 
 GaitPhasesPoints  crawl_gaitGenerator(int state, float height, float step_height, float stride, float x_pos)
 {
-  GaitPhasesPoints phaseState;
+  GaitPhasesPoints phaseState; 
   
+
+
   if(state == 0)         phaseState.sigma = 2 * pi * tau / (0.5f * Ts);               // 前半周期轨迹生成三角函数中的相位
   else if (state == 1)   phaseState.sigma = 2 * pi * (tau - 0.5f* Ts)/ (0.5f * Ts);   // 后半周期轨迹生成三角函数中的相位
 
@@ -241,6 +243,64 @@ GaitPhasesPoints  crawl_gaitGenerator(int state, float height, float step_height
   phaseState.xSupport = stride / 2  - stride * ((phaseState.sigma - sin(phaseState.sigma)) / (2 * pi)) + x_pos;
   phaseState.ySupport = height;
   return phaseState;
+}
+
+/* 新版匍匐步态生成器：单足摆动(25%·Ts) + 三足支撑(75%·Ts)
+ * t:         当前腿的时间偏移量（秒），范围 [0, Ts)
+ *   t ∈ [0,       0.25*Ts): 摆动相 → 摆线轨迹完成抬腿前移
+ *   t ∈ [0.25*Ts, Ts     ): 支撑相 → 足端匀速后移推身体前进
+ * height:    支撑时足端离电机轴心的垂直距离
+ * step_height: 摆动最高点高度
+ * stride:    步幅（单周期内足端前后移动总量）
+ * x_pos:     该腿电机轴心的x坐标（前腿为正，后腿为负）
+ *
+ * Ts (gait.h) 为匍匐步态的完整控制周期（秒），tau 从 0 累加至 Ts 为一个完整步态。
+ * 修改 Ts 即可等比例调节爬行速度：Ts 越大周期越长、爬行越慢。
+ */
+GaitPhasesPoints crawl_gaitGenerator_new(float t, float height, float step_height, float stride, float x_pos)
+{
+	GaitPhasesPoints phaseState;
+
+	// 确保 t 在 [0, Ts) 区间内（容错，正常由调用方保证）
+	if (t >= Ts) t -= Ts;
+	if (t < 0.0f) t += Ts;
+
+	float swing_end = 0.25f * Ts;   // 摆动相结束时刻 = 25% 周期处
+
+	if (t < swing_end)  // ======== 摆动相 (25%·Ts) ========
+	{
+		// sigma 从 0 → 2π，完成一次完整的摆线运动
+		phaseState.sigma = 2.0f * pi * t / swing_end;
+
+		// 摆动水平：从后向前跨一步（modified sine 轨迹）
+		phaseState.xSwing = stride * ((phaseState.sigma - sinf(phaseState.sigma)) / (2.0f * pi))
+		                    - stride / 2.0f + x_pos;
+		// 摆动垂直：抬腿→放下（cos 曲线）
+		phaseState.ySwing = height - step_height * (1.0f - cosf(phaseState.sigma)) / 2.0f;
+
+		// 支撑相字段置零（该腿在摆动，不使用支撑值）
+		phaseState.xSupport = 0.0f;
+		phaseState.ySupport = 0.0f;
+	}
+	else  // ======== 支撑相 (75%·Ts) ========
+	{
+		// support_t 从 0 → 1，表示支撑进度
+		float support_duration = Ts - swing_end;   // 0.75f * Ts
+		float support_t = (t - swing_end) / support_duration;
+
+		// 支撑水平：摆线轨迹，起点终点速度为零，与摆动相平滑衔接
+		float support_sigma = support_t * 2.0f * pi;
+		phaseState.sigma = support_sigma;
+		phaseState.xSupport = stride / 2.0f - stride * ((support_sigma - sinf(support_sigma)) / (2.0f * pi)) + x_pos;
+		// 支撑垂直：保持触地高度
+		phaseState.ySupport = height;
+
+		// 摆动相字段置零
+		phaseState.xSwing = 0.0f;
+		phaseState.ySwing = 0.0f;
+	}
+
+	return phaseState;
 }
 
 // 把运动曲线赋值给每个足   height:支撑脚离电机轴心高度  step_height:摆动高度  stride:步幅
@@ -283,74 +343,136 @@ void motion_Forward(float height, float step_height, float stride)
     Motor_SendCmd_AllAngle();  
 }
 
-void motion_Crawl(float step_height, float stride){
-    tau += crawl_freq; // 步频
-    if(tau >= 1.0f) { tau = 0.0f; }
+/* ── 匍匐状态机：先静止下蹲，再启动步态 ── */
+typedef enum {
+	CRAWL_DESCEND = 0,  /* 阶段1：四腿不动，缓慢下蹲 */
+	CRAWL_ACTIVE  = 1   /* 阶段2：正常匍匐步态     */
+} CrawlState_t;
 
-  motor1_kp_offset = 0.35f;
-  motor2_kp_offset = 0.45f;
-  motor3_kp_offset = 0.2f;
-  motor4_kp_offset = 0.15f;
-  motor5_kp_offset = 0.17f;
-  motor6_kp_offset = 0.32f;
-  motor7_kp_offset = 0.47f;
-  motor8_kp_offset = 0.60f;
+static CrawlState_t crawl_state = CRAWL_DESCEND;
+static float crawl_descend_t = 0.0f;        /* 下降进度 [0, 1] */
+static float crawl_descend_start_h = 22.0f; /* 下降起始高度      */
 
-    float Crawl_height = 13.5f; // y轴方向上电机轴心到地面的距离14.5 - 足底高度4.0
-    float front_pivot_x = 13.5f + 0.5f*stride; // 前摆线方程原点=x方向上离电机轴心最近的距离+步幅的一半
-	//                    12.5
-    if (tau <= 0.5f)
-    {
-        GaitPhasesPoints FrontRightState = crawl_gaitGenerator(0, Crawl_height, step_height, stride, front_pivot_x);
-        GaitPhasesPoints FrontLeftState = crawl_gaitGenerator(0, Crawl_height, step_height, stride, front_pivot_x);
-        GaitPhasesPoints BackRightState = crawl_gaitGenerator(0, Crawl_height, step_height, stride+rcData.R_y*3.0f, -front_pivot_x);
-        GaitPhasesPoints BackLeftState = crawl_gaitGenerator(0, Crawl_height, step_height, stride+rcData.R_y*3.0f, -front_pivot_x);
+#define CRAWL_TARGET_HEIGHT 13.5f   /* 匍匐目标高度 */
+#define CRAWL_DESCEND_STEP  0.015f  /* 每帧下降步长，0.015≈0.33s */
 
-        hposition1.B_y  = FrontRightState.ySwing;
-        hposition1.B_x  =  FrontRightState.xSwing; 
-        hposition2.B_y  = BackRightState.ySupport;
-        hposition2.B_x  =  BackRightState.xSupport; 
-        hposition3.B_y  = BackLeftState.ySwing ;
-        hposition3.B_x  =  BackLeftState.xSwing; 
-        hposition4.B_y  = FrontLeftState.ySupport;
-        hposition4.B_x  =  FrontLeftState.xSupport; 
-        set_Motor_Kp(1,1,1,1);
-    }
-    else if (tau > 0.5f && tau <= 1.0f)
-    {
-        GaitPhasesPoints FrontRightState = crawl_gaitGenerator(1, Crawl_height, step_height, stride, front_pivot_x);
-        GaitPhasesPoints FrontLeftState = crawl_gaitGenerator(1, Crawl_height, step_height, stride, front_pivot_x);
-        GaitPhasesPoints BackRightState = crawl_gaitGenerator(1, Crawl_height, step_height, stride+rcData.R_y*3.0f, -front_pivot_x);
-        GaitPhasesPoints BackLeftState = crawl_gaitGenerator(1, Crawl_height, step_height, stride+rcData.R_y*3.0f, -front_pivot_x);
+/* 进入匍匐时由 main.c 调用，重置下降状态 */
+void motion_Crawl_Reset(void)
+{
+	crawl_descend_start_h = walk_height;  /* 捕获当前站立高度  */
+	crawl_state = CRAWL_DESCEND;
+	crawl_descend_t = 0.0f;
+}
 
-        hposition1.B_y  = FrontRightState.ySupport;
-        hposition1.B_x  =  FrontRightState.xSupport; 
-        hposition2.B_y  = BackRightState.ySwing;
-        hposition2.B_x  =  BackRightState.xSwing;
-        hposition3.B_y  = BackLeftState.ySupport;
-        hposition3.B_x  =  BackLeftState.xSupport;
-        hposition4.B_y  = FrontLeftState.ySwing;
-        hposition4.B_x  =  FrontLeftState.xSwing;
-        set_Motor_Kp(1,1,1,1);
-    }
+void motion_Crawl(float step_height, float stride)
+{
+
+	/* ====== 阶段1：静止下蹲，四腿不动 ====== */
+	if (crawl_state == CRAWL_DESCEND) {
+		float r = fabsf(CRAWL_TARGET_HEIGHT - crawl_descend_start_h) * 0.5f;
+		float center_y = (CRAWL_TARGET_HEIGHT + crawl_descend_start_h) / 2.0f;
+		float theta = 3.141592f * crawl_descend_t;
+		float current_h = r * cosf(theta) + center_y;  /* t=0→站高, t=1→匍匐高 */
+
+		hposition1.B_x = 0.0f; hposition1.B_y = current_h;
+		hposition2.B_x = 0.0f; hposition2.B_y = current_h;
+		hposition3.B_x = 0.0f; hposition3.B_y = current_h;
+		hposition4.B_x = 0.0f; hposition4.B_y = current_h;
+
+		motor1_kp_offset = 0.35f; motor2_kp_offset = 0.45f;
+		motor3_kp_offset = 0.2f;  motor4_kp_offset = 0.15f;
+		motor5_kp_offset = 0.17f; motor6_kp_offset = 0.32f;
+		motor7_kp_offset = 0.47f; motor8_kp_offset = 0.60f;
+		set_Motor_Kp(1,1,1,1);
+		crawl_inverseKinematic_All();
+		Motor_SendCmd_AllAngle();
+
+		motor1_kp_offset = 0.25f; motor2_kp_offset = 0.15f;
+		motor3_kp_offset = 0.3f;  motor4_kp_offset = 0.2f;
+		motor5_kp_offset = 0.17f; motor6_kp_offset = 0.32f;
+		motor7_kp_offset = 0.37f; motor8_kp_offset = 0.50f;
+
+		crawl_descend_t += CRAWL_DESCEND_STEP;
+		if (crawl_descend_t >= 1.0f) {
+			crawl_descend_t = 0.0f;
+			crawl_state = CRAWL_ACTIVE;
+			tau = 0.0f;  /* 重置步态相位 */
+		}
+		return;  /* 下降期间不执行步态 */
+	}
+	/* ====== 阶段2：正常匍匐步态 ====== */
+	tau += Forward_freq;
+	if(tau >= Ts_crawl) { tau -= Ts_crawl; }
+
+	// 匍匐步态 Kp 偏移
+	motor1_kp_offset = 0.35f;
+	motor2_kp_offset = 0.45f;
+	motor3_kp_offset = 0.2f;
+	motor4_kp_offset = 0.15f;
+	motor5_kp_offset = 0.27f;
+	motor6_kp_offset = 0.32f;
+	motor7_kp_offset = 0.47f;
+	motor8_kp_offset = 0.99f;
 	
+	support_tau_ff = 0.12f;
+
+		float crawl_height = CRAWL_TARGET_HEIGHT;
+	float front_pivot_x = crawl_height + 0.5f * stride;
+	float back_x_pos    = -front_pivot_x;
+	float back_stride   = stride + rcData.R_y * 3.0f;
+	float swing_end = 0.25f * Ts;   // 摆动相结束时间点
+
+	// 四条腿依次偏移 0.25*Ts（秒），保证任意时刻仅一腿摆动
+	float t_FR = tau;
+	float t_BR = tau - 0.25f * Ts;  if(t_BR < 0.0f) t_BR += Ts_crawl;
+	float t_BL = tau - 0.50f * Ts;  if(t_BL < 0.0f) t_BL += Ts_crawl;
+	float t_FL = tau - 0.75f * Ts;  if(t_FL < 0.0f) t_FL += Ts_crawl;
+
+	// 生成每条腿的轨迹
+	GaitPhasesPoints FR = crawl_gaitGenerator_new(t_FR, crawl_height, step_height, stride,       front_pivot_x);
+	GaitPhasesPoints BR = crawl_gaitGenerator_new(t_BR, crawl_height, step_height, back_stride,  back_x_pos);
+	GaitPhasesPoints BL = crawl_gaitGenerator_new(t_BL, crawl_height, step_height, back_stride,  back_x_pos);
+	GaitPhasesPoints FL = crawl_gaitGenerator_new(t_FL, crawl_height, step_height, stride,       front_pivot_x);
+
+	// 根据各腿时间决定取摆动值还是支撑值
+	hposition1.B_y = (t_FR < swing_end) ? FR.ySwing : FR.ySupport;
+	hposition1.B_x = (t_FR < swing_end) ? FR.xSwing : FR.xSupport;
+	hposition2.B_y = (t_BR < swing_end) ? BR.ySwing : BR.ySupport;
+	hposition2.B_x = (t_BR < swing_end) ? BR.xSwing : BR.xSupport;
+	hposition3.B_y = (t_BL < swing_end) ? BL.ySwing : BL.ySupport;
+	hposition3.B_x = (t_BL < swing_end) ? BL.xSwing : BL.xSupport;
+	hposition4.B_y = (t_FL < swing_end) ? FL.ySwing : FL.ySupport;
+	hposition4.B_x = (t_FL < swing_end) ? FL.xSwing : FL.xSupport;
+
+	// Kp: 摆动腿=0(swing Kp)，支撑腿=1(support Kp)
+	set_Motor_Kp(
+		(t_FR < swing_end) ? 0 : 1,
+		(t_BR < swing_end) ? 0 : 1,
+		(t_BL < swing_end) ? 0 : 1,
+		(t_FL < swing_end) ? 0 : 1
+	);
+
 	crawl_inverseKinematic_All();
-    Motor_SendCmd_AllAngle();  
+	Motor_SendCmd_AllAngle();
+
+	// 恢复默认 Kp 偏移
+	motor1_kp_offset = 0.25f;
+	motor2_kp_offset = 0.15f;
+	motor3_kp_offset = 0.3f;
+	motor4_kp_offset = 0.2f;
+	motor5_kp_offset = 0.17f;
+	motor6_kp_offset = 0.32f;
+	motor7_kp_offset = 0.37f;
+	motor8_kp_offset = 0.50f;
 	
-  motor1_kp_offset = 0.25f;
-  motor2_kp_offset = 0.15f;
-  motor3_kp_offset = 0.3f;
-  motor4_kp_offset = 0.2f;
-  motor5_kp_offset = 0.17f;
-  motor6_kp_offset = 0.32f;
-  motor7_kp_offset = 0.37f;
-  motor8_kp_offset = 0.50f;
+	support_tau_ff = 0.00f;
 }
 
 /* 参数说明：
 * stride：步幅，参数范围（-max_stride 到 max_stride）
 * turn_stride：转弯角速度，参数范围（-1.0f 到 1.0f）
 */
+
 void motion_Mix(float height, float step_height, float stride, float turn_stride)
 {    
 //	static float _t = 0.0f;
@@ -749,6 +871,169 @@ void motion_Jump(float stride)
 	 inverseKinematic_All();
 	 Motor_SendCmd_AllAngle(); 
 
+}
+
+/*
+ * motion_SmallJump - 小跳上台阶，一跳一级
+ * 设计目标：垂直方向为主，稳定跃上 10cm 高台阶，落于 30cm 深踏面
+ * 遥控触发，按一次跳一级
+ *
+ * 调参入口（全部集中于此）：
+ *   STEP_HEIGHT     台阶实际高度
+ *   SAFETY_MARGIN   跳高安全余量（越大越稳，但落地冲击也大）
+ *   CROUCH_H        下蹲深度（越小储能越多，但别太小导致运动学无解）
+ *   PUSH_H          蹬直腿长（不要到机械极限 38.5）
+ *   SMALL_STRIDE    水平跨度（越小越垂直，越大越往前窜）
+ *   KP_BOOST        蹬腿时 Kp 基础值（越大越猛，过大会震荡/过流）
+ */
+void motion_SmallJump(void)
+{
+    /* ======== 可调参数 ======== */
+    const float STEP_HEIGHT   = 10.0f;   // 台阶高差 (cm)
+    const float SAFETY_MARGIN = 5.0f;    // 跳高余量 → 目标抬升 ≈15cm
+    const float CROUCH_H      = 18.0f;   // 下蹲腿长 (< walk_height=22)
+    const float PUSH_H        = 30.0f;   // 蹬直腿长 (< 机械极限 38.5)
+    const float SMALL_STRIDE  = 12.0f;   // 水平"虚拟步幅"，越小=越垂直
+    const float KP_BOOST      = 5.0f;    // 蹬腿时基础 Kp（越大越猛）
+
+    float forward_prep = 4.0f;           // 下蹲时脚前移量
+
+    /* 预计算蹬地方向（共用，避免多处重复算） */
+    float k2       = 2.0f * PUSH_H / SMALL_STRIDE;
+    float k2_sq_p1 = 1.0f + k2 * k2;    // 1 + k2²，复用
+
+    /* 蹬地直线的起点/终点（腿长 = 到髋关节的欧式距离） */
+    float x_start  = sqrtf(CROUCH_H * CROUCH_H / k2_sq_p1); // 在 CROUCH_H 腿长时
+    float x_stop   = sqrtf(PUSH_H   * PUSH_H   / k2_sq_p1); // 在 PUSH_H   腿长时
+
+    /* 空中摆线峰值：两段摆线在 θ=π 处的衔接高度
+     * STEP_HEIGHT + SAFETY_MARGIN ≈ 15cm 是目标净抬升量，由
+     * "蹬腿产生的身体上升 + 腿伸展量" 共同提供。
+     * 这里取 PUSH_H 作为峰值，保证腿部有足够伸展余量。 */
+    float peak_y = PUSH_H;
+
+    /* ======== State 0: 下蹲蓄力 ======== */
+    /* (0, walk_height)  →  (forward_prep, CROUCH_H)                     */
+    {
+        float k0 = (CROUCH_H - walk_height) / forward_prep;
+        for (float x = 0.0f; x <= forward_prep; x += 0.06f) {
+            if (emergency_stop == 1) return;
+            float y = k0 * x + walk_height;
+            hposition1.B_y = y;  hposition1.B_x = x;
+            hposition2.B_y = y;  hposition2.B_x = x;
+            hposition3.B_y = y;  hposition3.B_x = x;
+            hposition4.B_y = y;  hposition4.B_x = x;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+    }
+
+    /* ======== State 1: 水平收腿到起跳位 ======== */
+    /* 保持 CROUCH_H，二次插值平滑收腿至蹬地起点 (x = -x_start)          */
+    {
+        for (float i = 0.0f; i <= 1.0f; i += 0.015f) {
+            if (emergency_stop == 1) return;
+            float x = forward_prep + (-x_start - forward_prep) * i * i;
+            float y = CROUCH_H;
+            hposition1.B_y = y;  hposition1.B_x = x;
+            hposition2.B_y = y;  hposition2.B_x = x;
+            hposition3.B_y = y;  hposition3.B_x = x;
+            hposition4.B_y = y;  hposition4.B_x = x;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+    }
+
+    /* ======== State 2: 蹬腿起跳 ======== */
+    /* 沿 y = k2*x 直线蹬直，大幅提高 Kp 以产生爆发力                    */
+    {
+        /* 保存原始 KP */
+        float saved[4] = {motor1_kp_offset, motor2_kp_offset,
+                          motor7_kp_offset, motor8_kp_offset};
+
+        /* 提升 KP */
+        motor1_kp_offset *= 1.3f;
+        motor2_kp_offset *= 1.2f;
+        motor7_kp_offset *= 1.5f;
+        motor8_kp_offset *= 1.5f;
+        quick_set_kp(KP_BOOST, 0.0f);
+
+        float range = fabsf(x_start - x_stop);
+        for (float x = x_start; x < x_stop; x += 0.35f * range) {
+            if (emergency_stop == 1) goto restore_kp;
+            float y = k2 * x;
+            hposition1.B_y = y;  hposition1.B_x = -x;
+            hposition2.B_y = y;  hposition2.B_x = -x;
+            hposition3.B_y = y;  hposition3.B_x = -x;
+            hposition4.B_y = y;  hposition4.B_x = -x;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+        HAL_Delay(60);   // 等待蹬直
+
+    restore_kp:
+        motor1_kp_offset = saved[0];
+        motor2_kp_offset = saved[1];
+        motor7_kp_offset = saved[2];
+        motor8_kp_offset = saved[3];
+        quick_set_kp(1.0f, Expect_kw);
+    }
+    /* 急停检查：goto 过来的话 KP 已恢复，直接退出 */
+    if (emergency_stop == 1) return;
+
+    /* ======== State 3: 空中收腿前摆（前半段摆线，0→π） ======== */
+    /* y: CROUCH_H  →  peak_y(PUSH_H)，足端抬起清过台阶边缘              */
+    {
+        for (float angle = 0.0f; angle <= pi; angle += 0.035f * pi) {
+            if (emergency_stop == 1) return;
+            float x = SMALL_STRIDE * ((angle - sinf(angle)) / (2.0f * pi))
+                      - SMALL_STRIDE / 2.0f;
+            float y = CROUCH_H + (peak_y - CROUCH_H) * (1.0f - cosf(angle)) / 2.0f;
+
+            hposition1.B_y = y;  hposition1.B_x = x;
+            hposition2.B_y = y;  hposition2.B_x = x;
+            hposition3.B_y = y;  hposition3.B_x = x;
+            hposition4.B_y = y;  hposition4.B_x = x;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+    }
+
+    /* ======== State 4: 落腿着地（后半段摆线，π→2π） ======== */
+    /* y: peak_y(PUSH_H)  →  walk_height，两段在 θ=π 处连续               */
+    /* 降低 Kp 以缓冲落地冲击                                            */
+    {
+        quick_set_kp(0.3f, Expect_kw);   // 落地时低 Kp，软着陆
+        for (float angle = pi; angle <= 2.0f * pi; angle += 0.006f * pi) {
+            if (emergency_stop == 1) return;
+            float x = SMALL_STRIDE * ((angle - sinf(angle)) / (2.0f * pi))
+                      - SMALL_STRIDE / 2.0f;
+            float y = walk_height + (peak_y - walk_height) * (1.0f - cosf(angle)) / 2.0f;
+
+            hposition1.B_y = y;  hposition1.B_x = x;
+            hposition2.B_y = y;  hposition2.B_x = x;
+            hposition3.B_y = y;  hposition3.B_x = x;
+            hposition4.B_y = y;  hposition4.B_x = x;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+    }
+
+    /* ======== State 5: 水平回收，站稳 ======== */
+    {
+        for (float x = SMALL_STRIDE / 2.0f; x > 0.0f; x -= 0.005f * SMALL_STRIDE) {
+            if (emergency_stop == 1) return;
+            float y = walk_height;
+            hposition1.B_y = y;  hposition1.B_x = x;
+            hposition2.B_y = y;  hposition2.B_x = x;
+            hposition3.B_y = y;  hposition3.B_x = x;
+            hposition4.B_y = y;  hposition4.B_x = x;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+        inverseKinematic_All();
+        Motor_SendCmd_AllAngle();
+    }
 }
 
 void motion_Frontflip(void){
