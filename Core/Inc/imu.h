@@ -19,9 +19,9 @@
 #define IMU_GYRO_RATIO  (2000.0f / 32768.0f)   // ���� 2000��/s
 #define IMU_ANGLE_RATIO (180.0f / 32768.0f)    // ���� 180��
 
-extern float body_roll;
-extern float body_pitch;
-extern float body_yaw;
+extern volatile float body_roll;
+extern volatile float body_pitch;
+extern volatile float body_yaw;
 extern float prev_body_roll;
 
 extern float VeloY;

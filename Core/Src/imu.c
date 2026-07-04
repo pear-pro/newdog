@@ -5,8 +5,9 @@
  * @note    ������ coreimu ����ʵ��ʹ�õ� 0x50 ��ʶ�� + 0x55 ֡ͷ͸��Э���װ
  */
 #include "IMU.h"
-#include "gpio.h" // ����̽�����Ŷ���
-#include "main.h" // �����ȡϵͳʱ��� HAL_GetTick() 
+#include "gpio.h" // GPIO探针引脚定义
+#include "main.h" // 用于获取系统时钟 HAL_GetTick()
+#include <math.h>
 
 /* * ǿ������Ϊ volatile�����������������Ż����塣
  * ȷ��Ӧ�ò��㷨ÿ�ζ�ȡ���Ķ����жϸո�д�� RAM ���ʻ����ݡ�
@@ -23,9 +24,9 @@ float kp_roll = 0.01f; // 0.03
 float kd_roll = 0.001f;
 
 // ----�Ƕ�--------------
-float body_roll = 0.0f; 
-float body_pitch = 0.0f; 
-float body_yaw = 0.0f;
+volatile float body_roll = 0.0f;
+volatile float body_pitch = 0.0f;
+volatile float body_yaw = 0.0f;
 float prev_body_roll = 0.0f;
 
 // ----���ٶ�--------------
@@ -47,18 +48,18 @@ float AccZ=0.0f;
  */
 static void IMU_App_Update(void)
 {
-    /* �����½��յ�ŷ���Ǹ��Ƶ�Ӧ�ò�ȫ�ֱ��� */
-    body_roll = IMU_rx_data.Roll;
-    body_pitch = IMU_rx_data.Pitch-90.0f;
-    body_yaw = IMU_rx_data.Yaw;
-    
-    GyroX = IMU_rx_data.GyroX;
-    GyroY = IMU_rx_data.GyroY;
-    GyroZ = IMU_rx_data.GyroZ;
+    /* 将最新接收的欧拉角复制到应用层全局变量，加 isfinite 检查防止 NaN/inf 传播 */
+    if (isfinite(IMU_rx_data.Roll))  body_roll  = IMU_rx_data.Roll;
+    if (isfinite(IMU_rx_data.Pitch)) body_pitch = IMU_rx_data.Pitch - 90.0f;
+    if (isfinite(IMU_rx_data.Yaw))   body_yaw   = IMU_rx_data.Yaw;
 
-    AccX = IMU_rx_data.AccX;
-    AccY = IMU_rx_data.AccY;
-    AccZ = IMU_rx_data.AccZ;
+    if (isfinite(IMU_rx_data.GyroX)) GyroX = IMU_rx_data.GyroX;
+    if (isfinite(IMU_rx_data.GyroY)) GyroY = IMU_rx_data.GyroY;
+    if (isfinite(IMU_rx_data.GyroZ)) GyroZ = IMU_rx_data.GyroZ;
+
+    if (isfinite(IMU_rx_data.AccX)) AccX = IMU_rx_data.AccX;
+    if (isfinite(IMU_rx_data.AccY)) AccY = IMU_rx_data.AccY;
+    if (isfinite(IMU_rx_data.AccZ)) AccZ = IMU_rx_data.AccZ;
 
      /* ����ʵʱ���㣨�� PID ���������ڴ����ӣ�ȷ������Ч������Ӧ��Ƶ�ж� */
 
@@ -126,11 +127,14 @@ void IMU_CAN_RXCALLback(CAN_HandleTypeDef *hcan)
                             raw_x = (int16_t)((rx_data[3] << 8) | rx_data[2]);
                             raw_y = (int16_t)((rx_data[5] << 8) | rx_data[4]);
                             raw_z = (int16_t)((rx_data[7] << 8) | rx_data[6]);
-                            
-                            // ���� 180��
+
+                            // 量程 180°
                             IMU_rx_data.Roll  = (float)raw_x * IMU_ANGLE_RATIO;
                             IMU_rx_data.Pitch = (float)raw_y * IMU_ANGLE_RATIO;
                             IMU_rx_data.Yaw   = (float)raw_z * IMU_ANGLE_RATIO;
+
+                            /* 角度帧更新后立即刷新应用层变量 */
+                            IMU_App_Update();
                             break;
 
                         default:
@@ -139,11 +143,7 @@ void IMU_CAN_RXCALLback(CAN_HandleTypeDef *hcan)
                             */
                             break;
                     }
-                    
-                    /* ������ɺ���������Ӧ�ò���� */
-                    /* �� IMU_rx_data ���յ������ݸ�ֵ��Ӧ�ò���������ں������Ƽ��� */
-                    IMU_App_Update();
-                            
+
                     /* ==============================================================
                      * ̽��Ϳ�����ת�������� 20 ֡��תһ������
                      * ��;�����۹۲� GPIO_PIN_14��PF14������˸Ƶ�ʣ����� IMU CAN ͨ�Ž�����
