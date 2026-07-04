@@ -174,6 +174,7 @@ int main(void)
   MX_TIM9_Init();
   MX_TIM10_Init();
   MX_UART8_Init();
+  MX_CAN2_Init();
   /* USER CODE BEGIN 2 */
   
 	HAL_TIM_Base_Start_IT(&htim10);
