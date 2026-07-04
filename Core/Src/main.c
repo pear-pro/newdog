@@ -366,12 +366,12 @@ if (emergency_stop==1){
     {
         case 1:
         // 遥控控制行走
-		    motion_Mix(walk_height, 8.0f, max_stride*rcData.R_y,rcData.R_x);
+		    motion_Mix(walk_height, 8.0f, max_stride*rcData.R_y);
         break;
                 
         case 2:
         // 树莓派控制行走
-		    motion_Mix(walk_height, 8.0f, max_stride*front_speed, turn_omega);
+		    motion_Mix(walk_height, 8.0f, max_stride*front_speed);
         break;
 
         case 3: // 跳跃
@@ -380,7 +380,7 @@ if (emergency_stop==1){
         break;
                 
         case 4: // 站立
-		    motion_Mix(walk_height, 0.0000001f, 0.0f, 0.0f);
+		    motion_Mix(walk_height, 0.0000001f, 0.0f);
         break;   
           
         case 5:
@@ -405,7 +405,7 @@ if (emergency_stop==1){
         break; 
 
 	    	case 12: // RPi 超时自动站立
-            motion_Mix(walk_height, 0.0000001f, 0.0f, 0.0f);
+            motion_Mix(walk_height, 0.0000001f, 0.0f);
         break;
 
         default:

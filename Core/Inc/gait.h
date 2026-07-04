@@ -59,7 +59,7 @@ void motion_StandBy(float height);
 void StepInPlace(float height, float step_height);
 void motion_Jump(float stride);
 void motion_SmallJump(void);
-void motion_Mix(float height, float step_height, float stride, float turn_stride);
+void motion_Mix(float height, float step_height, float stride);
 void flip_body(void);
 void motion_Down(float start,float des);
 void motion_Up(float start,float des);
