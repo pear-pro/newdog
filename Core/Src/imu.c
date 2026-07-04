@@ -7,6 +7,7 @@
 #include "IMU.h"
 #include "gpio.h" // GPIO探针引脚定义
 #include "main.h" // 用于获取系统时钟 HAL_GetTick()
+#include <math.h>
 
 /* 强制声明为 volatile，防止编译器优化导致取值异常。
  * 确保应用层算法每次读取的都是中断刚刚写入 RAM 的最新数据。
@@ -47,18 +48,18 @@ volatile float AccZ=0.0f;
  */
 static void IMU_App_Update(void)
 {
-    /* 将最新接收的欧拉角复制到应用层全局变量 */
-    body_roll = IMU_rx_data.Roll;
-    body_pitch = IMU_rx_data.Pitch-90.0f;
-    body_yaw = IMU_rx_data.Yaw;
+    /* 将最新接收的欧拉角复制到应用层全局变量，加 isfinite 检查防止 NaN/inf 传播 */
+    if (isfinite(IMU_rx_data.Roll))  body_roll  = IMU_rx_data.Roll;
+    if (isfinite(IMU_rx_data.Pitch)) body_pitch = IMU_rx_data.Pitch - 90.0f;
+    if (isfinite(IMU_rx_data.Yaw))   body_yaw   = IMU_rx_data.Yaw;
 
-    GyroX = IMU_rx_data.GyroX;
-    GyroY = IMU_rx_data.GyroY;
-    GyroZ = IMU_rx_data.GyroZ;
+    if (isfinite(IMU_rx_data.GyroX)) GyroX = IMU_rx_data.GyroX;
+    if (isfinite(IMU_rx_data.GyroY)) GyroY = IMU_rx_data.GyroY;
+    if (isfinite(IMU_rx_data.GyroZ)) GyroZ = IMU_rx_data.GyroZ;
 
-    AccX = IMU_rx_data.AccX;
-    AccY = IMU_rx_data.AccY;
-    AccZ = IMU_rx_data.AccZ;
+    if (isfinite(IMU_rx_data.AccX)) AccX = IMU_rx_data.AccX;
+    if (isfinite(IMU_rx_data.AccY)) AccY = IMU_rx_data.AccY;
+    if (isfinite(IMU_rx_data.AccZ)) AccZ = IMU_rx_data.AccZ;
 
     /* 以下为实时计算预留位置（如 PID 控制、卡尔曼滤波等），
      * 确保所有数值运算都在高频率中断中完成 */
@@ -131,6 +132,9 @@ void IMU_CAN_RXCALLback(CAN_HandleTypeDef *hcan)
                             IMU_rx_data.Roll  = (float)raw_x * IMU_ANGLE_RATIO;
                             IMU_rx_data.Pitch = (float)raw_y * IMU_ANGLE_RATIO;
                             IMU_rx_data.Yaw   = (float)raw_z * IMU_ANGLE_RATIO;
+
+                            /* 角度帧更新后立即刷新应用层变量 */
+                            IMU_App_Update();
                             break;
 
                         default:
@@ -139,10 +143,6 @@ void IMU_CAN_RXCALLback(CAN_HandleTypeDef *hcan)
                             */
                             break;
                     }
-
-                    /* 解析完成后立即调用应用层回调 */
-                    /* 将 IMU_rx_data 接收到的新数据赋值给应用层变量，用于后续控制计算 */
-                    IMU_App_Update();
 
                     /* ==============================================================
                      * 调试用 LED 翻转：每收到 20 帧翻转一次电平
