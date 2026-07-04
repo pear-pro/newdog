@@ -29,7 +29,7 @@ volatile float body_yaw = 0.0f;
 float prev_body_roll = 0.0f;
 
 // ---- 角速度 ---------------
-volatile float GyroX=0.0f;
+volatile float GyroX=0.0f;//
 volatile float GyroY=0.0f;
 volatile float GyroZ=0.0f;
 
