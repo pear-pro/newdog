@@ -5,8 +5,14 @@
  * @note    ÒÑÊÊÅä coreimu ¹¤³ÌÊµ¼ÊÊ¹ÓÃµÄ 0x50 ±êÊ¶·û + 0x55 Ö¡Í·Í¸´«Ğ­Òé·â×°
  */
 #include "IMU.h"
+<<<<<<< HEAD
 #include "gpio.h" // ÒıÈëÌ½ÕëÒı½Å¶¨Òå
 #include "main.h" // ÒıÈë»ñÈ¡ÏµÍ³Ê±¼äµÄ HAL_GetTick() 
+=======
+#include "gpio.h" // GPIOæ¢é’ˆå¼•è„šå®šä¹‰
+#include "main.h" // ç”¨äºè·å–ç³»ç»Ÿæ—¶é’Ÿ HAL_GetTick()
+#include <math.h>
+>>>>>>> 89005bde61cd4fcf161cb4570fff459858e577cf
 
 /* * Ç¿ÖÆÉùÃ÷Îª volatile£¬·ÀÓù±àÒëÆ÷¼¤½øÓÅ»¯ÏİÚå¡£
  * È·±£Ó¦ÓÃ²ãËã·¨Ã¿´Î¶ÁÈ¡µ½µÄ¶¼ÊÇÖĞ¶Ï¸Õ¸ÕĞ´Èë RAM µÄÏÊ»îÊı¾İ¡£
@@ -22,10 +28,17 @@ float stab_roll = 0.0f;
 float kp_roll = 0.01f; // 0.03
 float kd_roll = 0.001f;
 
+<<<<<<< HEAD
 // ----½Ç¶È--------------
 float body_roll = 0.0f; 
 float body_pitch = 0.0f; 
 float body_yaw = 0.0f;
+=======
+// ----ï¿½Ç¶ï¿½--------------
+volatile float body_roll = 0.0f;
+volatile float body_pitch = 0.0f;
+volatile float body_yaw = 0.0f;
+>>>>>>> 89005bde61cd4fcf161cb4570fff459858e577cf
 float prev_body_roll = 0.0f;
 
 // ----½ÇËÙ¶È--------------
@@ -47,6 +60,7 @@ float AccZ=0.0f;
  */
 static void IMU_App_Update(void)
 {
+<<<<<<< HEAD
     /* ½«×îĞÂ½ÓÊÕµÄÅ·À­½Ç¸´ÖÆµ½Ó¦ÓÃ²ãÈ«¾Ö±äÁ¿ */
     body_roll = IMU_rx_data.Roll;
     body_pitch = IMU_rx_data.Pitch-90.0f;
@@ -55,10 +69,20 @@ static void IMU_App_Update(void)
     GyroX = IMU_rx_data.GyroX;
     GyroY = IMU_rx_data.GyroY;
     GyroZ = IMU_rx_data.GyroZ;
+=======
+    /* å°†æœ€æ–°æ¥æ”¶çš„æ¬§æ‹‰è§’å¤åˆ¶åˆ°åº”ç”¨å±‚å…¨å±€å˜é‡ï¼ŒåŠ  isfinite æ£€æŸ¥é˜²æ­¢ NaN/inf ä¼ æ’­ */
+    if (isfinite(IMU_rx_data.Roll))  body_roll  = IMU_rx_data.Roll;
+    if (isfinite(IMU_rx_data.Pitch)) body_pitch = IMU_rx_data.Pitch - 90.0f;
+    if (isfinite(IMU_rx_data.Yaw))   body_yaw   = IMU_rx_data.Yaw;
+>>>>>>> 89005bde61cd4fcf161cb4570fff459858e577cf
 
-    AccX = IMU_rx_data.AccX;
-    AccY = IMU_rx_data.AccY;
-    AccZ = IMU_rx_data.AccZ;
+    if (isfinite(IMU_rx_data.GyroX)) GyroX = IMU_rx_data.GyroX;
+    if (isfinite(IMU_rx_data.GyroY)) GyroY = IMU_rx_data.GyroY;
+    if (isfinite(IMU_rx_data.GyroZ)) GyroZ = IMU_rx_data.GyroZ;
+
+    if (isfinite(IMU_rx_data.AccX)) AccX = IMU_rx_data.AccX;
+    if (isfinite(IMU_rx_data.AccY)) AccY = IMU_rx_data.AccY;
+    if (isfinite(IMU_rx_data.AccZ)) AccZ = IMU_rx_data.AccZ;
 
      /* ÆäËûÊµÊ±¼ÆËã£¨Èç PID µ÷Õû£©¿ÉÔÚ´ËÌí¼Ó£¬È·±£¼ÆËãĞ§ÂÊÒÔÊÊÓ¦¸ßÆµÖĞ¶Ï */
 
@@ -126,11 +150,19 @@ void IMU_CAN_RXCALLback(CAN_HandleTypeDef *hcan)
                             raw_x = (int16_t)((rx_data[3] << 8) | rx_data[2]);
                             raw_y = (int16_t)((rx_data[5] << 8) | rx_data[4]);
                             raw_z = (int16_t)((rx_data[7] << 8) | rx_data[6]);
+<<<<<<< HEAD
                             
                             // Á¿³Ì 180¡ã
+=======
+
+                            // é‡ç¨‹ 180Â°
+>>>>>>> 89005bde61cd4fcf161cb4570fff459858e577cf
                             IMU_rx_data.Roll  = (float)raw_x * IMU_ANGLE_RATIO;
                             IMU_rx_data.Pitch = (float)raw_y * IMU_ANGLE_RATIO;
                             IMU_rx_data.Yaw   = (float)raw_z * IMU_ANGLE_RATIO;
+
+                            /* è§’åº¦å¸§æ›´æ–°åç«‹å³åˆ·æ–°åº”ç”¨å±‚å˜é‡ */
+                            IMU_App_Update();
                             break;
 
                         default:
@@ -139,11 +171,15 @@ void IMU_CAN_RXCALLback(CAN_HandleTypeDef *hcan)
                             */
                             break;
                     }
+<<<<<<< HEAD
                     
                     /* Êı¾İÍê³Éºó£¬Á¢¼´¸üĞÂÓ¦ÓÃ²ã±äÁ¿ */
                     /* ½« IMU_rx_data ½ÓÊÕµ½µÄÊı¾İ¸³Öµ¸øÓ¦ÓÃ²ã±äÁ¿£¬ÓÃÓÚºóĞø¿ØÖÆ¼ÆËã */
                     IMU_App_Update();
                             
+=======
+
+>>>>>>> 89005bde61cd4fcf161cb4570fff459858e577cf
                     /* ==============================================================
                      * Ì½ÕëµÍ¿ªÏú·­×ª£º¼ÆÊıµ½ 20 Ö¡·´×ªÒ»´ÎÒı½Å
                      * ÓÃÍ¾£ºÈâÑÛ¹Û²ì GPIO_PIN_14£¨PF14£©µÄÉÁË¸ÆµÂÊ£¬ÆÀ¹À IMU CAN Í¨ĞÅ½¡¿µ¶È
