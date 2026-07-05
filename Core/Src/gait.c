@@ -227,6 +227,109 @@ GaitPhasesPoints  gaitGenerator(int state, float height, float step_height, floa
   return phaseState;
 }
 
+/* ── 三足行走步态（五阶段）：两前腿依次前迈 → 四腿齐推 → 两后腿依次回位 ── */
+/*
+ * 阶段划分（每相 20% * Ts）：
+ *   Phase1 [0.0~0.2Ts]: 左前腿 FL 摆动前迈  0→+stride，其余三腿原地支撑
+ *   Phase2 [0.2~0.4Ts]: 右前腿 FR 摆动前迈  0→+stride，其余三腿原地支撑
+ *   Phase3 [0.4~0.6Ts]: 四腿齐撑向后平移（身体前移）
+ *                       FL/FR: +stride→0,  BL/BR: 0→-stride
+ *   Phase4 [0.6~0.8Ts]: 左后腿 BL 摆动回位 -stride→0，其余三腿原地支撑
+ *   Phase5 [0.8~1.0Ts]: 右后腿 BR 摆动回位 -stride→0，其余三腿原地支撑
+ *
+ * 前腿始终在身体前方运动（x≥0），后腿始终在身体后方运动（x≤0）。
+ * 所有摆动相使用摆线轨迹，所有平移使用摆线轨迹（平滑加减速）。
+ *
+ * 参数:
+ *   step_height : 摆动腿抬腿高度
+ *   stride      : 步幅
+ */
+void motion_TripodWalk(float step_height, float stride)
+{
+	float height = walk_height;
+	float phase_T = Ts / 5.0f;   // 每相时长 = 20% Ts
+
+	tau += Forward_freq;
+	if (tau >= Ts) { tau -= Ts; }
+
+	/* ====== Phase1: FL 摆动前迈 0→+stride ====== */
+	if (tau < phase_T) {
+		float sigma = 2.0f * pi * tau / phase_T;
+
+		// FL 摆动: x 0→+stride
+		hposition4.B_x = -stride * ((sigma - sinf(sigma)) / (2.0f * pi));
+		hposition4.B_y = height - step_height * (1.0f - cosf(sigma)) / 2.0f;
+		// FR, BR, BL 支撑
+		hposition1.B_x = 0.0f;  hposition1.B_y = height;
+		hposition2.B_x = 0.0f;  hposition2.B_y = height;
+		hposition3.B_x = 0.0f;  hposition3.B_y = height;
+
+		set_Motor_Kp(1, 1, 1, 0);  // FR/BR/BL 支撑, FL 摆动
+	}
+	/* ====== Phase2: FR 摆动前迈 0→+stride ====== */
+	else if (tau < 2.0f * phase_T) {
+		float t = tau - phase_T;
+		float sigma = 2.0f * pi * t / phase_T;
+
+		// FR 摆动: x 0→+stride
+		hposition1.B_x = -stride * ((sigma - sinf(sigma)) / (2.0f * pi));
+		hposition1.B_y = height - step_height * (1.0f - cosf(sigma)) / 2.0f;
+		// FL 停在前方, BR/BL 支撑
+		hposition4.B_x = -stride;   hposition4.B_y = height;
+		hposition2.B_x = 0.0f;     hposition2.B_y = height;
+		hposition3.B_x = 0.0f;     hposition3.B_y = height;
+
+		set_Motor_Kp(0, 1, 1, 1);  // FR 摆动, BR/BL/FL 支撑
+	}
+	/* ====== Phase3: 四腿齐撑后移，身体前移 ====== */
+	else if (tau < 3.0f * phase_T) {
+		float t = tau - 2.0f * phase_T;
+		float sigma = 2.0f * pi * t / phase_T;
+		float wave = (sigma - sinf(sigma)) / (2.0f * pi);  // 0→1
+
+		// 前腿: +stride → 0, 后腿: 0 → -stride
+		hposition1.B_x = -stride * (1.0f - wave);   hposition1.B_y = height;
+		hposition4.B_x =-stride * (1.0f - wave);   hposition4.B_y = height;
+		hposition2.B_x = stride * wave;            hposition2.B_y = height;
+		hposition3.B_x = stride * wave;            hposition3.B_y = height;
+
+		set_Motor_Kp(1, 1, 1, 1);  // 全部支撑
+	}
+	/* ====== Phase4: BL 摆动回位 -stride→0 ====== */
+	else if (tau < 4.0f * phase_T) {
+		float t = tau - 3.0f * phase_T;
+		float sigma = 2.0f * pi * t / phase_T;
+
+		// BL 摆动: x -stride→0
+		hposition3.B_x = -stride * ((sigma - sinf(sigma)) / (2.0f * pi)) - stride;
+		hposition3.B_y = height - step_height * (1.0f - cosf(sigma)) / 2.0f;
+		// FL/FR 在初始位, BR 停在后方
+		hposition1.B_x = 0.0f;     hposition1.B_y = height;
+		hposition4.B_x = 0.0f;     hposition4.B_y = height;
+		hposition2.B_x = stride;  hposition2.B_y = height;
+
+		set_Motor_Kp(1, 1, 0, 1);  // FR/BR 支撑, BL 摆动, FL 支撑
+	}
+	/* ====== Phase5: BR 摆动回位 -stride→0，全部回到初始 ====== */
+	else {
+		float t = tau - 4.0f * phase_T;
+		float sigma = 2.0f * pi * t / phase_T;
+
+		// BR 摆动: x -stride→0
+		hposition2.B_x = -stride * ((sigma - sinf(sigma)) / (2.0f * pi)) - stride;
+		hposition2.B_y = height - step_height * (1.0f - cosf(sigma)) / 2.0f;
+		// FL/FR/BL 均在初始位
+		hposition1.B_x = 0.0f;  hposition1.B_y = height;
+		hposition4.B_x = 0.0f;  hposition4.B_y = height;
+		hposition3.B_x = 0.0f;  hposition3.B_y = height;
+
+		set_Motor_Kp(1, 0, 1, 1);  // FR 支撑, BR 摆动, BL/FL 支撑
+	}
+
+	inverseKinematic_All();
+	Motor_SendCmd_AllAngle();
+}
+
 GaitPhasesPoints  crawl_gaitGenerator(int state, float height, float step_height, float stride, float x_pos)
 {
   GaitPhasesPoints phaseState; 
@@ -731,9 +834,9 @@ void motion_Jump(float stride)
     for (float x = x_start0; x <= x_stop0; x += jump_freq0){
 		if (emergency_stop==1){return;}
         float y = k0 * x + walk_height;
-        hposition1.B_y = y;
+        hposition1.B_y = y+6;
         hposition1.B_x = x; 
-        hposition2.B_y = y;
+        hposition2.B_y = y+6;
         hposition2.B_x = x; 
         hposition3.B_y = y;
         hposition3.B_x = x; 
@@ -752,9 +855,9 @@ void motion_Jump(float stride)
 		
         float x = forward_prep_step + (-x_start2 - forward_prep_step) * i*i;
         float y = 15.5f;
-        hposition1.B_y = y;
+        hposition1.B_y = y+6;
         hposition1.B_x = x; 
-        hposition2.B_y = y;
+        hposition2.B_y = y+6;
         hposition2.B_x = x; 
         hposition3.B_y = y;
         hposition3.B_x = x; 
@@ -782,9 +885,9 @@ void motion_Jump(float stride)
 	if (emergency_stop==1){return;}
 	
 	 float y = k2 * x;
-	 hposition1.B_y = y;
+	 hposition1.B_y = y+6;
 	 hposition1.B_x = -x; 
-	 hposition2.B_y = y;
+	 hposition2.B_y = y+6;
 	 hposition2.B_x = -x; 
 	 hposition3.B_y = y;
 	 hposition3.B_x = -x; 
@@ -797,10 +900,10 @@ void motion_Jump(float stride)
 	}
 	HAL_Delay(130); // 等完全蹬直
 	
-	motor1_kp_offset /= 1.3f;
-	motor2_kp_offset /= 1.2f;
-	motor7_kp_offset /= 1.3f;
-	motor8_kp_offset /= 1.3f;
+	motor1_kp_offset /= 1.45f;
+	motor2_kp_offset /= 1.35f;
+	motor7_kp_offset /= 1.9f;
+	motor8_kp_offset /= 1.9f;
 	
 // ---------异步力矩版蹬腿----------
 
@@ -894,7 +997,7 @@ void motion_SmallJump(void)
     const float CROUCH_H      = 18.0f;   // 下蹲腿长 (< walk_height=22)
     const float PUSH_H        = 30.0f;   // 蹬直腿长 (< 机械极限 38.5)
     const float SMALL_STRIDE  = 12.0f;   // 水平"虚拟步幅"，越小=越垂直
-    const float KP_BOOST      = 5.0f;    // 蹬腿时基础 Kp（越大越猛）
+    const float KP_BOOST      = 5.5f;    // 蹬腿时基础 Kp（越大越猛）
 
     float forward_prep = 4.0f;           // 下蹲时脚前移量
 
@@ -929,11 +1032,11 @@ void motion_SmallJump(void)
     }
 
     /* ======== State 1: 水平收腿到起跳位 ======== */
-    /* 保持 CROUCH_H，二次插值平滑收腿至蹬地起点 (x = -x_start)          */
+    /* 保持 CROUCH_H，二次插值平滑收腿至蹬地起点 (x = +x_start)          */
     {
         for (float i = 0.0f; i <= 1.0f; i += 0.015f) {
             if (emergency_stop == 1) return;
-            float x = forward_prep + (-x_start - forward_prep) * i * i;
+            float x = forward_prep + (x_start - forward_prep) * i * i;
             float y = CROUCH_H;
             hposition1.B_y = y;  hposition1.B_x = x;
             hposition2.B_y = y;  hposition2.B_x = x;
@@ -962,10 +1065,10 @@ void motion_SmallJump(void)
         for (float x = x_start; x < x_stop; x += 0.35f * range) {
             if (emergency_stop == 1) goto restore_kp;
             float y = k2 * x;
-            hposition1.B_y = y;  hposition1.B_x = -x;
-            hposition2.B_y = y;  hposition2.B_x = -x;
-            hposition3.B_y = y;  hposition3.B_x = -x;
-            hposition4.B_y = y;  hposition4.B_x = -x;
+            hposition1.B_y = y;  hposition1.B_x = x;
+            hposition2.B_y = y;  hposition2.B_x = x;
+            hposition3.B_y = y;  hposition3.B_x = x;
+            hposition4.B_y = y;  hposition4.B_x = x;
             inverseKinematic_All();
             Motor_SendCmd_AllAngle();
         }

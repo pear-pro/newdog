@@ -69,6 +69,7 @@ uint8_t imu_emergency_stop(void);
 void motion_Frontflip(void);
 void test_circle(void);
  void motion_Crawl1(float step_height, float stride);
+void motion_TripodWalk(float step_height, float stride);
 void Init_turn_omega_des();
 
 

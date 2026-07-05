@@ -324,15 +324,22 @@ while (1)
   */
 
 	//if (rcData.sw5 == 0xFCE0||imu_emergency_stop()){emergency_stop = 1;} // 侧翻急停开启版
-	if (rcData.sw5 == 0xFCE0){ emergency_stop = 1;} // 侧翻急停关闭版
+//	if (rcData.sw5 == 0xFCE0){ emergency_stop = 1;} // 侧翻急停关闭版
+//  else{ emergency_stop = 0;}
+
+//  if (rcData.sw5 == 0x0000 && rcData.sw7 == 0xFCE0){ temp_state=6;} // 跳跃，注意是非状态机函数
+//	if (rcData.sw5 == 0x0000 && rcData.sw7 == 0x0320){ temp_state=4;}	// 站立
+//  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0xFCE0){ temp_state=1;} // 遥控控制
+//  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0x0000){                  // 树莓派控制
+//      temp_state = uart8_walk_request ? 2 : 12;                     // 有数据→走(case2)，超时→站(case12)
+//  }
+if (rcData.sw8 == 0xFCE0){ emergency_stop = 1;} // 侧翻急停关闭版
   else{ emergency_stop = 0;}
 
-  if (rcData.sw5 == 0x0000 && rcData.sw7 == 0xFCE0){ temp_state=6;} // 跳跃，注意是非状态机函数
-	if (rcData.sw5 == 0x0000 && rcData.sw7 == 0x0320){ temp_state=4;}	// 站立
-  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0xFCE0){ temp_state=1;} // 遥控控制
-  if (rcData.sw5 == 0x0320 && rcData.sw8 == 0x0000){                  // 树莓派控制
-      temp_state = uart8_walk_request ? 2 : 12;                     // 有数据→走(case2)，超时→站(case12)
-  }
+  if (rcData.sw8 == 0x0000 && rcData.sw7 == 0xFCE0){ temp_state=6;} // 跳跃，注意是非状态机函数
+	if (rcData.sw8 == 0x0000 && rcData.sw7 == 0x0320){ temp_state=4;}	// 站立
+
+  if (rcData.sw8 == 0x0320 ){ temp_state=1;} // 遥控控制
 
 
   // -------------一些未用上的功能------------------
@@ -376,7 +383,7 @@ if (emergency_stop==1){
 
         case 3: // 跳跃
        //树莓派测试的时候不用，安全起见
-				motion_Jump(15.0f);
+				//motion_Jump(15.0f);
         break;
                 
         case 4: // 站立
@@ -392,7 +399,9 @@ if (emergency_stop==1){
 //			        motion_Crawl_Reset();  /* 刚进入匍匐，触发缓慢下蹲 */
 //			    }
 //			motion_Crawl(5.0f,12.0f);
-				motion_Jump(15.0f);
+			//	motion_Jump(15.0f);
+			//	motion_TripodWalk(22.0f, 12.0f);
+				motion_SmallJump();
         break;     
 
         case 7:// 前空翻
