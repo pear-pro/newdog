@@ -41,6 +41,7 @@
 #include "pwm_app.h"
 #include "ht_10a_remote_control.h"
 #include "robot_arm_control.h"
+#include "motor_4310.h"
 #include "motor_feedback.h"
 #include "debug_uart.h"
 #include "IMU.h"
@@ -175,6 +176,7 @@ int main(void)
   MX_TIM10_Init();
   MX_UART8_Init();
   MX_CAN2_Init();
+  MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
   
 	HAL_TIM_Base_Start_IT(&htim10);
@@ -195,29 +197,33 @@ int main(void)
 	
 // motor_release();
 
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  
+    Set_dm_enable(&hcan1, 0);
+	  Set_dm_enable(&hcan1, 1);
 float GyroZ_filtered = 0.0f;
 // 滤波系数，0~1，越小越平滑，也越滞后
 float alpha = 0.008f;
 
 while (1)
-  {  
+  {
+		//电机接收
 	  Motor_Feedback_Process();    
     Motor_Feedback_TimeoutTask();
-		
-		
-// 		
-//		for(int i=2;i<10;i++){
-//			uint8_t err  = motor_fb[i].error;
-//			if(err!=0){
-//			motor_release();
-//				while(1){}
-//			}
-//		}
+ 		//若电机出现错误立马切换零力矩模式
+		for(int i=2;i<=9;i++){
+			uint8_t err  = motor_fb[i].error;
+			if(err!=0){
+			motor_release();
+				while(1){}
+			}
+		}
 		
 		
 	  //      滤波测试
@@ -248,13 +254,17 @@ while (1)
 //	init_motor_parameters();
 //  }
 
-    // -------------机械臂6调试------------------
-//	while(1){
-//	hmotor4.Kp =0.1f;
-//	gimbal_send_unitree(60.0f); // 发送云台控制指令，参数为期望的云台角度
-//	
-//	}
-//	
+    // -------------机械臂调试（注释保留）------------------
+//	hmotor10.Kp =0.8f;
+//	gimbal_send_unitree(10.0f);
+//	Set_DM_Motor(1, -50);//大臂调节
+//	Set_DM_Motor(0, -20);//小臂调节
+//	Arm_Move_To(40,0,50);
+//	Set_Servo_Angle_TIM8(TIM_CHANNEL_1,30.0f);//摄像机w
+//  Set_Servo_Angle_TIM8(TIM_CHANNEL_2, 135.0f);//摄像机x
+//	Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 265.0f);//吸盘垂直
+	
+
 
     // -------------位置控制测试-----------------
 

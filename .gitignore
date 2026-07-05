@@ -1,21 +1,26 @@
-# Build outputs
+# ==================== Build outputs ====================
 build/
 cmake/build/
 cmake-build-*/
+Debug/
+Release/
 
-# IDE/Tooling
+# ==================== IDE/Tooling ====================
 .vscode/
 .clangd/
 .idea/
 .settings/
 .history/
+*.cproject
+*.project
+*.launch
 
-# STM32CubeMX
+# ==================== STM32CubeMX ====================
 *.mxproject
 .mxproject
 mx.scratch
 
-# Keil/MDK-ARM
+# ==================== Keil/MDK-ARM ====================
 *.uvoptx
 *.uvguix
 *.uvgui
@@ -35,14 +40,32 @@ mx.scratch
 *.hex
 *.bin
 *.crf
-
-# GCC/Clang outputs
 *.d
 *.a
 *.i
 *.out
+*.listing
+*.sct
+*.icf
 
-# OS junk
+# ==================== GCC/Clang ====================
+*.d
+*.o
+*.su
+*.a
+
+# ==================== Debug/Trace ====================
+*.jlink
+*.stlink
+*.dbgconf
+EventRecorderStub.scvd
+
+# ==================== OS junk ====================
 Thumbs.db
 Desktop.ini
 .DS_Store
+*.swp
+*~
+
+# ==================== 编译数据库（可选，按需取消注释） ====================
+# compile_commands.json

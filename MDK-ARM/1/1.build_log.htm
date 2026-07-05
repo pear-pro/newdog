@@ -1,9 +1,9 @@
 <html>
 <body>
 <pre>
-<h1>�Vision Build Log</h1>
+<h1>�Vision Build Log</h1>
 <h2>Tool Versions:</h2>
-IDE-Version: ��Vision V5.24.2.0
+IDE-Version: ��Vision V5.24.2.0
 Copyright (C) 2017 ARM Ltd and ARM Germany GmbH. All rights reserved.
 License Information: 1 wwj20070717@icloud.com, 1, LIC=UJWP0-BXSCL-GKXBG-VN2FQ-87HGC-J4RJ8
  
@@ -15,6 +15,10 @@ Assembler:       Armasm.exe V5.06 update 5 (build 528)
 Linker/Locator:  ArmLink.exe V5.06 update 5 (build 528)
 Library Manager: ArmAr.exe V5.06 update 5 (build 528)
 Hex Converter:   FromElf.exe V5.06 update 5 (build 528)
+CPU DLL:         SARMCM3.DLL V5.24.1
+Dialog DLL:      DCM.DLL V1.16.0.0
+Target DLL:      CMSIS_AGDI.dll V1.28.3.0
+Dialog DLL:      TCM.DLL V1.32.0.0
 CPU DLL:         SARMCM3.DLL V5.24.1
 Dialog DLL:      DCM.DLL V1.16.0.0
 Target DLL:      CMSIS_AGDI.dll V1.28.3.0
@@ -39,7 +43,7 @@ compiling main.c...
 ../Core/Inc/robot_arm_control.h(10): warning:  #1-D: last line of file ends without a newline
    
 ../Core/Src/main.c(372): warning:  #550-D: variable "prev_temp_state"  was set but never used
-  	    static uint8_t prev_temp_state = 0;  /* 上一帧的状态，用于检测切�? */
+  	    static uint8_t prev_temp_state = 0;  /* 上一帧的状态，用于检测切�? */
 ../Core/Src/main.c(203): warning:  #177-D: variable "GyroZ_filtered"  was declared but never referenced
   float GyroZ_filtered = 0.0f;
 ../Core/Src/main.c(205): warning:  #177-D: variable "alpha"  was declared but never referenced
@@ -67,11 +71,11 @@ compiling gait.c...
 ..\Core\Src\gait.c(827): warning:  #177-D: variable "front_skip_Pitch"  was declared but never referenced
       float front_skip_Pitch = 100.0f; // 前空翻时身体前倾的角度
 ..\Core\Src\gait.c(829): warning:  #177-D: variable "skip_Height"  was declared but never referenced
-      float skip_Height = 35.0f; // 前空翻时蹬地的高�?
+      float skip_Height = 35.0f; // 前空翻时蹬地的高�?
 ..\Core\Src\gait.c(832): warning:  #177-D: variable "front_support_angle_max"  was declared but never referenced
-  	float front_support_angle_max = 60.0f; // 前脚蹬地的最大角�?
+  	float front_support_angle_max = 60.0f; // 前脚蹬地的最大角�?
 ..\Core\Src\gait.c(856): warning:  #177-D: variable "start_h2_alpha2"  was declared but never referenced
-      float start_h2_alpha2 = hposition2.alpha; // 后推蹬地的坐标（3�?17）对应的角度  
+      float start_h2_alpha2 = hposition2.alpha; // 后推蹬地的坐标（3�?17）对应的角度  
 ..\Core\Src\gait.c(857): warning:  #177-D: variable "start_h2_beta2"  was declared but never referenced
       float start_h2_beta2 = hposition2.beta;
 ..\Core\Src\gait.c(858): warning:  #177-D: variable "start_h3_alpha2"  was declared but never referenced
@@ -109,8 +113,15 @@ Package Vendor: ARM
                 ARM.CMSIS.5.0.1
                 CMSIS (Cortex Microcontroller Software Interface Standard)
    * Component: CORE Version: 5.0.1
+                http://www.keil.com/pack/ARM.CMSIS.5.0.1.pack
+                ARM.CMSIS.5.0.1
+                CMSIS (Cortex Microcontroller Software Interface Standard)
+   * Component: CORE Version: 5.0.1
 
 Package Vendor: Keil
+                https://www.keil.com/pack/Keil.STM32F4xx_DFP.2.17.0.pack
+                Keil.STM32F4xx_DFP.2.17.0
+                STMicroelectronics STM32F4 Series Device Support, Drivers and Examples
                 https://www.keil.com/pack/Keil.STM32F4xx_DFP.2.17.0.pack
                 Keil.STM32F4xx_DFP.2.17.0
                 STMicroelectronics STM32F4 Series Device Support, Drivers and Examples
