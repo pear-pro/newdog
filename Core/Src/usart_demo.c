@@ -1,24 +1,26 @@
 /**
  ******************************************************************************
  * @file    usart_demo.c
- * @brief   UART8 串口通信模块 - 树莓派速度指令接收（稳定恢复版）
+ * @brief   UART8 串口通信模块 - 树莓派速度+摄像头指令接收
  ******************************************************************************
  *
- * 协议：8 字节定长帧
- *   [0] 0x55
- *   [1] 0xAA
- *   [2] CTRL
- *   [3] V_H
- *   [4] V_L
- *   [5] W_H
- *   [6] W_L
- *   [7] CHECKSUM = (Byte2 + Byte3 + Byte4 + Byte5 + Byte6) & 0xFF
+ * 【协议格式】14 字节定长帧，收发统一
  *
- * 本版重点：
- *   1. 不依赖 IDLE 才解析，只要 DMA 缓冲区有字节就解析。
- *   2. 数据区遇到 0x55 不重新同步，避免合法数据导致丢帧。
- *   3. 自动检测 UART 错误 / DMA 接收关闭 / RxState 异常，并自动重启 UART8 DMA 接收。
- *   4. 中间停发、重新发，不需要重新打开串口，也不需要 MCU 复位。
+ *   [0x55][0xAA][CTRL][V_H][V_L][W_H][W_L][X_H][X_L][Y_H][Y_L][Z_H][Z_L][CKSUM]
+ *
+ *   - 双字节帧头 0x55+0xAA
+ *   - 校验和 = (Byte2 ~ Byte12) 之和 & 0xFF，位于 Byte13
+ *   - 速度值大端序，缩放 /10000
+ *   - 摄像头坐标大端序，缩放 /100（单位：米）
+ *
+ * 【数据流】
+ *   RPi 下发速度+摄像头指令 → DMA 循环接收 → IDLE 中断 → 主循环解析 → 应用数据
+ *
+ * 【状态机】
+ *   PARSE_SYNC_1: 等待 0x55
+ *   PARSE_SYNC_2: 等待 0xAA
+ *   PARSE_COLLECT: 收集后续 12 字节 → 校验 → 分发
+ *
  ******************************************************************************
  */
 
@@ -34,7 +36,7 @@ extern Remote_Control_struct rcData;
 /*                           可调参数                                           */
 /* ========================================================================== */
 
-/* 调通后如果想“断线自动停狗”，改成 1；当前先关闭，避免影响测试 */
+/* 调通后如果想"断线自动停狗"，改成 1；当前先关闭，避免影响测试 */
 #define UART8_ENABLE_LOST_TIMEOUT    0
 #define UART8_LOST_TIMEOUT_MS        300u
 
@@ -66,16 +68,16 @@ static uint32_t last_rx_tick = 0;
 /** 树莓派速度指令到达标志：1=有新速度数据，请求进入行走状态 */
 volatile uint8_t uart8_walk_request = 0;
 
-/* ------------------------- 原有调试变量：保留名字 -------------------------- */
-volatile uint8_t  dbg_last_frame[8] = {0};
+/* ------------------------- 调试变量：Watch 窗口查看 -------------------------- */
+volatile uint8_t  dbg_last_frame[FRAME_LEN] = {0};
 volatile uint8_t  dbg_frame_ok_count = 0;       /* 8bit，会回绕；兼容原 Watch */
 volatile uint8_t  dbg_frame_err_count = 0;      /* 8bit，会回绕；兼容原 Watch */
 volatile int16_t  dbg_last_v = 0;
 volatile int16_t  dbg_last_w = 0;
 
-/* 默认不冻结，方便观察实时帧。需要抓某一帧时，在 Watch 手动改为 1。 */
-volatile uint8_t  dbg_freeze = 0;
-volatile uint8_t  dbg_frozen_frame[8] = {0};
+/* 默认冻结，方便观察首帧。需要实时跟踪时，在 Watch 手动改为 0。 */
+volatile uint8_t  dbg_freeze = 1;
+volatile uint8_t  dbg_frozen_frame[FRAME_LEN] = {0};
 volatile int16_t  dbg_frozen_v = 0;
 volatile int16_t  dbg_frozen_w = 0;
 volatile uint32_t dbg_frozen_tick = 0;
@@ -101,11 +103,17 @@ volatile uint32_t dbg_uart_cr3 = 0;             /* 最近一次 CR3 快照 */
 volatile uint32_t dbg_uart_recover_reason = 0;  /* 1=Init,2=Error,3=DMAR off,4=RxState异常 */
 
 /* 最后一次校验失败的帧，便于看是校验错还是错位 */
-volatile uint8_t  dbg_err_frame[8] = {0};
+volatile uint8_t  dbg_err_frame[FRAME_LEN] = {0};
 
 /* 分发给运动层的速度 */
 float front_speed = 0.0f;
 float turn_omega  = 0.0f;
+
+/* 摄像头目标坐标全局变量（单位：米） */
+float camera_obj_x = 0.0f;
+float camera_obj_y = 0.0f;
+float camera_obj_z = 0.0f;
+volatile uint8_t camera_data_fresh = 0;
 
 /* ========================================================================== */
 /*                           内部函数声明                                       */
@@ -214,7 +222,6 @@ static uint16_t RingBuf_GetHead(void)
 
 /**
  * @brief 计算 DMA 环形缓冲区当前可读字节数。
- *        通用写法，不要求 USART_DEMO_RX_BUF_SIZE 必须是 2 的整数次方。
  */
 static uint16_t RingBuf_Available(void)
 {
@@ -250,17 +257,15 @@ static uint8_t RingBuf_ReadByte(void)
 }
 
 /**
- * @brief 计算 8 位累加校验。
+ * @brief 计算 8 位累加校验：(Byte2 ~ Byte12) 之和 & 0xFF
  */
 static uint8_t CalcChecksum8(const uint8_t *buf)
 {
     uint16_t sum = 0;
 
-    sum += buf[POS_CTRL];
-    sum += buf[POS_V_HIGH];
-    sum += buf[POS_V_LOW];
-    sum += buf[POS_W_HIGH];
-    sum += buf[POS_W_LOW];
+    for (uint8_t i = POS_CTRL; i <= POS_CAM_Z_LOW; i++) {
+        sum += buf[i];
+    }
 
     return (uint8_t)(sum & 0xFFu);
 }
@@ -283,11 +288,11 @@ static void Parser_Reset(void)
 /* ========================================================================== */
 
 /**
- * @brief 输入 1 字节，尝试组出完整 8 字节帧。
+ * @brief 输入 1 字节，尝试组出完整 14 字节帧。
  * @return 1=完整帧已收齐；0=还未收齐。
  *
  * 注意：PARSE_COLLECT 阶段不能因为遇到 0x55 就重新同步。
- *      因为 V_H/V_L/W_H/W_L/CHECKSUM 都可能等于 0x55。
+ *      因为 V_H/V_L/W_H/W_L/X_H/X_L/Y_H/Y_L/Z_H/Z_L/CHECKSUM 都可能等于 0x55。
  */
 static uint8_t Parser_FeedByte(uint8_t byte)
 {
@@ -358,19 +363,23 @@ static void DispatchCommand(const CmdFrame_TypeDef *cmd)
     switch (cmd->ctrl_mode) {
 
     case CTRL_SPEED:
-        /* 上位机协议：v/w = 实际物理量 * 1000。这里恢复成浮点。 */
-        front_speed = (float)cmd->velocity_v / 1000.0f;
-        turn_omega  = (float)cmd->velocity_w / 1000.0f;
+        /* 上位机协议：v/w = 实际物理量 * 10000。这里恢复成浮点。 */
+        front_speed = (float)cmd->velocity_v / 10000.0f;
+        turn_omega  = (float)cmd->velocity_w / 10000.0f;
 
         /* 保持原工程逻辑：给后级运动层的输入限制在 [-1, 1]。 */
         front_speed = LimitFloat(front_speed, -CMD_SPEED_LIMIT, CMD_SPEED_LIMIT);
         turn_omega  = LimitFloat(turn_omega,  -CMD_SPEED_LIMIT, CMD_SPEED_LIMIT);
 
-        /* 兼容原工程：如果后级运动控制仍读取遥控结构体，就同步写入 rcData。
-         * 如果你们后级已经直接读取 front_speed / turn_omega，这两行也不会影响调试。
-         */
-        rcData.R_y = front_speed;
-        rcData.R_x = turn_omega;
+        /* 摄像头坐标更新（协议缩放 /100，单位：米） */
+        camera_obj_x = (float)cmd->camera_x / 100.0f;
+        camera_obj_y = (float)cmd->camera_y / 100.0f;
+        camera_obj_z = (float)cmd->camera_z / 100.0f;
+        camera_data_fresh = 1;
+
+        /* 兼容原工程：如果后级运动控制仍读取遥控结构体，就同步写入 rcData。 */
+        //rcData.R_y = front_speed;
+       // rcData.R_x = turn_omega;
 
         uart8_walk_request = 1;
         last_rx_tick = HAL_GetTick();
@@ -413,7 +422,7 @@ void UART8_Demo_Init(void)
  * @brief 主循环处理函数。必须在 while(1) 或高频任务中持续调用。
  *
  * 关键点：
- *   - 不再使用 “if (uart8_idle_flag) 才解析” 的写法。
+ *   - 不再使用 "if (uart8_idle_flag) 才解析" 的写法。
  *   - 只要 DMA 环形缓冲区存在新字节，就逐字节送入协议状态机。
  *   - 如果 UART 错误或 DMA 接收被 HAL 关闭，自动重启接收。
  */
@@ -457,11 +466,17 @@ void UART8_Demo_Process(void)
             if (Parser_ValidateFrame(parser.buf)) {
                 CmdFrame_TypeDef cmd;
 
-                cmd.ctrl_mode = parser.buf[POS_CTRL];
+                cmd.ctrl_mode  = parser.buf[POS_CTRL];
                 cmd.velocity_v = (int16_t)(((uint16_t)parser.buf[POS_V_HIGH] << 8)
                                          |  ((uint16_t)parser.buf[POS_V_LOW]));
                 cmd.velocity_w = (int16_t)(((uint16_t)parser.buf[POS_W_HIGH] << 8)
                                          |  ((uint16_t)parser.buf[POS_W_LOW]));
+                cmd.camera_x   = (int16_t)(((uint16_t)parser.buf[POS_CAM_X_HIGH] << 8)
+                                         |  ((uint16_t)parser.buf[POS_CAM_X_LOW]));
+                cmd.camera_y   = (int16_t)(((uint16_t)parser.buf[POS_CAM_Y_HIGH] << 8)
+                                         |  ((uint16_t)parser.buf[POS_CAM_Y_LOW]));
+                cmd.camera_z   = (int16_t)(((uint16_t)parser.buf[POS_CAM_Z_HIGH] << 8)
+                                         |  ((uint16_t)parser.buf[POS_CAM_Z_LOW]));
 
                 dbg_last_v = cmd.velocity_v;
                 dbg_last_w = cmd.velocity_w;
@@ -498,20 +513,29 @@ void UART8_Demo_Process(void)
 }
 
 /**
- * @brief 发送应答帧给树莓派。当前可选使用。
+ * @brief 发送应答帧给树莓派。
+ *
+ * 帧格式：[0x55][0xAA][CTRL][V_H][V_L][W_H][W_L][X_H][X_L][Y_H][Y_L][Z_H][Z_L][CKSUM]
  */
-void UART8_Demo_SendResponse(uint8_t ctrl_mode, int16_t v, int16_t w)
+void UART8_Demo_SendResponse(uint8_t ctrl_mode, int16_t v, int16_t w,
+                             int16_t cam_x, int16_t cam_y, int16_t cam_z)
 {
     uint8_t frame[FRAME_LEN];
 
-    frame[POS_HEAD1]  = FRAME_HEADER_1;
-    frame[POS_HEAD2]  = FRAME_HEADER_2;
-    frame[POS_CTRL]   = ctrl_mode;
-    frame[POS_V_HIGH] = (uint8_t)(((uint16_t)v >> 8) & 0xFFu);
-    frame[POS_V_LOW]  = (uint8_t)((uint16_t)v & 0xFFu);
-    frame[POS_W_HIGH] = (uint8_t)(((uint16_t)w >> 8) & 0xFFu);
-    frame[POS_W_LOW]  = (uint8_t)((uint16_t)w & 0xFFu);
-    frame[POS_CKSUM]  = CalcChecksum8(frame);
+    frame[POS_HEAD1]      = FRAME_HEADER_1;
+    frame[POS_HEAD2]      = FRAME_HEADER_2;
+    frame[POS_CTRL]       = ctrl_mode;
+    frame[POS_V_HIGH]     = (uint8_t)(((uint16_t)v >> 8) & 0xFFu);
+    frame[POS_V_LOW]      = (uint8_t)((uint16_t)v & 0xFFu);
+    frame[POS_W_HIGH]     = (uint8_t)(((uint16_t)w >> 8) & 0xFFu);
+    frame[POS_W_LOW]      = (uint8_t)((uint16_t)w & 0xFFu);
+    frame[POS_CAM_X_HIGH] = (uint8_t)(((uint16_t)cam_x >> 8) & 0xFFu);
+    frame[POS_CAM_X_LOW]  = (uint8_t)((uint16_t)cam_x & 0xFFu);
+    frame[POS_CAM_Y_HIGH] = (uint8_t)(((uint16_t)cam_y >> 8) & 0xFFu);
+    frame[POS_CAM_Y_LOW]  = (uint8_t)((uint16_t)cam_y & 0xFFu);
+    frame[POS_CAM_Z_HIGH] = (uint8_t)(((uint16_t)cam_z >> 8) & 0xFFu);
+    frame[POS_CAM_Z_LOW]  = (uint8_t)((uint16_t)cam_z & 0xFFu);
+    frame[POS_CKSUM]      = CalcChecksum8(frame);
 
     HAL_UART_Transmit(&huart8, frame, FRAME_LEN, TX_TIMEOUT_MS);
 }
