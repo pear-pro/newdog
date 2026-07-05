@@ -48,7 +48,7 @@ float Frontflip_freq3 = 0.004f; //
 
 float walk_height = 22.0f; //32.0
 float max_stride = 11.0f;
-float max_stride2 = 8.0f;
+float max_stride2 = 9.0f;
 float tau = 0.0f;
 float t = 0.0f;    
 
@@ -355,7 +355,7 @@ void motion_Crawl(float step_height, float stride){
 * turn_omega：转弯角速度，参数范围（-1.0f 到 1.0f）
 */
 
-
+uint8_t Flag=1;
 void motion_Mix(float height, float step_height, float stride)
 {    
     tau += Forward_freq;  
@@ -373,9 +373,11 @@ void motion_Mix(float height, float step_height, float stride)
     float L_stride = stride;
 	
 	float turn_curr_max = 30.0f;//需要实际测量
-	if((fabs(rcData.R_y)<0.35f)&&(fabs(rcData.R_x)<0.35f)&&rcData.sw5 == 0x0320)
+	
+	if((fabs(rcData.R_y)<0.35f)&&(fabs(rcData.R_x)<0.35f)&&Flag==0)
 	{
-		turn_omega_des=body_yaw;
+		Init_turn_omega_des();
+		Flag=1;
 //		turn_omega_integral=0;
 	}
 	
@@ -401,9 +403,11 @@ void motion_Mix(float height, float step_height, float stride)
 				   
 	// turn_omega_corr 映射到 turn_stride
 	turn_stride = turn_omega_corr;
-
-	if ((fabs(rcData.R_y)<0.35f)&&(rcData.R_x>0.35f||rcData.R_x<-0.35f)&&rcData.sw5 == 0x0320){
+	if((fabs(rcData.R_y)<0.1f)&&(fabs(rcData.R_x)<0.1f))
+	{
 		
+	if(fabs(deta_angle)>5.0f)
+	{
        if (turn_stride >0.01f){ 
            R_stride =  - turn_stride*max_stride2;
            L_stride =  + turn_stride*max_stride2;
@@ -413,35 +417,51 @@ void motion_Mix(float height, float step_height, float stride)
            R_stride =  - turn_stride*max_stride2;
            L_stride =  + turn_stride*max_stride2;
        }
+		
+     }
+	}
+	else if ((fabs(rcData.R_y)<0.35f)&&(rcData.R_x>0.35f||rcData.R_x<-0.35f)){
+		Flag=0;
+       if (turn_stride >0.01f){ 
+           R_stride =  - turn_stride*max_stride2;
+           L_stride =  + turn_stride*max_stride2;
+       }
+	   if (turn_stride <-0.01f){
+           R_stride =  - turn_stride*max_stride2;
+           L_stride =  + turn_stride*max_stride2;
+       }
    }
-	else if((fabs(rcData.R_y)>0.35f)&&(fabs(rcData.R_x)<0.35f)&&rcData.sw5 == 0x0320)
+	else if((fabs(rcData.R_y)>0.35f)&&(fabs(rcData.R_x)<0.35f))
 	{
+		Flag=0;
 		if (turn_stride > 0.1f){
 			if(rcData.R_y>0.35){
-				R_stride = stride*(1.0f + 1.25f * turn_stride);
-				L_stride = stride;
-			}
-			else if(rcData.R_y<-0.35)
-			{
 				R_stride = stride;
-				L_stride = stride*(1.0f + 1.25f * turn_stride) ;
+				L_stride = stride*(1.0f - 1.5f * turn_stride);
+			}
+			else if(rcData.R_y<-0.35)  
+				 
+			{
+				R_stride = stride*(1.0f - 1.5f * turn_stride);
+				L_stride = stride;
 			}
 		}			
 		if (turn_stride < -0.1f){
 			if(rcData.R_y>0.35)
 			{
-				R_stride = stride  ;
-				L_stride = stride* (1.0f - 1.25f * turn_stride);
+				R_stride = stride* (1.0f +1.5f * turn_stride);
+				L_stride = stride;
 			}
 			else if(rcData.R_y<-0.35)
 			{
-				R_stride = stride* (1.0f - 1.25f * turn_stride);
-				L_stride = stride;
+				R_stride = stride;
+				L_stride = stride* (1.0f +1.5f * turn_stride);
 			}
 		}
 	}
-	else if((fabs(rcData.R_y)>0.35f)&&(fabs(rcData.R_x)>0.18f)&&rcData.sw5 == 0x0320)
+	else if((fabs(rcData.R_y)>0.35f)&&(fabs(rcData.R_x)>0.18f))
 	{
+		Flag=0;
 		if (turn_stride > 0.01f){
 			if(rcData.R_y>0.35)
 			{
@@ -467,7 +487,6 @@ void motion_Mix(float height, float step_height, float stride)
 			}
 		}
 	}
-	
 	
     if (tau <= 0.5f)
     {

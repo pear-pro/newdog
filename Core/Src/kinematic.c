@@ -223,11 +223,11 @@ void crawl_inverseKinematic(Position_HandleTypeDef *hposition, LegSide_t leg_sid
 }
 
 void inverseKinematic_All(){// 前面两条腿装反了
-//	hposition1.B_x = -hposition1.B_x;
-//	hposition4.B_x = -hposition4.B_x; 
+	hposition1.B_x = -hposition1.B_x;
+	hposition4.B_x = -hposition4.B_x; 
 	
-	hposition2.B_x = -hposition2.B_x;
-	hposition3.B_x = -hposition3.B_x; 
+//	hposition2.B_x = -hposition2.B_x;
+//	hposition3.B_x = -hposition3.B_x; 
 	
 	inverseKinematic(&hposition1);
 	inverseKinematic(&hposition2);

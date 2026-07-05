@@ -304,7 +304,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		if (rcData.sw6 == 0xFCE0){
 			walk_height+=0.03f*rcData.L_y;
 		}
-		if (rcData.sw5 == 0xFCE0){
+		if (rcData.sw8 == 0xFCE0){
 			motor_release();
 			emergency_stop = 1;
 		}else{
@@ -325,19 +325,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 			Vofa_JustFloat(diag_buf, 33);
 		}
 		
-		if(rcData.sw5==0x0320 && rcData.sw8 == 0xFCE0)
+		if(rcData.sw8==0x0320)
 		{
-			if(fabs(deta_angle)<60.0f){
-				if(fabs(rcData.R_x)<0.01) rcData.R_x=0;
-			turn_omega_des-=0.1*rcData.R_x;
+			if(fabs(deta_angle)<22.5f){
+				if(fabs(rcData.R_x)<0.35) rcData.R_x=0;
+			turn_omega_des-=0.25*rcData.R_x;
 			}
-			if(turn_omega_des>180.0f) turn_omega_des=-180.0f;
-			else if(turn_omega_des<-180.0f) turn_omega_des=180.0f;
-			
-			
+			if(turn_omega_des>180.0f) 
+			{
+				turn_omega_des=-180.0f;
+				if(turn_omega_des<=body_yaw&&(fabs(rcData.R_x)>.35))turn_omega_des=body_yaw+22.0f;
+			}
+			else if(turn_omega_des<-180.0f) 
+			{ 
+				turn_omega_des=180.0f;
+				if(turn_omega_des>=body_yaw&&(fabs(rcData.R_x)>0.35))turn_omega_des=body_yaw-22.0f;
+			}
 		}
-		
-    }
+	}
 }
 
 // time不要超过65535

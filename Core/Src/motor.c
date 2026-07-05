@@ -14,14 +14,24 @@
 
 #define TRANSNIT_DELAY 500
  
-float motor1_bias = 5.00f;
-float motor2_bias = 0.15f;
-float motor3_bias = 5.12f;
-float motor4_bias = 3.0f;
-float motor5_bias = 1.90f;
-float motor6_bias = 4.53f;
-float motor7_bias = -1.60f;
-float motor8_bias = 3.00f;
+//float motor1_bias = 5.00f;
+//float motor2_bias = 0.15f;
+//float motor3_bias = 5.12f;
+//float motor4_bias = 3.0f;
+//float motor5_bias = 1.90f;
+//float motor6_bias = 4.53f;
+//float motor7_bias = -1.60f;
+//float motor8_bias = 3.00f;
+//float motor10_bias = 3.10f;// 云台偏置
+
+float motor1_bias = 6.15f;
+float motor2_bias = 0.25f;
+float motor3_bias = 4.77f;
+float motor4_bias = 2.2f;
+float motor5_bias = 2.10f;
+float motor6_bias = 5.38f;
+float motor7_bias = -2.65f;
+float motor8_bias = 2.50f;
 float motor10_bias = 3.10f;// 云台偏置
 
 
