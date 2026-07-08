@@ -64,7 +64,7 @@ void Set_dm_mit(CAN_HandleTypeDef* hcan,int16_t ID)
 	/* 先检查是否有空闲的 TX mailbox，只有有空位才发送报文 */
 	if(HAL_CAN_GetTxMailboxesFreeLevel(hcan) > 0)
 	{
- 			HAL_CAN_AddTxMessage(hcan, &can1TxMsg, can1TxData, &tx_mailbox);//发送报文
+ 			HAL_CAN_AddTxMessage(hcan, &can1TxMsg, can1TxData, (uint32_t*)CAN_TX_MAILBOX0);//发送报文
 	}
 }
 

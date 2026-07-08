@@ -1,6 +1,6 @@
 
 /*
- * Auto generated Run-Time-Environment Component Configuration File
+ * Auto generated Run-Time-Environment Configuration File
  *      *** Do not modify ! ***
  *
  * Project: '1' 

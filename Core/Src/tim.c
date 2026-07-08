@@ -28,6 +28,7 @@
 #include "ht_10a_remote_control.h"
 #include "debug_uart.h"
 #include "motor_feedback.h"
+#include "usart_demo.h"
 
 #include "math.h"
 /*
@@ -298,6 +299,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
   /* USER CODE BEGIN TIM5_MspPostInit 0 */
 
   /* USER CODE END TIM5_MspPostInit 0 */
+
     __HAL_RCC_GPIOH_CLK_ENABLE();
     /**TIM5 GPIO Configuration
     PH12     ------> TIM5_CH3
@@ -448,7 +450,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 			Vofa_JustFloat(diag_buf, 33);
 		}
 		
-		if(rcData.sw8==0x0320)
+		if(rcData.sw8==0x0320&& rcData.sw7 ==0x0320 )
 		{
 			if(fabs(deta_angle)<22.5f){
 				if(fabs(rcData.R_x)<0.35) rcData.R_x=0;
@@ -457,7 +459,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 			if(turn_omega_des>180.0f) 
 			{
 				turn_omega_des=-180.0f;
-				if(turn_omega_des<=body_yaw&&(fabs(rcData.R_x)>.35))turn_omega_des=body_yaw+22.0f;
+				if(turn_omega_des<=body_yaw&&(fabs(rcData.R_x)>0.35))turn_omega_des=body_yaw+22.0f;
 			}
 			else if(turn_omega_des<-180.0f) 
 			{ 
@@ -465,6 +467,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 				if(turn_omega_des>=body_yaw&&(fabs(rcData.R_x)>0.35))turn_omega_des=body_yaw-22.0f;
 			}
 		}
+		
+       if(rcData.sw8== 0x0320&& rcData.sw7 == 0xFCE0)//树莓派
+		{
+			if(fabs(deta_angle)<22.5f){
+				if(fabs(turn_omega)<0.1f) turn_omega=0;
+			turn_omega_des-=0.15*turn_omega;
+			}
+			if(turn_omega_des>180.0f) 
+			{
+				turn_omega_des=-180.0f;
+				if(turn_omega_des<=body_yaw&&(fabs(turn_omega)>0.1))turn_omega_des=body_yaw+22.0f;
+			}
+			else if(turn_omega_des<-180.0f) 
+			{ 
+				turn_omega_des=180.0f;
+				if(turn_omega_des>=body_yaw&&(fabs(turn_omega)>0.1))turn_omega_des=body_yaw-22.0f;
+			}
+		}		
 	}
 }
 
