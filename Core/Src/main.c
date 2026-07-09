@@ -428,10 +428,10 @@ while(1){
 if (rcData.sw8 == 0xFCE0){ emergency_stop = 1;} // 侧翻急停关闭版
   else{ emergency_stop = 0;}
 
-  if (rcData.sw8 == 0x0000 && rcData.sw7 == 0xFCE0){ temp_state=6;} // 跳跃，注意是非状态机函数
-	if (rcData.sw8 == 0x0000 && rcData.sw7 == 0x0320){ temp_state=4;}	// 站立
+//  if (rcData.sw8 == 0x0000 && rcData.sw7 == 0xFCE0){ temp_state=6;} // 跳跃，注意是非状态机函数
+	if (rcData.sw8 == 0x0000){ temp_state=4;}	// 站立
 
-  if (rcData.sw8 == 0x0320 ){ temp_state=1;} // 遥控控制
+  if (rcData.sw8 == 0x0320&& rcData.sw7 == 0x0320 ){ temp_state=1;} // 遥控控制
 
 
   // -------------一些未用上的功能------------------
@@ -466,17 +466,17 @@ if (emergency_stop==1){
         case 1:
         // 遥控控制行走
 		if(fabs(rcData.R_y)<0.35) rcData.R_y=0.0f;
-		    motion_Mix(walk_height, 8.0f, max_stride*rcData.R_y, rcData.R_x);
+		    motion_Mix(walk_height, 5.5f, -max_stride*rcData.R_y);
         break;
                 
         case 2:
         // 树莓派控制行走
-		    motion_Mix(walk_height, 8.0f, max_stride*front_speed, 0.0f);
+		    motion_Mix2(walk_height, 7.0f, -max_stride*front_speed);
         break;
 
         case 3: // 跳跃
        //树莓派测试的时候不用，安全起见
-				motion_Jump(15.0f);
+//				motion_Jump(15.0f);
         break;
                 
         case 4: // 站立

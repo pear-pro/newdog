@@ -15,6 +15,7 @@
 #include "stm32f427xx.h"
 #include "stm32f4xx_hal_rcc.h"
 #include <stdint.h>
+#include "usart_demo.h"
 
 #define pi 3.141592f
 
@@ -370,12 +371,15 @@ void motion_Mix(float height, float step_height, float stride, float turn_stride
 //	float last_deta_angle = 0.0f; // 上一次角度误差
 //	const float kd_turn = 0.35f;  // 微分系数
 	
-    float R_stride = stride;
-    float L_stride = stride;
 	
 	float turn_curr_max = 30.0f;//需要实际测量
 	
-	if((fabs(rcData.R_y)<0.35f)&&(fabs(rcData.R_x)<0.35f)&&Flag==0)
+	  R_stride = stride;
+      L_stride = stride;
+
+	
+	
+	if((fabs(rcData.R_y)<0.15f)&&(fabs(rcData.R_x)<0.15f)&&Flag==0)
 	{
 		Init_turn_omega_des();
 		Flag=1;
@@ -387,15 +391,6 @@ void motion_Mix(float height, float step_height, float stride, float turn_stride
 	if(deta_angle>180.0f) deta_angle-=360.0f;
 	else if(deta_angle<-180.0f) deta_angle+=360.0f;
 	
-//	turn_omega_integral += ki_turn *deta_angle;
-//	// 积分限幅
-//	if(turn_omega_integral > integral_max) turn_omega_integral = integral_max;
-//	if(turn_omega_integral < -integral_max) turn_omega_integral = -integral_max;
-
-//	// PID输出
-//	float d_err = deta_angle - last_deta_angle;
-//	turn_omega_corr = kp_turn_omega * deta_angle + turn_omega_integral + kd_turn * d_err;
-//	last_deta_angle = deta_angle;
 	turn_omega_corr = kp_turn_omega * deta_angle;
 	// 从turn_omega_des 映射到 turn_omega_corr
                    if (turn_omega_corr>turn_curr_max){turn_omega_corr=turn_curr_max;}
@@ -404,12 +399,12 @@ void motion_Mix(float height, float step_height, float stride, float turn_stride
 				   
 	// turn_omega_corr 映射到 turn_stride
 	turn_stride = turn_omega_corr;
-	if((fabs(rcData.R_y)<0.1f)&&(fabs(rcData.R_x)<0.1f))
+	if((fabs(rcData.R_y)<0.1f)&&(fabs(rcData.R_x)<0.1f))//原地踏步闭环
 	{
-		
 	if(fabs(deta_angle)>5.0f)
 	{
-       if (turn_stride >0.01f){ 
+       if (turn_stride >0.01f){
+		   
            R_stride =  - turn_stride*max_stride2;
            L_stride =  + turn_stride*max_stride2;
        }
@@ -421,7 +416,139 @@ void motion_Mix(float height, float step_height, float stride, float turn_stride
 		
      }
 	}
-	else if ((fabs(rcData.R_y)<0.35f)&&(rcData.R_x>0.35f||rcData.R_x<-0.35f)){
+
+	else if ((fabs(rcData.R_y)<0.15f)&&fabs(rcData.R_x)>0.15f){//纯左右转
+		Flag=0;
+		
+	
+       if (turn_stride >0.001f){ 
+           R_stride =  - turn_stride*max_stride2;
+           L_stride =  + turn_stride*max_stride2;
+       }
+	   if (turn_stride <-0.001f){
+           R_stride =  - turn_stride*max_stride2;
+           L_stride =  + turn_stride*max_stride2;
+       }
+   }
+	else if((fabs(rcData.R_y)>0.35f)&&(fabs(rcData.R_x)<0.35f))//直走闭环
+	{
+		Flag=0;
+		
+		if (turn_stride > 0.005f){
+			R_stride = stride ;
+			L_stride = stride* (1.0f - 2.0f * turn_stride);
+		}else if (turn_stride < -0.005f){
+			R_stride = stride * (1.0f + 2.0f * turn_stride);
+			L_stride = stride;
+		}
+	}
+	
+	else if((fabs(rcData.R_y)>0.35f)&&(fabs(rcData.R_x)>0.18f))//前进转弯
+	{
+		Flag=0;
+		if (turn_stride > 0.005f){
+			R_stride = stride ;
+			L_stride = stride* (1.0f - 1.0f * turn_stride);
+		}else if (turn_stride < -0.005f){
+			R_stride = stride * (1.0f + 1.0f * turn_stride);
+			L_stride = stride;
+		}
+
+	}
+  
+	
+  
+	
+    if (tau <= 0.5f)
+    {
+        GaitPhasesPoints RightState = gaitGenerator(0, height, step_height, R_stride);
+        GaitPhasesPoints LeftState = gaitGenerator(0, height, step_height, L_stride);
+
+        hposition1.B_y  = RightState.ySwing * (1.0f+tanf(pi*stab_roll/180.0f)) ;
+        hposition1.B_x  =  RightState.xSwing; 
+        hposition2.B_y  = RightState.ySupport * (1.0f+tanf(pi*stab_roll/180.0f));
+        hposition2.B_x  =  RightState.xSupport; 
+        hposition3.B_y  = LeftState.ySwing * (1.0f-tanf(pi*stab_roll/180.0f));
+        hposition3.B_x  =  LeftState.xSwing; 
+        hposition4.B_y  = LeftState.ySupport * (1.0f-tanf(pi*stab_roll/180.0f));
+        hposition4.B_x  =  LeftState.xSupport; 
+        set_Motor_Kp(0,1,0,1);
+    }
+    else if (tau > 0.5f && tau <= 1.0f)
+    {
+        GaitPhasesPoints RightState = gaitGenerator(1, height, step_height, R_stride);
+        GaitPhasesPoints LeftState = gaitGenerator(1, height, step_height, L_stride);
+
+        hposition1.B_y  = RightState.ySupport * (1.0f+tanf(pi*stab_roll/180.0f));
+        hposition1.B_x  =  RightState.xSupport; 
+        hposition2.B_y  = RightState.ySwing * (1.0f+tanf(pi*stab_roll/180.0f));
+        hposition2.B_x  =  RightState.xSwing;
+        hposition3.B_y  = LeftState.ySupport * (1.0f-tanf(pi*stab_roll/180.0f));
+        hposition3.B_x  =  LeftState.xSupport;
+        hposition4.B_y  = LeftState.ySwing * (1.0f-tanf(pi*stab_roll/180.0f));
+        hposition4.B_x  =  LeftState.xSwing;
+        set_Motor_Kp(1,0,1,0);
+    }
+
+    inverseKinematic_All();
+    Motor_SendCmd_AllAngle();  
+	
+}
+
+void motion_Mix2(float height, float step_height, float stride)//树莓派
+{    
+    tau += Forward_freq;  
+    if(tau >= 1.0f) { tau -= 1.0f; }
+			
+	// 开环左右转控制
+	float kp_turn_omega = 1.60f;
+	
+     R_stride = stride;
+     L_stride = stride;
+	
+	
+	
+	float turn_curr_max = 30.0f;//需要实际测量
+	
+	
+	
+	if((fabs(front_speed)<0.1f)&&(fabs(turn_omega)<0.1f)&&Flag==0)
+	{
+		Init_turn_omega_des();
+		Flag=1;
+//		turn_omega_integral=0;
+	}
+	
+	//解决陀螺仪转过180变号
+	deta_angle=turn_omega_des-body_yaw;
+	if(deta_angle>180.0f) deta_angle-=360.0f;
+	else if(deta_angle<-180.0f) deta_angle+=360.0f;
+	
+	turn_omega_corr = kp_turn_omega * deta_angle;
+	// 从turn_omega_des 映射到 turn_omega_corr
+                   if (turn_omega_corr>turn_curr_max){turn_omega_corr=turn_curr_max;}
+                   if (turn_omega_corr<-turn_curr_max){turn_omega_corr=-turn_curr_max;}
+	turn_omega_corr = turn_omega_corr/turn_curr_max;
+				   
+	// turn_omega_corr 映射到 turn_stride
+	turn_stride = turn_omega_corr;
+	if((fabs(front_speed)<0.15f)&&(fabs(turn_omega)<0.15f))//原地踏步闭环
+	{		
+		if(fabs(deta_angle)>5.0f)
+		{
+		   if (turn_stride >0.01f){ 
+			   R_stride =  -turn_stride*max_stride2;
+			   L_stride =  + turn_stride*max_stride2;
+		   }
+		   if (turn_stride <-0.01f){
+			
+			   R_stride =  - turn_stride*max_stride2;
+			   L_stride =  + turn_stride*max_stride2;
+		   }
+			
+		 }
+		}
+	else if (fabs(turn_omega)>0.15f){//纯左右转闭环
 		Flag=0;
        if (turn_stride >0.01f){ 
            R_stride =  - turn_stride*max_stride2;
@@ -432,62 +559,19 @@ void motion_Mix(float height, float step_height, float stride, float turn_stride
            L_stride =  + turn_stride*max_stride2;
        }
    }
-	else if((fabs(rcData.R_y)>0.35f)&&(fabs(rcData.R_x)<0.35f))
+	else if((fabs(front_speed)>0.15f)&&(fabs(turn_omega)<0.15f))//前进闭环
 	{
 		Flag=0;
-		if (turn_stride > 0.1f){
-			if(rcData.R_y>0.35){
-				R_stride = stride;
-				L_stride = stride*(1.0f - 1.5f * turn_stride);
-			}
-			else if(rcData.R_y<-0.35)  
-				 
-			{
-				R_stride = stride*(1.0f - 1.5f * turn_stride);
-				L_stride = stride;
-			}
-		}			
-		if (turn_stride < -0.1f){
-			if(rcData.R_y>0.35)
-			{
-				R_stride = stride* (1.0f +1.5f * turn_stride);
-				L_stride = stride;
-			}
-			else if(rcData.R_y<-0.35)
-			{
-				R_stride = stride;
-				L_stride = stride* (1.0f +1.5f * turn_stride);
-			}
+		if (turn_stride > 0.005f){
+			R_stride = stride ;
+			L_stride = stride* (1.0f - 1.5f * turn_stride);
+		}else if (turn_stride < -0.005f){
+			R_stride = stride * (1.0f + 1.5f * turn_stride);
+			L_stride = stride;
 		}
+
 	}
-	else if((fabs(rcData.R_y)>0.35f)&&(fabs(rcData.R_x)>0.18f))
-	{
-		Flag=0;
-		if (turn_stride > 0.01f){
-			if(rcData.R_y>0.35)
-			{
-				R_stride = stride *(1.0f + 1.1f * turn_stride);
-				L_stride = stride;
-			}
-			else if(rcData.R_y<-0.35)
-			{
-				R_stride = stride;
-				L_stride = stride *(1.0f + 1.1f * turn_stride);
-			}
-		}
-		if (turn_stride < -0.01f){
-			if(rcData.R_y>0.35)
-			{
-				R_stride = stride ;
-				L_stride = stride * (1.0f - 1.1f * turn_stride);
-			}
-			else if(rcData.R_y<-0.35)
-			{
-				R_stride = stride*(1.0f - 1.1f * turn_stride);
-				L_stride = stride;
-			}
-		}
-	}
+  
 	
     if (tau <= 0.5f)
     {
