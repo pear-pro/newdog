@@ -11,6 +11,7 @@
 #include "imu.h"
 #include "tim.h"
 #include "motor.h"
+#include "motor_feedback.h"
 #include "stm32f427xx.h"
 #include "stm32f4xx_hal_rcc.h"
 #include <stdint.h>
@@ -25,11 +26,11 @@ float turn_omega_corr = 0.0f; // 旋转纠正值
 float deta_angle=0.0f;
 float turn_stride=0.0f;
 
-float Forward_freq = 0.0075f; // 0.004 
+float Forward_freq = 0.0075f; // 0.01(队友) 
 #define up_down_freq 0.004f
 #define crawl_freq 0.002f
 
-float support_Kp = 0.7f; // 0.6/0.7,0.25/0.3
+float support_Kp = 0.7f; // 0.5(队友)
 float swing_Kp = 0.3f;
 float Expect_kw = 0.01f;  // 直接用来初始化
 float support_tau_ff = 0.00f; // 0.10
@@ -47,8 +48,8 @@ float Frontflip_freq3 = 0.004f; //
 #define jump_freq5 0.003f   // 0.01
 
 float walk_height = 22.0f; //32.0
-float max_stride = 11.0f;
-float max_stride2 = 9.0f;
+float max_stride = 11.0f; // 13.0f(队友)
+float max_stride2 = 9.0f; // 队友删除了此参数
 float tau = 0.0f;
 float t = 0.0f;    
 
@@ -67,14 +68,14 @@ float stride_max = 20.0f;
 // float motor7_kp_offset = 0.37f;
 // float motor8_kp_offset = 0.50f;
 
-float motor1_kp_offset = 0.5f;
+float motor1_kp_offset = 0.5f; // 0.15(队友)
 float motor2_kp_offset = 0.0f;
 float motor3_kp_offset = 0.1f;
 float motor4_kp_offset = 0.1f;
 float motor5_kp_offset = 0.15f;
 float motor6_kp_offset = 0.0f;
-float motor7_kp_offset = 0.25f;
-float motor8_kp_offset = 0.4f;
+float motor7_kp_offset = 0.25f; // 0.0(队友)
+float motor8_kp_offset = 0.4f; // 0.0(队友)
 
 
 void Init_turn_omega_des(){
@@ -356,13 +357,13 @@ void motion_Crawl(float step_height, float stride){
 */
 
 uint8_t Flag=1;
-void motion_Mix(float height, float step_height, float stride)
+void motion_Mix(float height, float step_height, float stride, float turn_stride)
 {    
     tau += Forward_freq;  
     if(tau >= 1.0f) { tau -= 1.0f; }
 			
 	// 开环左右转控制
-	float kp_turn_omega = 1.60f;
+	float kp_turn_omega = 1.60f; // 1.0(队友)
 //	float turn_omega_integral = 0.0f;
 //	const float ki_turn = 0.0170f; // 积分系数
 //	const float integral_max =6.0f; // 积分限幅防饱和
@@ -1695,3 +1696,72 @@ void motion_Frontflip(void){
 //}
 
  // ----------------------by LiShuai ,END
+
+void Change_Angle(Motor_HandleTypeDef *hmotor, float tau_ff, float target_angle){
+
+	// 1 3角逆时针
+	hmotor->Kp = 0.0f;
+	hmotor->Kw = 0.0f;
+	hmotor->Omega_des = 0.0f;
+	hmotor->Theta_des = 0.0f;
+
+	// 逆时针电机
+	if ((hmotor->MotorID == 1 || hmotor->MotorID == 4 || hmotor->MotorID == 9)){
+		while ( motor_fb[hmotor->MotorID].theta < target_angle){
+			hmotor->Tau_ff = tau_ff;
+			Motor_SendCmd_AllAngle();
+		}
+			hmotor->Tau_ff = 0.0f;
+	}
+		// 顺时针电机
+	if ((hmotor->MotorID == 2|| hmotor->MotorID == 3|| hmotor->MotorID == 6 || hmotor->MotorID == 7)){
+		while ( motor_fb[hmotor->MotorID].theta > target_angle){
+			hmotor->Tau_ff = -tau_ff;
+			Motor_SendCmd_AllAngle();
+	    }
+	    hmotor->Tau_ff = 0.0f;
+	}
+		Motor_SendCmd_AllAngle();
+}
+
+void test_jump(float angle){
+    float k_jump = tanf((90.0f - angle)*pi/180.0f);
+    float r_min = 13.5f;
+    float r_max = 37.5f;
+    float x_start = r_min/sqrtf(1 + k_jump*k_jump);
+    float x_stop = r_max/sqrtf(1 + k_jump*k_jump);
+
+	for(float x = x_start;x<x_stop;x+=0.01f){
+	 float y = k_jump*x;
+	 hposition1.B_y = y;
+	 hposition1.B_x = x;
+	 hposition2.B_y = y;
+	 hposition2.B_x = x;
+	 hposition3.B_y = y;
+	 hposition3.B_x = x;
+	 hposition4.B_y = y;
+	 hposition4.B_x = x;
+	 inverseKinematic_All();
+	 Motor_SendCmd_AllAngle();
+
+	Motor_Feedback_Process();
+    Motor_Feedback_TimeoutTask();
+	}
+
+	for(float x = x_stop;x>x_start;x-=0.01f){
+        float y = k_jump*x;
+	    hposition1.B_y = y;
+        hposition1.B_x = x;
+        hposition2.B_y = y;
+        hposition2.B_x = x;
+        hposition3.B_y = y;
+        hposition3.B_x = x;
+        hposition4.B_y = y;
+        hposition4.B_x = x;
+        inverseKinematic_All();
+        Motor_SendCmd_AllAngle();
+
+	Motor_Feedback_Process();
+    Motor_Feedback_TimeoutTask();
+    }
+}

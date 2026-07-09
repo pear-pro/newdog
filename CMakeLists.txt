@@ -60,6 +60,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/remote_control.c
     Core/Src/sucker.c
     Core/Src/usart_demo.c
+    Core/Src/motor_feedback.c
+    Core/Src/motor_4310.c
+    Core/Src/robot_arm_control.c
+    Core/Src/ht_10a_remote_control.c
 
       Core/Src/imu.c
 )

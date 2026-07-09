@@ -11,6 +11,7 @@
 #include "gait.h"
 #include "string.h"
 #include "kinematic.h"
+#include "motor_feedback.h"
 
 #define TRANSNIT_DELAY 500
  
@@ -337,6 +338,8 @@ void gimbal_send_unitree(float angel){
     hmotor10.Theta_des = motor10_bias / 6.33f + 6.28f * angel / 360.0f;
 	Motor_SendCmd(&hmotor10);
 	MY_delay_us(TRANSNIT_DELAY);
+	Motor_Feedback_Process();
+	Motor_Feedback_TimeoutTask();
 }
 
 /*
@@ -382,6 +385,9 @@ void Motor_SendCmd_AllAngle()
 	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor5);
 	MY_delay_us(TRANSNIT_DELAY);
+
+	Motor_Feedback_Process();
+	Motor_Feedback_TimeoutTask();
 }
 
 // ---------4310控制代码开始------------

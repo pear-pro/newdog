@@ -4,6 +4,7 @@
 #define Ts 1.00f    // 控制周期
 #define Ts_crawl 1.00f   
 #include "stm32f4xx.h"
+#include "motor.h"
 
 /*某只脚的两个电机驱动的角度，alpha和beta*/
 typedef struct
@@ -59,7 +60,7 @@ void motion_StandBy(float height);
 void StepInPlace(float height, float step_height);
 void motion_Jump(float stride);
 void motion_SmallJump(void);
-void motion_Mix(float height, float step_height, float stride);
+void motion_Mix(float height, float step_height, float stride, float turn_stride);
 void flip_body(void);
 void motion_Down(float start,float des);
 void motion_Up(float start,float des);
@@ -70,6 +71,8 @@ void motion_Frontflip(void);
 void test_circle(void);
  void motion_Crawl1(float step_height, float stride);
 void Init_turn_omega_des();
+void Change_Angle(Motor_HandleTypeDef *hmotor, float tau_ff, float target_angle);
+void test_jump(float angle);
 
 
 #endif
