@@ -174,6 +174,7 @@ int main(void)
   MX_TIM9_Init();
   MX_TIM10_Init();
   MX_UART8_Init();
+  MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
   
 	HAL_TIM_Base_Start_IT(&htim10);
@@ -189,6 +190,7 @@ int main(void)
  Motor_Feedback_Init();
   UART8_Demo_Init(); // 初始化 UART8 的 DMA 接收和中断
 	
+	
 //	HAL_Delay(100);
 	Init_turn_omega_des();
 	
@@ -203,86 +205,264 @@ float GyroZ_filtered = 0.0f;
 // 滤波系数，0~1，越小越平滑，也越滞后
 float alpha = 0.008f;
 
+Set_dm_enable(&hcan1,0);
+Set_dm_enable(&hcan1,1);
+Set_dm_zeropoint(&hcan1,0);
+Set_dm_zeropoint(&hcan1,1);
+	damiao[0].KP=30.0f;
+	damiao[0].KD = 0.9f;
+	damiao[0].tor = 1.2f;
+	damiao[1].KP=30.0f;
+	damiao[1].KD = 0.9f;
+	damiao[1].tor = 1.2f;
+
 while (1)
   {  
-	  
-
-	  //      滤波测试
-//	  while(1)
-//	  {
-//	  GyroZ_filtered = alpha * GyroZ + (1 - alpha) * GyroZ_filtered;
-////	  float yaw_Kalman;
-////	  yaw_Kalman = Kalman_Filter(&KF_Yaw, body_yaw,GyroZ );
-////		float f[3]={yaw_Kalman,body_yaw,GyroZ};
-////		  Vofa_JustFloat(f,3);
-////     Kalman(&GyroZ_Kalman,body_yaw);
-////		body_yaw=GyroZ_Kalman.Out;
-////		       Kalman(&GyroZ_Kalman,GyroZ_filtered);
-////		GyroZ_filtered=GyroZ_Kalman.Out;
-
-//	  float f[3]={GyroZ,GyroZ_filtered,body_yaw};
-//		  Vofa_JustFloat(f,3);
-//	  HAL_Delay(1);
-//  }
-  // --------------循环配置----------------
-    UART8_Demo_Process(); // 处理 UART8 接收的树莓派数据，更新 rcData 结构体
-
-	  stab_roll = 0.0f;// 平衡角度归零
-  
-    // -------------急停模式调试------------------
-//  if (motor_release_flag == 1){
-//	motor_release_flag=0;
-//	init_motor_parameters();
-//  }
-
-    // -------------机械臂6调试------------------
-//	while(1){
-//	hmotor4.Kp =0.1f;
-//	gimbal_send_unitree(60.0f); // 发送云台控制指令，参数为期望的云台角度
-//	
-//	}
-//	
-
-    // -------------位置控制测试-----------------
-
-// while(1){
-//	float x = 0.0f;
-//	float y =25.0f;
-//	hposition1.B_y = y;
-//	hposition1.B_x = x; 
-//	hposition2.B_y = y;
-//	hposition2.B_x = x; 
-//	hposition3.B_y = y;
-//	hposition3.B_x = x; 
-//	hposition4.B_y = y;
-//	hposition4.B_x = x;
-//	crawl_inverseKinematic_All();
-//	Motor_SendCmd_AllAngle(); 
-//	HAL_Delay(10);
-// }
-
-
-//	//----------4/4单电机通信调试----------
-//接收
 
 //while(1){
-////	MotorTest_Sweep(1, 0.4f);
-////	MotorTest_Sweep(2, 0.4f);
-//	MotorTest_Sweep(3, 0.4f);
-//	MotorTest_Sweep(4, 0.4f);
-////	MotorTest_Sweep(5, 0.4f);  
-////	MotorTest_Sweep(6, 0.4f);
-////	MotorTest_Sweep(7, 0.4f);
-////	MotorTest_Sweep(8, 0.4f);
-//// 	MotorTest_Sweep(9, 0.4f); 
-////	MotorTest_Sweep(10, 0.4f);
-////	MotorTest_Sweep(11, 0.4f);
-//// 	MotorTest_Sweep(12, 0.4f);
-//// 	MotorTest_Sweep(13, 0.4f); 
-////	MotorTest_Sweep(14, 0.4f);
-////	MotorTest_Sweep(15, 0.4f);
-//}
 
+//float x = 6.0f;
+//float y = 37.0f;
+//	    hposition1.B_y = y;
+//        hposition1.B_x = x; 
+//        hposition2.B_y = y;
+//        hposition2.B_x = x; 
+//        hposition3.B_y = y;
+//        hposition3.B_x = x; 
+//        hposition4.B_y = y;
+//        hposition4.B_x = x;
+//        inverseKinematic_All();
+//        Motor_SendCmd_AllAngle(); 
+
+//		  Change_Angle(&hmotor3,0.2f,0.0f);
+//HAL_Delay(2000);
+//test_jump(7.0f);
+//}
+//		while(1){
+//		  Change_Angle(&hmotor3,0.2f,0.0f);
+//			HAL_Delay(2000);
+//			Change_Angle(&hmotor3,0.2f,20.0f);
+//		  HAL_Delay(2000);
+//		
+
+//		}
+		
+		
+//	  Motor_Feedback_Process();    
+//    Motor_Feedback_TimeoutTask();
+// 		
+//		for(int i=1;i<9;i++){
+//			uint8_t err  = motor_fb[i].error;
+//			if(err!=0){
+//			motor_release();
+//				while(1){}
+//			}
+//		}
+//		
+//		
+//	  //      滤波测试
+////	  while(1)
+////	  {
+////	  GyroZ_filtered = alpha * GyroZ + (1 - alpha) * GyroZ_filtered;
+//////	  float yaw_Kalman;
+//////	  yaw_Kalman = Kalman_Filter(&KF_Yaw, body_yaw,GyroZ );
+//////		float f[3]={yaw_Kalman,body_yaw,GyroZ};
+//////		  Vofa_JustFloat(f,3);
+//////     Kalman(&GyroZ_Kalman,body_yaw);
+//////		body_yaw=GyroZ_Kalman.Out;
+//////		       Kalman(&GyroZ_Kalman,GyroZ_filtered);
+//////		GyroZ_filtered=GyroZ_Kalman.Out;
+
+////	  float f[3]={GyroZ,GyroZ_filtered,body_yaw};
+////		  Vofa_JustFloat(f,3);
+////	  HAL_Delay(1);
+////  }
+//  // --------------循环配置----------------
+//    UART8_Demo_Process(); // 处理 UART8 接收的树莓派数据，更新 rcData 结构体
+
+//	  stab_roll = 0.0f;// 平衡角度归零
+//  
+//    // -------------急停模式调试------------------
+////  if (motor_release_flag == 1){
+////	motor_release_flag=0;
+////	init_motor_parameters();
+////  }
+
+//    // -------------机械臂调试------------------
+	while(1){
+//	hmotor10.Kw =0.1f;
+//	hmotor10.Kp =0.1f;
+//	gimbal_send_unitree(0.0f); // 发送云台控制指令，参数为期望的云台角度
+//		gimbal_send_unitree(80.0f);
+//	//	gimbal_send_unitree(50.0f);// motor_release();
+//	  Set_DM_Motor(1, 0);//大臂调节零点
+//	  Set_DM_Motor(0,0);//小臂调节零点
+//		Set_dm_mit(&hcan1,0);
+//		Set_dm_mit(&hcan1,1);
+	Arm_Move_Smooth(10.0,-20,60,100);
+	HAL_Delay(2000);
+		
+	//	Arm_Move_Smooth(0, 0, 75.629,50);	
+	//	Arm_Move_Smooth(41,0-10,34.629+12.8-2.8,10);
+		//	Arm_Move_Smooth(41,0-20,34.629+12.8-2.8,10);
+ //依次跑这 5 个点，观察底座是否转到对应方向
+
+//Arm_Base_Move( 35.9, -27.4, 200);  HAL_Delay(40000);  // θ1=0°    正右
+
+//Arm_Base_Move( 32,  32, 200);  HAL_Delay(40000);  // θ1=45°   右前
+//Arm_Base_Move(  0,  45, 200);  HAL_Delay(40000);  // θ1=90°   正前
+//	
+//Arm_Base_Move( 32, -32, 200);  HAL_Delay(40000);  // θ1=-45°  右后
+//Arm_Base_Move(  0, -45, 200);  HAL_Delay(40000);  // θ1=-90°  正后
+//		
+//		HAL_Delay(4000);
+Arm_Base_Move( 39, -21, 200);  HAL_Delay(400);  // θ1≈-28°  右后
+Arm_Base_Move( 15.03, 93.74, 200);  HAL_Delay(40000);  // θ1≈-17°  右后
+//Arm_Base_Move( 45,  -4, 200);  HAL_Delay(40000);  // θ1≈ -5°  近正右
+//Arm_Base_Move( 45,   5, 200);  HAL_Delay(40000);  // θ1≈  6°  近正右
+//Arm_Base_Move( 43,  14, 200);  HAL_Delay(40000);  // θ1≈ 18°  右前
+//Arm_Base_Move( 35.9,  -27.4, 200);  HAL_Delay(10000000);  // θ1≈ 29°  右前
+
+//		Arm_Base_Move(  0, 6.4, 100);  HAL_Delay(2000);  // θ1=90°   正前
+
+// 假设画一个在高为30.0f的矩形（xoy面上）
+
+float Z = 30.0f;
+uint16_t steps = 150;
+
+// 角1: 右下 (45, -10)
+Arm_Base_Move( 45, -10, steps);
+Arm_Move_Smooth(45, -10, Z, steps);
+HAL_Delay(1000);
+
+// 角2: 右上 (45, 10)
+Arm_Base_Move( 45,  10, steps);
+Arm_Move_Smooth(45,  10, Z, steps);
+HAL_Delay(1000);
+
+// 角3: 左上 (25, 10)
+Arm_Base_Move( 25,  10, steps);
+Arm_Move_Smooth(25,  10, Z, steps);
+HAL_Delay(1000);
+
+// 角4: 左下 (25, -10)
+Arm_Base_Move( 25, -10, steps);
+Arm_Move_Smooth(25, -10, Z, steps);
+HAL_Delay(1000);
+
+// 回到角1 闭合矩形
+Arm_Base_Move( 45, -10, steps);
+Arm_Move_Smooth(45, -10, Z, steps);
+
+
+//  Arm_Base_Move(10.0,-20,100);
+//  HAL_Delay(2000);
+  
+//	Arm_Move_Smooth(5.0,-20,60,100);
+//	HAL_Delay(2000);
+//  Arm_Move_Smooth(10.0,-20,35,100);
+//	HAL_Delay(2000);
+//	Arm_Move_Smooth(30.0,-20,35,100);
+//	HAL_Delay(2000);
+//	Arm_Move_Smooth(30.0,-20,20,100);
+//	HAL_Delay(2000);
+//	Arm_Move_Smooth(30.0,-20,35,100);
+//	HAL_Delay(2000);
+//	Arm_Move_Smooth(10.0,-20,35,100);+
+//	HAL_Delay(2000);
+//	
+	
+//  Arm_Move_Smooth(10.0,-20,35,100);
+//	HAL_Delay(2000);
+//	Arm_Move_Smooth(30.0,-20,35,100);
+//	HAL_Delay(2000);
+//	Arm_Move_Smooth(30.0,-20,20,100);
+//	HAL_Delay(2000);
+//	Arm_Move_Smooth(30.0,-20,35,100);
+//	HAL_Delay(2000);
+//Arm_Move_Smooth( 32, -32, 34.629, 100);  // θ1=-45° 右后方
+//		HAL_Delay(3000);
+//Arm_Move_Smooth(  0, -45, 34.629, 100);  // θ1=-90° 正后方
+//    HAL_Delay(3000);
+
+		
+	//		Arm_Move_Smooth(41,0,34.629+12.8-2.8,10);
+		
+	//		Arm_Move_Smooth(0,-41,34.629+12.8-2.8,50);
+
+//    初始状态
+//    Arm_Move_To_Start(0, 0, 60.629);
+//    Arm_Move_To(x,y,z);//到达位置
+//    Arm_Move_To();//平衡位置
+//    Arm_Move_To(x,y,z);//到达位置
+//    Arm_Move_To();//平衡位置
+//			Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 10.0f);//直 y
+//
+//		HAL_Delay(3000);
+//		Arm_Move_Smooth(-35.0,0,34.629+12.8,5);
+//		HAL_Delay(3000);
+//		Arm_Move_Smooth(-44.0+7.5,6.0f,34.629+12.8-2.8,50);
+//		Arm_Move_Smooth(-9.629,0,50.0+12.8,5);//平衡位置
+//		HAL_Delay(5000);
+	//	Arm_Move_Smooth(-35,0,34.629+10+12.8,5);//吸取状态
+//		HAL_Delay(5000);
+//		Arm_Move_To(40,0,0);//
+//		Arm_Move_To(0,0,69.629);//完全竖直	
+//		Arm_Move_To(-35,0,34.629+12.8);
+//		PWM_Set(PWM_IN);//吸
+//		HAL_Delay(1000);
+//		Arm_Move_To(-9.629,0,50.0+12.8);//平衡位置
+	//	HAL_Delay(10000);
+//Arm_Move_To(-35,0,40.629+10+12.8);
+//HAL_Delay(10000);
+//		HAL_Delay(1000);
+//  	HAL_Delay(10);
+		
+		//摄像机舵机给值
+		Set_Camera_Servo_Angle_TIM8(TIM_CHANNEL_1,270.0f);//w下面
+    Set_Camera_Servo_Angle_TIM8(TIM_CHANNEL_2, 270.0f);//x上面
+		
+		//吸盘舵机
+		Set_Sucker_Servo_Angle_TIM8(TIM_CHANNEL_3, 10.0f);//垂直 y
+//		Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 170.0f);//直线
+//				Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 45.0f);//向上
+//		Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 90.0f);
+		
+//		//吸盘
+//		PWM_Set(PWM_IN);//吸
+//		HAL_Delay(2000);
+//		
+//		PWM_Set(PWM_OUT);//放
+//		HAL_Delay(2000);
+//		
+//		//PWM_Set(PWM_IDLE);//错误，都不进行
+
+//		HAL_Delay(1000);
+}
+
+////    // -------------位置控制测试-----------------
+
+////// while(1){
+//////	float x = 0.0f;
+//////	float y =25.0f;
+//////	hposition1.B_y = y;
+//////	hposition1.B_x = x; 
+//////	hposition2.B_y = y;
+//////	hposition2.B_x = x; 
+//////	hposition3.B_y = y;
+//////	hposition3.B_x = x; 
+//////	hposition4.B_y = y;
+//////	hposition4.B_x = x;
+//////	crawl_inverseKinematic_All();
+//////	Motor_SendCmd_AllAngle(); 
+//////	HAL_Delay(10);
+////// }
+
+
+////	//----------4/4单电机通信调试----------
+////接收
+
+//
 
   // -------------遥控控制部分------------------
 	// 说明：此处主要控制非状态机函数
