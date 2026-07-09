@@ -60,13 +60,20 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/remote_control.c
     Core/Src/sucker.c
     Core/Src/usart_demo.c
-
-      Core/Src/imu.c
+    Core/Src/imu.c
+    Core/Src/motor_4310.c
+    Core/Src/motor_feedback.c
+    Core/Src/robot_arm_control.c
+    Core/Src/ht_10a_remote_control.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
+    Core/Inc
+    Drivers/STM32F4xx_HAL_Driver/Inc
+    Drivers/CMSIS/Device/ST/STM32F4xx/Include
+    Drivers/CMSIS/Include
 )
 
 # Add project symbols (macros)

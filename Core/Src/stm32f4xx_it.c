@@ -28,6 +28,8 @@
 #include "usart_demo.h"
 #include "ht_10a_remote_control.h"
 #include "motor_feedback.h"
+#include "motor_4310.h"
+#include "robot_arm_control.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -404,13 +406,48 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   *   - 回调执行时间不宜过长，避免堵塞其他中断
   * @return None
   */
+// 调试计数器
+volatile uint32_t can1_rx_count = 0;
+volatile uint32_t can1_rx_id = 0;
+volatile uint8_t can1_rx_data[8] = {0};  // 调试：保存最后收到的数据
+
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
       /* USER CODE BEGIN CAN1_RX0_IRQn 0 */
-             IMU_CAN_RXCALLback(hcan);
-   
+      if (hcan->Instance == CAN2) {
+          IMU_CAN_RXCALLback(hcan);
+      }
+      else if (hcan->Instance == CAN1) {
+          /**
+           * 达妙4310电机 CAN1 反馈接收处理
+           * -----------------------------------
+           * 电机响应 CAN ID: 固定为 0x03（与发送ID无关）
+           * 电机实际ID: 从 Byte[0] 低4位提取（0=小臂，1=大臂）
+           *
+           * 数据解析由 dm_motor_fbdata() 完成，更新 damiao[].Rxmsg 结构体
+           *
+           * 角度读取方式（在 Watch 窗口）：
+           *   小臂关节角度(度): damiao[0].Rxmsg.Angle * 57.2958f / 2.0f  （有2:1减速比，需除以2）
+           *   大臂关节角度(度): damiao[1].Rxmsg.Angle * 57.2958f
+           */
+          CAN_RxHeaderTypeDef rxHeader;
+          uint8_t rxData[8];
+          if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rxHeader, rxData) == HAL_OK) {
+              can1_rx_count++;  // 调试：收到的消息总数
+              // 从 Byte[0] 低4位提取电机实际ID（0=小臂，1=大臂）
+              uint8_t motorId = rxData[0] & 0x0F;
+              can1_rx_id = motorId;  // 调试：最后收到的电机ID
+              // 保存原始数据（调试用）
+              for(int i=0; i<8; i++) can1_rx_data[i] = rxData[i];
+              // 解析反馈数据，更新 damiao[motorId].Rxmsg
+              if (motorId < 4) {
+                  dm_motor_fbdata(&damiao[motorId], rxData);
+              }
+          }
+      }
+
        /* USER CODE END CAN1_RX0_IRQn 0 */
-   
+
 }
 
 

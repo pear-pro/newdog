@@ -67,17 +67,23 @@ void MX_CAN1_Init(void)
   can_filter_st.FilterMode = CAN_FILTERMODE_IDMASK;
   can_filter_st.FilterScale = CAN_FILTERSCALE_32BIT;
   
-  /* * 放行 0x50 标准帧 ID 的报文，其他 ID 全丢弃
-   * 维特标准协议封装特点：ID 固定为 0x50，数据域前两字节为帧头和帧类型，后续 6 字节为有效载荷
-   * 因此只需对 ID 进行过滤，数据域无需过滤: 
-   *   can_filter_st.FilterIdHigh     = (0x50 << 5);   // 目标 ID 左移 5 位
-   *   can_filter_st.FilterMaskIdHigh = (0x7FF << 5);  // 11 位标准 ID 全掩码
-   * 
-   * 未来若需扩展接收其他 CAN ID（如 0x00~0x0F），可修改 Mask 参数扩大接收范围。
+  /**
+   * CAN1 接收过滤器配置
+   * -------------------
+   * 接受所有标准帧 ID（0x000~0x7FF）
+   *
+   * 总线上的设备：
+   *   - 达妙4310电机：响应 ID 固定为 0x03（与发送ID无关）
+   *   - IMU（HWT901B）：ID 0x50（仅在 CAN2 上）
+   *
+   * 注意：达妙电机的响应 ID 不等于发送 ID
+   *   - 发送 ID 0x00（小臂）→ 响应 ID 0x03
+   *   - 发送 ID 0x01（大臂）→ 响应 ID 0x03
+   *   - 电机实际 ID 从响应数据 Byte[0] 低4位提取
    */
-  can_filter_st.FilterIdHigh =(0x50 << 5);
+  can_filter_st.FilterIdHigh = 0x0000;
   can_filter_st.FilterIdLow = 0x0000;
-  can_filter_st.FilterMaskIdHigh =(0x7FF << 5);
+  can_filter_st.FilterMaskIdHigh = 0x0000;
   can_filter_st.FilterMaskIdLow = 0x0000;
   
   can_filter_st.FilterFIFOAssignment = CAN_RX_FIFO0;

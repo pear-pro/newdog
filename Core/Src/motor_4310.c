@@ -193,11 +193,29 @@ void Set_dm_zeropoint(CAN_HandleTypeDef* hcan,uint16_t CAN_ID)
 	}
 }
 
-void dm_motor_fbdata(motor_info_t *motor, uint8_t *rx_data) //master_id默认为0(不影响解算)
+/**
+ * 达妙4310电机 MIT模式反馈数据解析
+ * -----------------------------------
+ * 响应数据格式（8字节）：
+ *   Byte[0]: 电机ID(低4位) + 状态(高4位)
+ *   Byte[1-2]: 位置（16位，大端）
+ *   Byte[3-4高4位]: 速度（12位）
+ *   Byte[4低4位-5]: 扭矩（12位）
+ *   Byte[6-7]: 未使用
+ *
+ * 转换后的物理值：
+ *   Angle: 电机轴角度（弧度），范围 -12.5 ~ 12.5 rad
+ *   Speed: 电机轴速度（rad/s），范围 -30 ~ 30
+ *   Torque: 电机扭矩（Nm），范围 -10 ~ 10
+ *
+ * 注意：小臂电机有2:1减速比，关节角度 = 电机轴角度 / 2
+ */
+void dm_motor_fbdata(motor_info_t *motor, uint8_t *rx_data)
 {
-//    // 电机编号ID和状态（一般不用，看协议就有）
-//    motor->para.id = (rx_data[0]) & 0x0F;
-//    motor->para.state = (rx_data[0]) >> 4;
+    // 电机编号ID（低4位）
+    uint8_t motor_id = (rx_data[0]) & 0x0F;
+    // 电机状态（高4位）
+    uint8_t motor_state = (rx_data[0]) >> 4;
 
     // 读取位置原始值（高字节+低字节）
     uint16_t p_int = (rx_data[1] << 8) | rx_data[2];
@@ -207,8 +225,7 @@ void dm_motor_fbdata(motor_info_t *motor, uint8_t *rx_data) //master_id默认为
     uint16_t t_int = ((rx_data[4] & 0x0F) << 8) | rx_data[5];
 
     // 将原始值转换为实际物理值
-    motor->Rxmsg.Angle = uint_to_float(p_int, -12.5,12.5,16);
-    motor->Rxmsg.Speed = uint_to_float(v_int, -30,30,12);
-    motor->Rxmsg.Torque = uint_to_float(t_int, -10,10,12);
-	//motor->Angle_pid.get = motor->Rxmsg.Angle;
+    motor->Rxmsg.Angle = uint_to_float(p_int, -12.5, 12.5, 16);  // 弧度
+    motor->Rxmsg.Speed = uint_to_float(v_int, -30, 30, 12);      // rad/s
+    motor->Rxmsg.Torque = uint_to_float(t_int, -10, 10, 12);    // Nm
 }

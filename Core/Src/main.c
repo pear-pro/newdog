@@ -120,6 +120,12 @@ int temp_state = 0;
 //static int up_trigger_count = 0;
 //static int down_trigger_count = 0;
 
+/* 达妙电机反馈角度（方便 debug 查看） */
+float dm_small_arm_angle_deg = 0.0f;  // 小臂关节角度（度）
+float dm_big_arm_angle_deg = 0.0f;    // 大臂关节角度（度）
+float dm_small_arm_speed = 0.0f;      // 小臂速度（rad/s）
+float dm_big_arm_torque = 0.0f;       // 大臂扭矩（Nm）
+
 
 /* USER CODE END PV */
 
@@ -290,17 +296,55 @@ while (1)
 
 //    // -------------机械臂调试------------------
 	while(1){
-//	hmotor10.Kw =0.1f;
-//	hmotor10.Kp =0.1f;
-//	gimbal_send_unitree(0.0f); // 发送云台控制指令，参数为期望的云台角度
+	/**
+	 * 达妙4310电机反馈接收测试代码
+	 * ----------------------------
+	 * 原理：达妙电机 MIT 模式是"命令-响应"机制
+	 *       只有收到控制命令后，电机才会发送反馈数据
+	 *
+	 * 当前配置：KP=0（不跟踪位置），KD=0.9（阻尼），电机不会移动
+	 *           持续发送命令（10ms间隔），电机才会持续响应反馈
+	 *
+	 * 反馈读取（Watch窗口）：
+	 *   小臂关节角度(度): damiao[0].Rxmsg.Angle * 57.2958f / 2.0f
+	 *   大臂关节角度(度): damiao[1].Rxmsg.Angle * 57.2958f
+	 *   小臂速度(rad/s): damiao[0].Rxmsg.Speed
+	 *   大臂扭矩(Nm): damiao[1].Rxmsg.Torque
+	 *
+	 * 调试变量：
+	 *   can1_rx_count: 收到的CAN1消息总数
+	 *   can1_rx_id: 最后收到的电机ID（0=小臂，1=大臂）
+	 *   can1_rx_data[8]: 原始响应数据
+	 */
+	damiao[0].KP = 0.0f;
+	damiao[0].KD = 0.9f;
+	damiao[0].angle = 0.0f;
+	damiao[0].speed = 0.0f;
+	damiao[0].tor = 0.0f;
+	damiao[1].KP = 0.0f;
+	damiao[1].KD = 0.9f;
+	damiao[1].angle = 0.0f;
+	damiao[1].speed = 0.0f;
+	damiao[1].tor = 0.0f;
+	Set_dm_mit(&hcan1, 0);  // 发送小臂控制命令
+	Set_dm_mit(&hcan1, 1);  // 发送大臂控制命令
+	HAL_Delay(10);  // 10ms 间隔，100Hz
+
+	// 更新全局变量（debug 中可直接查看）
+	dm_small_arm_angle_deg = (damiao[0].Rxmsg.Angle / 2.0f) * 57.2958f;  // 小臂关节角度（度）
+	dm_big_arm_angle_deg = damiao[1].Rxmsg.Angle * 57.2958f;            // 大臂关节角度（度）
+	dm_small_arm_speed = damiao[0].Rxmsg.Speed;                          // 小臂速度（rad/s）
+	dm_big_arm_torque = damiao[1].Rxmsg.Torque;                          // 大臂扭矩（Nm）
+
+
 //		gimbal_send_unitree(80.0f);
 //	//	gimbal_send_unitree(50.0f);// motor_release();
 //	  Set_DM_Motor(1, 0);//大臂调节零点
 //	  Set_DM_Motor(0,0);//小臂调节零点
 //		Set_dm_mit(&hcan1,0);
 //		Set_dm_mit(&hcan1,1);
-	Arm_Move_Smooth(10.0,-20,60,100);
-	HAL_Delay(2000);
+	// Arm_Move_Smooth(10.0,-20,60,100);
+	// HAL_Delay(2000);
 		
 	//	Arm_Move_Smooth(0, 0, 75.629,50);	
 	//	Arm_Move_Smooth(41,0-10,34.629+12.8-2.8,10);
@@ -316,8 +360,8 @@ while (1)
 //Arm_Base_Move(  0, -45, 200);  HAL_Delay(40000);  // θ1=-90°  正后
 //		
 //		HAL_Delay(4000);
-Arm_Base_Move( 39, -21, 200);  HAL_Delay(400);  // θ1≈-28°  右后
-Arm_Base_Move( 15.03, 93.74, 200);  HAL_Delay(40000);  // θ1≈-17°  右后
+// Arm_Base_Move( 39, -21, 200);  HAL_Delay(400);  // θ1≈-28°  右后
+// Arm_Base_Move( 15.03, 93.74, 200);  HAL_Delay(40000);  // θ1≈-17°  右后
 //Arm_Base_Move( 45,  -4, 200);  HAL_Delay(40000);  // θ1≈ -5°  近正右
 //Arm_Base_Move( 45,   5, 200);  HAL_Delay(40000);  // θ1≈  6°  近正右
 //Arm_Base_Move( 43,  14, 200);  HAL_Delay(40000);  // θ1≈ 18°  右前
@@ -330,29 +374,29 @@ Arm_Base_Move( 15.03, 93.74, 200);  HAL_Delay(40000);  // θ1≈-17°  右后
 float Z = 30.0f;
 uint16_t steps = 150;
 
-// 角1: 右下 (45, -10)
-Arm_Base_Move( 45, -10, steps);
-Arm_Move_Smooth(45, -10, Z, steps);
-HAL_Delay(1000);
+// // 角1: 右下 (45, -10)
+// Arm_Base_Move( 45, -10, steps);
+// Arm_Move_Smooth(45, -10, Z, steps);
+// HAL_Delay(1000);
 
-// 角2: 右上 (45, 10)
-Arm_Base_Move( 45,  10, steps);
-Arm_Move_Smooth(45,  10, Z, steps);
-HAL_Delay(1000);
+// // 角2: 右上 (45, 10)
+// Arm_Base_Move( 45,  10, steps);
+// Arm_Move_Smooth(45,  10, Z, steps);
+// HAL_Delay(1000);
 
-// 角3: 左上 (25, 10)
-Arm_Base_Move( 25,  10, steps);
-Arm_Move_Smooth(25,  10, Z, steps);
-HAL_Delay(1000);
+// // 角3: 左上 (25, 10)
+// Arm_Base_Move( 25,  10, steps);
+// Arm_Move_Smooth(25,  10, Z, steps);
+// HAL_Delay(1000);
 
-// 角4: 左下 (25, -10)
-Arm_Base_Move( 25, -10, steps);
-Arm_Move_Smooth(25, -10, Z, steps);
-HAL_Delay(1000);
+// // 角4: 左下 (25, -10)
+// Arm_Base_Move( 25, -10, steps);
+// Arm_Move_Smooth(25, -10, Z, steps);
+// HAL_Delay(1000);
 
-// 回到角1 闭合矩形
-Arm_Base_Move( 45, -10, steps);
-Arm_Move_Smooth(45, -10, Z, steps);
+// // 回到角1 闭合矩形
+// Arm_Base_Move( 45, -10, steps);
+// Arm_Move_Smooth(45, -10, Z, steps);
 
 
 //  Arm_Base_Move(10.0,-20,100);
@@ -438,8 +482,8 @@ Arm_Move_Smooth(45, -10, Z, steps);
 //		//PWM_Set(PWM_IDLE);//错误，都不进行
 
 //		HAL_Delay(1000);
-}
-
+  }
+//    // -------------机械臂调试结束------------------
 ////    // -------------位置控制测试-----------------
 
 ////// while(1){
