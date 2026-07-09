@@ -3,80 +3,48 @@
 <pre>
 <h1>�Vision Build Log</h1>
 <h2>Tool Versions:</h2>
-IDE-Version: ��Vision V5.38.0.0
+IDE-Version: ��Vision V5.37.0.0
 Copyright (C) 2022 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: A Admin, A, LIC=FYKYW-QEAAW-NNQAF-6LTK5-WCZLZ-6TJWP
+License Information: 1 LarkS, 1, LIC=6XJT4-FB17Y-MSPYP-M8W04-XTR5U-3J34Z
  
 Tool Versions:
-Toolchain:       MDK-ARM Plus  Version: 5.43.0.0
-Toolchain Path:  D:\Keil_v5\ARM\ARMCC\Bin
-C Compiler:      Armcc.exe V5.06 update 5 (build 528)
-Assembler:       Armasm.exe V5.06 update 5 (build 528)
-Linker/Locator:  ArmLink.exe V5.06 update 5 (build 528)
-Library Manager: ArmAr.exe V5.06 update 5 (build 528)
-Hex Converter:   FromElf.exe V5.06 update 5 (build 528)
-CPU DLL:         SARMCM3.DLL V5.43.0.0
+Toolchain:       MDK-ARM Professional  Version: 5.37.0.0
+Toolchain Path:  D:\Keil5 32\Core\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.06 update 7 (build 960)
+Assembler:       Armasm.exe V5.06 update 7 (build 960)
+Linker/Locator:  ArmLink.exe V5.06 update 7 (build 960)
+Library Manager: ArmAr.exe V5.06 update 7 (build 960)
+Hex Converter:   FromElf.exe V5.06 update 7 (build 960)
+CPU DLL:         SARMCM3.DLL V5.37.0.0
 Dialog DLL:      DCM.DLL V1.17.5.0
-Target DLL:      CMSIS_AGDI.dll V1.33.24.0
-Dialog DLL:      TCM.DLL V1.56.6.0
+Target DLL:      UL2CM3.DLL V1.164.7.0
+Dialog DLL:      TCM.DLL V1.56.1.0
  
 <h2>Project:</h2>
-C:\Users\33303\Desktop\newdog (4-24)1\MDK-ARM\1.uvprojx
-Project File Date:  07/06/2026
+C:\Users\LarkS\Desktop\dog\newdog\MDK-ARM\1.uvprojx
+Project File Date:  07/09/2026
 
 <h2>Output:</h2>
-*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\Keil_v5\ARM\ARMCC\Bin'
+*** Using Compiler 'V5.06 update 7 (build 960)', folder: 'D:\Keil5 32\Core\ARM\ARMCC\Bin'
 Build target '1'
-compiling gait.c...
-../Core/Inc/gait.h(74): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
-  void Init_turn_omega_des();
-..\Core\Src\gait.c(979): warning:  #550-D: variable "temp"  was set but never used
-      uint8_t temp = 0;
-..\Core\Src\gait.c(911): warning:  #177-D: variable "front_skip_Pitch"  was declared but never referenced
-      float front_skip_Pitch = 100.0f; // 前空翻时身体前倾的角度
-..\Core\Src\gait.c(913): warning:  #177-D: variable "skip_Height"  was declared but never referenced
-      float skip_Height = 35.0f; // 前空翻时蹬地的高�?
-..\Core\Src\gait.c(916): warning:  #177-D: variable "front_support_angle_max"  was declared but never referenced
-  	float front_support_angle_max = 60.0f; // 前脚蹬地的最大角�?
-..\Core\Src\gait.c(940): warning:  #177-D: variable "start_h2_alpha2"  was declared but never referenced
-      float start_h2_alpha2 = hposition2.alpha; // 后推蹬地的坐标（3�?17）对应的角度  
-..\Core\Src\gait.c(941): warning:  #177-D: variable "start_h2_beta2"  was declared but never referenced
-      float start_h2_beta2 = hposition2.beta;
-..\Core\Src\gait.c(942): warning:  #177-D: variable "start_h3_alpha2"  was declared but never referenced
-      float start_h3_alpha2 = hposition3.alpha;
-..\Core\Src\gait.c(943): warning:  #177-D: variable "start_h3_beta2"  was declared but never referenced
-      float start_h3_beta2 = hposition3.beta;
-..\Core\Src\gait.c(955): warning:  #177-D: variable "start_h1_alpha3"  was declared but never referenced
-      float start_h1_alpha3 = hposition1.alpha;
-..\Core\Src\gait.c(956): warning:  #177-D: variable "start_h1_beta3"  was declared but never referenced
-      float start_h1_beta3 = hposition1.beta;
-..\Core\Src\gait.c(957): warning:  #177-D: variable "start_h2_alpha3"  was declared but never referenced
-      float start_h2_alpha3 = hposition2.alpha;
-..\Core\Src\gait.c(958): warning:  #177-D: variable "start_h2_beta3"  was declared but never referenced
-      float start_h2_beta3 = hposition2.beta;
-..\Core\Src\gait.c(959): warning:  #177-D: variable "start_h3_alpha3"  was declared but never referenced
-      float start_h3_alpha3 = hposition3.alpha;
-..\Core\Src\gait.c(960): warning:  #177-D: variable "start_h3_beta3"  was declared but never referenced
-      float start_h3_beta3 = hposition3.beta;
-..\Core\Src\gait.c(961): warning:  #177-D: variable "start_h4_alpha3"  was declared but never referenced
-      float start_h4_alpha3 = hposition4.alpha;
-..\Core\Src\gait.c(962): warning:  #177-D: variable "start_h4_beta3"  was declared but never referenced
-      float start_h4_beta3 = hposition4.beta;
-..\Core\Src\gait.c(1780): warning:  #1-D: last line of file ends without a newline
-   // ----------------------by LiShuai ,END
-..\Core\Src\gait.c: 18 warnings, 0 errors
 linking...
-Program Size: Code=40868 RO-data=1868 RW-data=456 ZI-data=4640  
-FromELF: creating hex file...
-"1\1.axf" - 0 Error(s), 18 Warning(s).
+1\1.axf: Error: L6200E: Symbol sbus_buffer multiply defined (by t15.o and ht_10a_remote_control.o).
+1\1.axf: Error: L6200E: Symbol sbus_ctrl multiply defined (by t15.o and ht_10a_remote_control.o).
+1\1.axf: Error: L6200E: Symbol USART1_IRQHandlerCallBack multiply defined (by t15.o and ht_10a_remote_control.o).
+1\1.axf: Error: L6200E: Symbol get_sbus_remote_control_point multiply defined (by t15.o and ht_10a_remote_control.o).
+1\1.axf: Error: L6200E: Symbol sbus_remote_control_init multiply defined (by t15.o and ht_10a_remote_control.o).
+Not enough information to list image symbols.
+Not enough information to list load addresses in the image map.
+Finished: 2 information, 0 warning and 5 error messages.
+"1\1.axf" - 5 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
 
 Package Vendor: ARM
-                https://www.keil.com/pack/ARM.CMSIS.6.2.0.pack
-                ARM.CMSIS.6.2.0
+                http://www.keil.com/pack/ARM.CMSIS.5.9.0.pack
+                ARM.CMSIS.5.9.0
                 CMSIS (Common Microcontroller Software Interface Standard)
-   * Component: CORE Version: 6.1.1
+   * Component: CORE Version: 5.6.0
 
 Package Vendor: Keil
                 https://www.keil.com/pack/Keil.STM32F4xx_DFP.3.1.1.pack
@@ -85,13 +53,14 @@ Package Vendor: Keil
 
 <h2>Collection of Component include folders:</h2>
   ./RTE/_1
-  D:/Keil_v5/ARM/PACK/ARM/CMSIS/6.2.0/CMSIS/Core/Include
+  D:/Keil5 32/Pack/ARM/CMSIS/5.9.0/CMSIS/Core/Include
 
 <h2>Collection of Component Files used:</h2>
 
-   * Component: ARM::CMSIS:CORE:6.1.1
+   * Component: ARM::CMSIS:CORE:5.6.0
       Include file:  CMSIS/Core/Include/tz_context.h
-Build Time Elapsed:  00:00:02
+Target not created.
+Build Time Elapsed:  00:00:00
 </pre>
 </body>
 </html>
