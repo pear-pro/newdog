@@ -9,8 +9,8 @@
  #define PI 3.1415926535f
  
  #define L1 14.83f//??
- #define L2 19.799f//小臂（短的）
- #define L3 42.1f//大臂（长的）
+ #define L2 19.799f//大臂（短的）
+ #define L3 42.1f//小臂（长的）
 // #define offset2 -20.0f//?????
 // #define offset3 (-90.0f / 2)//?????
  #define offset2 0.0f
@@ -48,6 +48,26 @@ void Set_Sucker_Servo_Angle_TIM8(uint32_t Channel, float angle);
 void Arm_Base_Move(float targetX, float targetY, uint16_t steps);
 void Set_Servo_Angle_TIM8(uint32_t Channel, float angle);
 void Arm_Forward_Kinematics(float *x, float *y, float *z);
+
+/**
+ * 正运动学函数
+ * -----------------------------------------------
+ * 连杆：L2=19.8cm 第一连杆（肩→肘），L3=42.1cm 第二连杆（肘→腕）
+ *
+ * 输入：
+ *   big_arm_angle_deg   - 大臂关节角度（度），damiao[1].Rxmsg.Angle * 57.2958f
+ *   small_arm_angle_deg - 小臂关节角度（度），damiao[0].Rxmsg.Angle * 57.2958f / 2.0f
+ *
+ * 输出：
+ *   *R_out - 水平距离（cm），即 sqrt(x²+y²)
+ *   *z_out - 高度（cm）
+ *
+ * 公式：
+ *   R = L2·sin(θ₁) - L3·sin(θ₁ - θ₂)
+ *   Z = L1 + 12.8 + L2·cos(θ₁) - L3·cos(θ₁ - θ₂)
+ */
+void Arm_Forward_Kinematics_New(float big_arm_angle_deg, float small_arm_angle_deg,
+                                 float *R_out, float *z_out);
 
  #endif
  

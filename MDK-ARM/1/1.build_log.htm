@@ -34,23 +34,19 @@ compiling main.c...
   #endif // __MOTOR_4310_H
 ../Core/Inc/robot_arm_control.h(9): warning:  #47-D: incompatible redefinition of macro "PI"  (declared at line 8 of "../Core/Inc/motor.h")
    #define PI 3.1415926535f
-../Core/Inc/robot_arm_control.h(53): warning:  #1-D: last line of file ends without a newline
+../Core/Inc/robot_arm_control.h(73): warning:  #1-D: last line of file ends without a newline
    
-../Core/Src/main.c(374): warning:  #177-D: variable "Z"  was declared but never referenced
-  float Z = 30.0f;
-../Core/Src/main.c(375): warning:  #177-D: variable "steps"  was declared but never referenced
-  uint16_t steps = 150;
-../Core/Src/main.c(538): warning:  #111-D: statement is unreachable
+../Core/Src/main.c(552): warning:  #111-D: statement is unreachable
   	if (rcData.sw5 == 0xFCE0){ emergency_stop = 1;} // 侧翻急停关闭�?
-../Core/Src/main.c(210): warning:  #177-D: variable "GyroZ_filtered"  was declared but never referenced
+../Core/Src/main.c(215): warning:  #177-D: variable "GyroZ_filtered"  was declared but never referenced
   float GyroZ_filtered = 0.0f;
-../Core/Src/main.c(212): warning:  #177-D: variable "alpha"  was declared but never referenced
+../Core/Src/main.c(217): warning:  #177-D: variable "alpha"  was declared but never referenced
   float alpha = 0.008f;
-../Core/Src/main.c: 9 warnings, 0 errors
+../Core/Src/main.c: 7 warnings, 0 errors
 linking...
-Program Size: Code=24984 RO-data=1548 RW-data=464 ZI-data=5000  
+Program Size: Code=31218 RO-data=1822 RW-data=528 ZI-data=5000  
 FromELF: creating hex file...
-"1\1.axf" - 0 Error(s), 9 Warning(s).
+"1\1.axf" - 0 Error(s), 7 Warning(s).
 
 <h2>Software Packages used:</h2>
 

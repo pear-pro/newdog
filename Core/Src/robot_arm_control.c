@@ -271,6 +271,60 @@ void Arm_Forward_Kinematics(float *x, float *y, float *z)
 	*z = end_z/100.0f;
 }
 
+/**
+ * 正运动学函数
+ * -----------------------------------------------
+ * 连杆定义（与逆解算一致）：
+ *   L2 = 19.8cm = 第一连杆（肩→肘）
+ *   L3 = 42.1cm = 第二连杆（肘→腕）
+ *
+ * 几何推导：
+ *   第一连杆从肩出发，方向 θ₁（与垂直方向夹角）
+ *   第二连杆从肘出发，方向 θ₁ + (π - θ₂)
+ *     θ₂=π → 两连杆同向（直立）
+ *     θ₂=π/2 → 第二连杆垂直于第一连杆
+ *     θ₂=0 → 两连杆反向（折叠）
+ *
+ *   R = L2·sin(θ₁) + L3·sin(θ₁ + π - θ₂)
+ *     = L2·sin(θ₁) - L3·sin(θ₁ - θ₂)
+ *   δz = L2·cos(θ₁) + L3·cos(θ₁ + π - θ₂)
+ *      = L2·cos(θ₁) - L3·cos(θ₁ - θ₂)
+ *   Z = L1 + 12.8 + δz
+ *
+ * 验证（IK 输入 R=30, Z=50 → θ₁=-0.437, θ₂=1.554）：
+ *   FK: R = 19.8×sin(-0.437) - 42.1×sin(-0.437-1.554)
+ *     = -8.37 - 42.1×(-0.911) = -8.37 + 38.36 = 29.99 ≈ 30 ✅
+ *   FK: δz = 19.8×cos(-0.437) - 42.1×cos(-1.991)
+ *      = 17.94 - 42.1×(-0.412) = 17.94 + 17.35 = 35.29 ≈ 35.17 ✅
+ *
+ * 验证（直立 θ₁=0, θ₂=π）：
+ *   R = 0 - 42.1×sin(-π) = 0 ✅
+ *   δz = 19.8 - 42.1×cos(-π) = 19.8 + 42.1 = 61.9 ✅
+ *   Z = 61.9 + 27.63 = 89.53 ✅
+ */
+void Arm_Forward_Kinematics_New(float big_arm_angle_deg, float small_arm_angle_deg,
+                                 float *R_out, float *z_out)
+{
+    // 1. 角度转弧度
+    float theta1 = big_arm_angle_deg * PI / 180.0f;
+
+    // 2. 从小臂发送角度反推肘角 theta2
+    // 逆解算：targetTheta3 = -(PI-theta2)*2/PI*180
+    // 反推：theta2 = PI + small_arm_deg * PI / 360
+    float theta2 = PI + (small_arm_angle_deg * PI / 360.0f);
+
+    // 3. 正运动学公式
+    // R = L2·sin(θ₁) - L3·sin(θ₁ - θ₂)
+    // δz = L2·cos(θ₁) - L3·cos(θ₁ - θ₂)
+    float R = L2*sinf(theta1) - L3*sinf(theta1 - theta2);
+    float delta_z = L2*cosf(theta1) - L3*cosf(theta1 - theta2);
+    float end_z = delta_z + L1 + 12.8f;
+
+    // 输出结果（cm）
+    *R_out = R;
+    *z_out = end_z;
+}
+
 //void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //{
 //	if(htim->Instance == TIM10)

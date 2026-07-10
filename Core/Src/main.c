@@ -126,6 +126,11 @@ float dm_big_arm_angle_deg = 0.0f;    // 大臂关节角度（度）
 float dm_small_arm_speed = 0.0f;      // 小臂速度（rad/s）
 float dm_big_arm_torque = 0.0f;       // 大臂扭矩（Nm）
 
+/* 正运动学输出（末端坐标，单位 cm） */
+float fk_R = 0.0f;  // 水平距离 sqrt(x²+y²)
+float fk_z = 0.0f;  // 高度
+// 注意：X 和 Y 需要底座旋转角（宇树电机），暂未计算
+
 
 /* USER CODE END PV */
 
@@ -215,12 +220,12 @@ Set_dm_enable(&hcan1,0);
 Set_dm_enable(&hcan1,1);
 Set_dm_zeropoint(&hcan1,0);
 Set_dm_zeropoint(&hcan1,1);
-	damiao[0].KP=30.0f;
+	damiao[0].KP=2.0f;   // KP 小值：软保持，手动可推动
 	damiao[0].KD = 0.9f;
-	damiao[0].tor = 1.2f;
-	damiao[1].KP=30.0f;
+	damiao[0].tor = 0.0f;
+	damiao[1].KP=2.0f;   // KP 小值：软保持，手动可推动
 	damiao[1].KD = 0.9f;
-	damiao[1].tor = 1.2f;
+	damiao[1].tor = 0.0f;
 
 while (1)
   {  
@@ -336,7 +341,16 @@ while (1)
 	dm_small_arm_speed = damiao[0].Rxmsg.Speed;                          // 小臂速度（rad/s）
 	dm_big_arm_torque = damiao[1].Rxmsg.Torque;                          // 大臂扭矩（Nm）
 
+	// 正运动学：计算 R 和 Z（X、Y 需要底座角度，暂未实现）
+	Arm_Forward_Kinematics_New(dm_big_arm_angle_deg, dm_small_arm_angle_deg,
+	                           &fk_R, &fk_z);
 
+
+
+ Arm_Move_Smooth(25 , 25 , 50.0f, 100);
+HAL_Delay(2000);
+ Arm_Move_Smooth(20 , -25 , 50.0f, 100);  
+ HAL_Delay(2000);
 //		gimbal_send_unitree(80.0f);
 //	//	gimbal_send_unitree(50.0f);// motor_release();
 //	  Set_DM_Motor(1, 0);//大臂调节零点
@@ -371,8 +385,8 @@ while (1)
 
 // 假设画一个在高为30.0f的矩形（xoy面上）
 
-float Z = 30.0f;
-uint16_t steps = 150;
+//float Z = 30.0f;
+//uint16_t steps = 150;
 
 // // 角1: 右下 (45, -10)
 // Arm_Base_Move( 45, -10, steps);
