@@ -218,6 +218,8 @@ float alpha = 0.008f;
 
 Set_dm_enable(&hcan1,0);
 Set_dm_enable(&hcan1,1);
+
+
 Set_dm_zeropoint(&hcan1,0);
 Set_dm_zeropoint(&hcan1,1);
 	damiao[0].KP=2.0f;   // KP 小值：软保持，手动可推动
@@ -226,10 +228,53 @@ Set_dm_zeropoint(&hcan1,1);
 	damiao[1].KP=2.0f;   // KP 小值：软保持，手动可推动
 	damiao[1].KD = 0.9f;
 	damiao[1].tor = 0.0f;
+	
+//	float kp_value = 0.1f;
+//	float kw_value = 0.01f;
+//	
+//    hmotor1.Kp = kp_value* (1.0f );
+//    hmotor2.Kp = kp_value * (1.0f );
+//    hmotor3.Kp = kp_value* (1.0f );
+//    hmotor4.Kp = kp_value * (1.0f );
+//    hmotor5.Kp = kp_value* (1.0f );
+//    hmotor6.Kp = kp_value * (1.0f );
+//    hmotor7.Kp = kp_value* (1.0f );
+//    hmotor8.Kp = kp_value * (1.0f );
 
-while (1)
+//    hmotor1.Kw = kw_value;
+//    hmotor2.Kw = kw_value;
+//    hmotor3.Kw = kw_value;
+//    hmotor4.Kw = kw_value;
+//    hmotor5.Kw = kw_value;
+//    hmotor6.Kw = kw_value;
+//    hmotor7.Kw = kw_value;
+//    hmotor8.Kw = kw_value;
+		
+		while (1)
   {  
 
+//		while(1){
+//		//电机接收
+//	  Motor_Feedback_Process();    
+//    Motor_Feedback_TimeoutTask();
+//	hmotor1.Theta_des = 0.0f;
+//	hmotor2.Theta_des = 0.0f;
+//	hmotor3.Theta_des = 0.0f;
+//	hmotor4.Theta_des = 0.0f;
+//	hmotor5.Theta_des = 0.0f;
+//	hmotor6.Theta_des = 0.0f;
+//	hmotor7.Theta_des = 0.0f;
+//	hmotor8.Theta_des = 0.0f;		  
+//	Motor_SendCmd_AllAngle(); 
+//  
+//		  
+//	  }
+//		
+//		while(1){
+//		motor_release();
+//		Motor_Feedback_Process();    
+//    Motor_Feedback_TimeoutTask();
+//		}
 //while(1){
 
 //float x = 6.0f;
@@ -321,40 +366,92 @@ while (1)
 	 *   can1_rx_id: 最后收到的电机ID（0=小臂，1=大臂）
 	 *   can1_rx_data[8]: 原始响应数据
 	 */
-	damiao[0].KP = 0.0f;
-	damiao[0].KD = 0.9f;
-	damiao[0].angle = 0.0f;
-	damiao[0].speed = 0.0f;
-	damiao[0].tor = 0.0f;
-	damiao[1].KP = 0.0f;
-	damiao[1].KD = 0.9f;
-	damiao[1].angle = 0.0f;
-	damiao[1].speed = 0.0f;
-	damiao[1].tor = 0.0f;
-	Set_dm_mit(&hcan1, 0);  // 发送小臂控制命令
-	Set_dm_mit(&hcan1, 1);  // 发送大臂控制命令
-	HAL_Delay(10);  // 10ms 间隔，100Hz
+//	damiao[0].KP = 0.0f;
+//	damiao[0].KD = 0.9f;
+//	damiao[0].angle = 0.0f;
+//	damiao[0].speed = 0.0f;
+//	damiao[0].tor = 0.0f;
+//	damiao[1].KP = 0.0f;
+//	damiao[1].KD = 0.9f;
+//	damiao[1].angle = 0.0f;
+//	damiao[1].speed = 0.0f;
+//	damiao[1].tor = 0.0f;
+//	Set_dm_mit(&hcan1, 0);  // 发送小臂控制命令
+//	Set_dm_mit(&hcan1, 1);  // 发送大臂控制命令
+//	HAL_Delay(10);  // 10ms 间隔，100Hz
 
-	// 更新全局变量（debug 中可直接查看）
-	dm_small_arm_angle_deg = (damiao[0].Rxmsg.Angle / 2.0f) * 57.2958f;  // 小臂关节角度（度）
-	dm_big_arm_angle_deg = damiao[1].Rxmsg.Angle * 57.2958f;            // 大臂关节角度（度）
-	dm_small_arm_speed = damiao[0].Rxmsg.Speed;                          // 小臂速度（rad/s）
-	dm_big_arm_torque = damiao[1].Rxmsg.Torque;                          // 大臂扭矩（Nm）
+//	// 更新全局变量（debug 中可直接查看）
+//	dm_small_arm_angle_deg = (damiao[0].Rxmsg.Angle / 2.0f) * 57.2958f;  // 小臂关节角度（度）
+//	dm_big_arm_angle_deg = damiao[1].Rxmsg.Angle * 57.2958f;            // 大臂关节角度（度）
+//	dm_small_arm_speed = damiao[0].Rxmsg.Speed;                          // 小臂速度（rad/s）
+//	dm_big_arm_torque = damiao[1].Rxmsg.Torque;                          // 大臂扭矩（Nm）
 
-	// 正运动学：计算 R 和 Z（X、Y 需要底座角度，暂未实现）
-	Arm_Forward_Kinematics_New(dm_big_arm_angle_deg, dm_small_arm_angle_deg,
-	                           &fk_R, &fk_z);
+//	// 正运动学：计算 R 和 Z（X、Y 需要底座角度，暂未实现）
+//	Arm_Forward_Kinematics_New(dm_big_arm_angle_deg, dm_small_arm_angle_deg,
+//	                           &fk_R, &fk_z);
+
+//用于看反馈角度定零点
+//while(1){
+////  hmotor10.Kp=0.0f;
+////  hmotor10.Kw=0.0f;
+////  hmotor10.Theta_des=0.0f;
+////	hmotor10.Omega_des=0.0f;
+////	hmotor10.Tau_ff=0.0f;
+////	Motor_SendCmd(&hmotor10);
+////	HAL_Delay(1);
+////	Motor_Feedback_Process();    
+////  Motor_Feedback_TimeoutTask();
+//	
+////gimbal_send_unitree(0.0f);
+//}
 
 
+Arm_Base_Move( 11, 0, 200); 
+////Arm_Move_Smooth(10 , 10 , 40, 100);
+////HAL_Delay(2000);  
+////Arm_Base_Move( 0, 1, 200);
+////HAL_Delay(2000);
+////while(1){
+//////float x=0.0f;
 
- Arm_Move_Smooth(25 , 25 , 50.0f, 100);
-HAL_Delay(2000);
- Arm_Move_Smooth(20 , -25 , 50.0f, 100);  
- HAL_Delay(2000);
+//////float y=0.0f;
+//////float z=0.0f;
+
+//////Arm_Move_Smooth(x , y , z, 100);  
+//////Arm_Base_Move( x, y, 200);
+////	
+Arm_Move_Smooth(20 , 15 , 40, 500);
+HAL_Delay(2000);  
+//Arm_Base_Move( 0, 1, 200);
+//HAL_Delay(2000);
+//Arm_Base_Move( 1, 0, 200);
+//HAL_Delay(2000);	
+//Arm_Base_Move( 0, -1, 200);
+//HAL_Delay(2000);
+//}
+
+
+//Arm_Move_Smooth(0 , 25 , 50.0f, 100);
+//HAL_Delay(2000);
+//Arm_Move_Smooth(25 , 25 , 50.0f, 100);
+//HAL_Delay(2000);
+//Arm_Move_Smooth(20 , 0 , 50.0f, 100);  
+//HAL_Delay(2000);
+
+//Arm_Base_Move( 0, 10, 200);  
+//HAL_Delay(3000);  
+//Arm_Base_Move( 10,10, 200);  
+//HAL_Delay(3000);  
+//Arm_Base_Move( 10,0, 200);  
+//HAL_Delay(3000);
+
+
 //		gimbal_send_unitree(80.0f);
 //	//	gimbal_send_unitree(50.0f);// motor_release();
+//while(1){
 //	  Set_DM_Motor(1, 0);//大臂调节零点
 //	  Set_DM_Motor(0,0);//小臂调节零点
+//}
 //		Set_dm_mit(&hcan1,0);
 //		Set_dm_mit(&hcan1,1);
 	// Arm_Move_Smooth(10.0,-20,60,100);
@@ -365,14 +462,13 @@ HAL_Delay(2000);
 		//	Arm_Move_Smooth(41,0-20,34.629+12.8-2.8,10);
  //依次跑这 5 个点，观察底座是否转到对应方向
 
-//Arm_Base_Move( 35.9, -27.4, 200);  HAL_Delay(40000);  // θ1=0°    正右
+//Arm_Base_Move( 0,25 , 200);  HAL_Delay(1000);  // θ1=0°    正右
+//Arm_Base_Move( 32,  32, 200);  HAL_Delay(1000);  // θ1=45°   右前
+//Arm_Base_Move( 0,  25, 200);  HAL_Delay(1000);  // θ1=90°   正前
+//Arm_Base_Move( -32, 32, 200);  HAL_Delay(1000);  // θ1=-45°  右后
 
-//Arm_Base_Move( 32,  32, 200);  HAL_Delay(40000);  // θ1=45°   右前
-//Arm_Base_Move(  0,  45, 200);  HAL_Delay(40000);  // θ1=90°   正前
-//	
-//Arm_Base_Move( 32, -32, 200);  HAL_Delay(40000);  // θ1=-45°  右后
 //Arm_Base_Move(  0, -45, 200);  HAL_Delay(40000);  // θ1=-90°  正后
-//		
+		
 //		HAL_Delay(4000);
 // Arm_Base_Move( 39, -21, 200);  HAL_Delay(400);  // θ1≈-28°  右后
 // Arm_Base_Move( 15.03, 93.74, 200);  HAL_Delay(40000);  // θ1≈-17°  右后

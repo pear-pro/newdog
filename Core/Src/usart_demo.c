@@ -13,8 +13,8 @@
  *   [5] W_H
  *   [6] W_L
  *   [7] CHECKSUM = (Byte2 + Byte3 + Byte4 + Byte5 + Byte6) & 0xFF
- *
- * 本版重点：
+ *///
+ /* 本版重点：
  *   1. 不依赖 IDLE 才解析，只要 DMA 缓冲区有字节就解析。
  *   2. 数据区遇到 0x55 不重新同步，避免合法数据导致丢帧。
  *   3. 自动检测 UART 错误 / DMA 接收关闭 / RxState 异常，并自动重启 UART8 DMA 接收。

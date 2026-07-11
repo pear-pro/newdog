@@ -52,6 +52,7 @@ void Motor_Feedback_Init(void)
 
 void USART6_RestartRxDMA(void)//用于motor.c
 {
+    
     HAL_UART_Receive_DMA(&huart6, dma_buf, DMA_BUF_SIZE);
 }
 

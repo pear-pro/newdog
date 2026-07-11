@@ -70,6 +70,7 @@ void test_circle(void);
 void Init_turn_omega_des();
 void Change_Angle(Motor_HandleTypeDef *hmotor, float tau_ff, float target_angle);
 void test_jump(float k_jump);
+void quick_set_kp(float kp_value,float kw_value);
 
 
 
