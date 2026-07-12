@@ -80,7 +80,6 @@ void motion_Mix4(float height, float step_height, float stride);
 void motion_mix5(float height, float step_height, float velo, float omega);
 void motion_mix6(float height, float step_height, float velo);
 void motion_mix7(float height, float step_height, float velo);//遥控
- void motion_LeanJump(void);
 
 
 #endif

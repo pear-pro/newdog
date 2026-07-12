@@ -142,7 +142,7 @@ void SystemClock_Config(void);
   * @retval int
   */
 int main(void)
-	{
+{
 
   /* USER CODE BEGIN 1 */
 
@@ -229,11 +229,6 @@ while (1)
   {  
 //	  while(1){
 //		//电机接收
-//	  while(1){
-//	Motor_Feedback_Process();    
-//    Motor_Feedback_TimeoutTask();
-//		  motor_release();
-//	  }
 //	  Motor_Feedback_Process();    
 //    Motor_Feedback_TimeoutTask();
 //	hmotor1.Theta_des = 0.0f;
@@ -383,14 +378,12 @@ while (1)
 if (rcData.sw8 == 0xFCE0){ emergency_stop = 1;} // 侧翻急停关闭版
   else{ emergency_stop = 0;}
 
-  if (rcData.sw8 == 0x0000 && rcData.sw7 == 0xFCE0){ temp_state=6;} // 匍匐
-	if (rcData.sw5==0x0000&&rcData.sw8 == 0x0000&& rcData.sw7 == 0x0320){ temp_state=4;}	// 站立
+  if (rcData.sw8 == 0x0000 && rcData.sw7 == 0xFCE0){ temp_state=6;} // 跳跃，注意是非状态机函数
+	if (rcData.sw8 == 0x0000&& rcData.sw7 == 0x0320){ temp_state=4;}	// 站立
 
   if (rcData.sw8 == 0x0320&& rcData.sw7 == 0x0320 ){ temp_state=1;} // 遥控控制
    if (rcData.sw8 == 0x0320&& rcData.sw7 == 0xFCE0 ){ temp_state=2;} // 树莓派控制
-  if(rcData.sw5 == 0x0320&&rcData.sw8 == 0x0000) {temp_state=5;}//小跳
-  if(rcData.sw5 == 0xFCE0&&rcData.sw8 == 0x0000) {temp_state=7;}//大跳
-	  
+ 
 
 
   // -------------一些未用上的功能------------------
@@ -428,9 +421,14 @@ if (emergency_stop==1){
         case 1:
         // 遥控控制行走
 //		if(fabs(rcData.R_y)<0.35) rcData.R_y=0.0f;
-		
-//		    motion_mix7(walk_height, 7.5f, -(rcData.R_y+0.1582f));
-		    motion_mix5(walk_height, 7.5f, -(rcData.R_y+0.1582f),rcData.R_x);
+//		if(stay_state==0){
+//		    motion_mix7(walk_height, 7.5f, -(rcData.R_y+0.10f));
+//		}
+//		else if(stay_state==1){
+//			motion_StandBy(22.0);
+//		}
+//		
+		    motion_mix7(walk_height, 7.5f, -(rcData.R_y+0.1582f));
 		
         break;
                 
@@ -439,10 +437,14 @@ if (emergency_stop==1){
 //			control_omega = powf(fabs(turn_omega),0.2);
 //			control_omega *= turn_omega/fabs(turn_omega);
 //		    motion_mix5(walk_height, 7.0f, -front_speed,control_omega);
-//           motion_mix6(walk_height, 7.5f, -(front_speed+0.1582f));
-           motion_mix6(walk_height, 7.5f, -(front_speed+0.1582f));
+//			if(stay_state==0){
+//		    motion_mix6(walk_height, 7.5f, -front_speed);
+//			}
+//			else if(stay_state==1){
+//				motion_StandBy(22.0);
+//			}
+           motion_mix6(walk_height, 7.5f, -(front_speed+0.1f));
 
-		
         break;
 
         case 3: // 跳跃
@@ -458,8 +460,7 @@ if (emergency_stop==1){
 			
         break;   
           
-        case 5://小跳
-// 		motion_LeanJump();
+        case 5:
 
         break;
                    
@@ -469,12 +470,10 @@ if (emergency_stop==1){
 //			    }
 //			motion_Crawl(5.0f,12.0f);
 //				motion_Jump(15.0f);
-//		motion_LeanJump();
         break;     
 
-        case 7:// 大跳
-//			motion_Frontflip();
-//				motion_Jump(15.0f);
+        case 7:// 前空翻
+			motion_Frontflip();
 
         break; 
 

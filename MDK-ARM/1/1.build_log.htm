@@ -3,73 +3,61 @@
 <pre>
 <h1>礦ision Build Log</h1>
 <h2>Tool Versions:</h2>
-IDE-Version: μVision V5.38.0.0
-Copyright (C) 2022 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: A Admin, A, LIC=FYKYW-QEAAW-NNQAF-6LTK5-WCZLZ-6TJWP
+IDE-Version: μVision V5.39.0.0
+Copyright (C) 2023 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: liang zhirun, 1, LIC=65ISZ-JHDZY-SB4EJ-ULCZC-FX8RN-76UAM
  
 Tool Versions:
-Toolchain:       MDK-ARM Plus  Version: 5.43.0.0
-Toolchain Path:  D:\Keil_v5\ARM\ARMCC\Bin
+Toolchain:       MDK-ARM Plus  Version: 5.39.0.0
+Toolchain Path:  D:\keil5\ARM\ARMCC\Bin
 C Compiler:      Armcc.exe V5.06 update 5 (build 528)
 Assembler:       Armasm.exe V5.06 update 5 (build 528)
 Linker/Locator:  ArmLink.exe V5.06 update 5 (build 528)
 Library Manager: ArmAr.exe V5.06 update 5 (build 528)
 Hex Converter:   FromElf.exe V5.06 update 5 (build 528)
-CPU DLL:         SARMCM3.DLL V5.43.0.0
+CPU DLL:         SARMCM3.DLL V5.39.0.0
 Dialog DLL:      DCM.DLL V1.17.5.0
-Target DLL:      CMSIS_AGDI.dll V1.33.24.0
-Dialog DLL:      TCM.DLL V1.56.6.0
+Target DLL:      CMSIS_AGDI.dll V1.33.16.0
+Dialog DLL:      TCM.DLL V1.56.4.0
  
 <h2>Project:</h2>
-C:\Users\33303\Desktop\newdog (4-24)1\MDK-ARM\1.uvprojx
-Project File Date:  07/06/2026
+D:\Users\桌面\newdog 树莓派通信成功\newdog 树莓派通信成功\MDK-ARM\1.uvprojx
+Project File Date:  07/13/2026
 
 <h2>Output:</h2>
-*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\Keil_v5\ARM\ARMCC\Bin'
+*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\keil5\ARM\ARMCC\Bin'
 Build target '1'
-compiling main.c...
+compiling vmc.c...
 ../Core/Inc/gait.h(78): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
   void Init_turn_omega_des();
-../Core/Inc/motor_4310.h(51): warning:  #1-D: last line of file ends without a newline
-  #endif // __MOTOR_4310_H
-../Core/Inc/robot_arm_control.h(9): warning:  #47-D: incompatible redefinition of macro "PI"  (declared at line 8 of "../Core/Inc/motor.h")
-   #define PI 3.1415926535f
-../Core/Inc/robot_arm_control.h(28): warning:  #1-D: last line of file ends without a newline
-   
-../Core/Src/main.c(425): warning:  #550-D: variable "prev_temp_state"  was set but never used
-  	    static uint8_t prev_temp_state = 0;  /* 涓婁竴甯х殑鐘舵�侊紝鐢ㄤ簬妫�娴嬪垏鎹? */
-../Core/Src/main.c(418): warning:  #177-D: variable "control_omega"  was declared but never referenced
-  	float control_omega = 0.0f;
-../Core/Src/main.c(210): warning:  #177-D: variable "GyroZ_filtered"  was declared but never referenced
-  float GyroZ_filtered = 0.0f;
-../Core/Src/main.c(212): warning:  #177-D: variable "alpha"  was declared but never referenced
-  float alpha = 0.008f;
-../Core/Src/main.c: 8 warnings, 0 errors
+../Core/Inc/vmc.h(10): warning:  #1-D: last line of file ends without a newline
+  #endif
+..\Core\Src\vmc.c: 2 warnings, 0 errors
 linking...
-Program Size: Code=41644 RO-data=1868 RW-data=516 ZI-data=4716  
+Program Size: Code=44156 RO-data=1868 RW-data=488 ZI-data=4712  
 FromELF: creating hex file...
-"1\1.axf" - 0 Error(s), 8 Warning(s).
+"1\1.axf" - 0 Error(s), 2 Warning(s).
 
 <h2>Software Packages used:</h2>
 
 Package Vendor: ARM
-                https://www.keil.com/pack/ARM.CMSIS.6.2.0.pack
-                ARM.CMSIS.6.2.0
+                http://www.keil.com/pack/ARM.CMSIS.5.9.0.pack
+                ARM::CMSIS@5.9.0
                 CMSIS (Common Microcontroller Software Interface Standard)
-   * Component: CORE Version: 6.1.1
+   * Component: CORE Version: 5.6.0
 
 Package Vendor: Keil
                 https://www.keil.com/pack/Keil.STM32F4xx_DFP.3.1.1.pack
-                Keil.STM32F4xx_DFP.3.1.1
+                Keil::STM32F4xx_DFP@3.1.1
                 STMicroelectronics STM32F4 Series Device Support
 
 <h2>Collection of Component include folders:</h2>
   ./RTE/_1
-  D:/Keil_v5/ARM/PACK/ARM/CMSIS/6.2.0/CMSIS/Core/Include
+  D:/keil5/ARM/PACK/ARM/CMSIS/5.9.0/CMSIS/Core/Include
 
 <h2>Collection of Component Files used:</h2>
 
-   * Component: ARM::CMSIS:CORE:6.1.1
+   * Component: ARM::CMSIS:CORE@5.6.0
       Include file:  CMSIS/Core/Include/tz_context.h
 Build Time Elapsed:  00:00:02
 </pre>

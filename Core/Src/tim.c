@@ -404,6 +404,139 @@ void HAL_TIM_OC_MspDeInit(TIM_HandleTypeDef* tim_ocHandle)
 
 /* USER CODE BEGIN 1 */
 
+//void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+//    if (htim->Instance == TIM10) {
+//		/* ── VOFA 遥测: 20Hz 发送 IMU 姿态 (100Hz / 5) ── */
+//		static uint8_t vofa_div = 0;
+//		if (++vofa_div >= 5) {
+//			vofa_div = 0;
+//			float imu_buf[9] = {body_roll, body_pitch, body_yaw, GyroX, GyroY, GyroZ, AccX, AccY, AccZ};
+//			Vofa_JustFloat(imu_buf, 9);
+//		}
+
+//		float AccY_correct=(AccY-0.0045f);
+//		if (AccY_correct>0.003f||AccY_correct<-0.003f) {
+//			VeloY += AccY_correct*0.01f;
+//		}
+//		if (VeloY> 2.0f) {VeloY= 2.0f; }
+//		if (VeloY<-2.0f) {VeloY=-2.0f; }
+//		
+//		if (rcData.sw6 == 0x0320){
+//		Forward_freq+=0.0001f*rcData.L_y;
+//		if (Forward_freq<0.0f){Forward_freq=0.0001f;}
+//		if (Forward_freq>0.07f){Forward_freq=0.07f;}	
+//		}
+//		if (rcData.sw6 == 0xFCE0){
+//			walk_height+=0.03f*rcData.L_y;
+//		}
+//		if (rcData.sw8 == 0xFCE0){
+//			motor_release();
+//			emergency_stop = 1;
+//		}else{
+//			emergency_stop = 0;
+//		}
+//		/* ── VOFA 电机诊断: 4Hz (100Hz / 25, offset=2) ── */
+//		static uint8_t diag_div = 2;
+//		if (++diag_div >= 25) {
+//			diag_div = 0;
+//			float diag_buf[33];
+//			diag_buf[0] = 9.0f;
+//			for (uint8_t i = 0; i < 8; i++) {
+//				diag_buf[i*4 + 1] = motor_fb[i].theta;
+//				diag_buf[i*4 + 2] = motor_fb[i].tau;
+//				diag_buf[i*4 + 3] = (float)motor_fb[i].temp;
+//				diag_buf[i*4 + 4] = (float)motor_fb[i].online;
+//			}
+//			Vofa_JustFloat(diag_buf, 33);
+//		}
+//		
+//		if(rcData.sw8==0x0320&& rcData.sw7 ==0x0320 )//遥控
+//		{
+//			if(fabsf(rcData.R_x)<0.05&&fabsf(rcData.R_y)<0.05f){
+//			   stay_state=1;	
+//			   //Init_turn_omega_des();				
+
+//			}
+//			else stay_state=0;
+//			
+//			
+//			if(fabsf(deta_angle)<30.0f){
+//				if(fabsf(rcData.R_x)<0.05) rcData.R_x=0;
+//			turn_omega_des-=0.35f*rcData.R_x;
+//			}
+//			
+////			float R_x1 = -0.5f;
+////			if(fabs(deta_angle)<22.5f){
+////				if(fabs(R_x1)<0.35) R_x1=0;
+////			turn_omega_des-=0.25*R_x1;
+////			}
+//			if(turn_omega_des>180.0f) 
+//			{
+//				turn_omega_des=-180.0f;
+//				if(turn_omega_des<=body_yaw&&(fabs(rcData.R_x)>0.35))turn_omega_des=body_yaw+22.0f;
+//			}
+//			else if(turn_omega_des<-180.0f) 
+//			{ 
+//				turn_omega_des=180.0f;
+//				if(turn_omega_des>=body_yaw&&(fabs(rcData.R_x)>0.35))turn_omega_des=body_yaw-22.0f;
+//			}
+//			
+//				if(stay_state==1){
+//					accum_v += AccX;
+//	
+//			    accum_x += accum_v;
+//				if(accum_x >10.0f) accum_x=10.0f;
+//				if(accum_x<-10.0f) accum_x=-10.0f;	
+//			}
+
+//			
+//		}
+//		
+//       if(rcData.sw8== 0x0320&& rcData.sw7 == 0xFCE0)//树莓派
+//		{
+//			if(fabsf(turn_omega)<0.05&&fabsf(front_speed)<0.05f){
+//			   stay_state=1;
+////               Init_turn_omega_des();				
+//			}
+//			else stay_state=0;
+
+//			
+//			if(fabs(deta_angle)<30.0f){
+//				if(fabs(turn_omega)<0.1f) turn_omega=0;
+//			turn_omega_des+=0.25f*turn_omega;
+//			}
+//			
+////			float turn_omega1 = 0.5f;
+////			if(fabs(deta_angle)<22.5f){
+////				if(fabs(turn_omega1)<0.1f) turn_omega1=0;
+////			turn_omega_des-=0.25*turn_omega1;
+////			}
+//			
+//			if(turn_omega_des>180.0f) 
+//			{
+//				turn_omega_des=-180.0f;
+//				if(turn_omega_des<=body_yaw&&(fabs(turn_omega)>0.1))turn_omega_des=body_yaw+22.0f;
+//			}
+//			else if(turn_omega_des<-180.0f) 
+//			{ 
+//				turn_omega_des=180.0f;
+//				if(turn_omega_des>=body_yaw&&(fabs(turn_omega)>0.1))turn_omega_des=body_yaw-22.0f;
+//			}
+//		}
+//		
+////		if(stay_state==1){
+////		
+////		accum_x += 0.01f*AccX; if(accum_x >10.0f) accum_x=10.0f;
+////		accum_y += 0.01f*AccY; if(accum_y >10.0f) accum_y=10.0f;
+////		}
+//		
+//		
+//		
+//		
+//	}
+//}
+
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     if (htim->Instance == TIM10) {
 		/* ── VOFA 遥测: 20Hz 发送 IMU 姿态 (100Hz / 5) ── */
@@ -523,6 +656,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		
 	}
 }
+
 
 // time不要超过65535
 void MY_delay_us(uint16_t time){
