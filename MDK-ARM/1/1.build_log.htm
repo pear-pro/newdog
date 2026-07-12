@@ -1,77 +1,139 @@
 <html>
 <body>
 <pre>
-<h1>�Vision Build Log</h1>
+<h1>�Vision Build Log</h1>
 <h2>Tool Versions:</h2>
-IDE-Version: ��Vision V5.25.3.0
-Copyright (C) 2018 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: 1 hfz lao, 1, LIC=NQQMA-1I1F2-Y8SFK-ZNMAP-HHEE9-FX8G5
+IDE-Version: ��Vision V5.38.0.0
+Copyright (C) 2022 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: A Admin, A, LIC=FYKYW-QEAAW-NNQAF-6LTK5-WCZLZ-6TJWP
  
 Tool Versions:
-Toolchain:       MDK-ARM Plus  Version: 5.24.1
-Toolchain Path:  D:\keil5\ARM\ARMCC\Bin
+Toolchain:       MDK-ARM Plus  Version: 5.43.0.0
+Toolchain Path:  D:\Keil_v5\ARM\ARMCC\Bin
 C Compiler:      Armcc.exe V5.06 update 5 (build 528)
 Assembler:       Armasm.exe V5.06 update 5 (build 528)
 Linker/Locator:  ArmLink.exe V5.06 update 5 (build 528)
 Library Manager: ArmAr.exe V5.06 update 5 (build 528)
 Hex Converter:   FromElf.exe V5.06 update 5 (build 528)
-CPU DLL:         SARMCM3.DLL V5.24.1
-Dialog DLL:      DCM.DLL V1.16.0.0
-Target DLL:      CMSIS_AGDI.dll V1.28.3.0
-Dialog DLL:      TCM.DLL V1.32.0.0
+CPU DLL:         SARMCM3.DLL V5.43.0.0
+Dialog DLL:      DCM.DLL V1.17.5.0
+Target DLL:      CMSIS_AGDI.dll V1.33.24.0
+Dialog DLL:      TCM.DLL V1.56.6.0
  
 <h2>Project:</h2>
-C:\Users\hfz lao\Desktop\newdogtow\newdog\MDK-ARM\1.uvprojx
-Project File Date:  07/07/2026
+C:\Users\33303\Desktop\newdog (4-24)1\MDK-ARM\1.uvprojx
+Project File Date:  07/12/2026
 
 <h2>Output:</h2>
-*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\keil5\ARM\ARMCC\Bin'
+*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\Keil_v5\ARM\ARMCC\Bin'
 Build target '1'
+compiling motor.c...
+../Core/Inc/gait.h(79): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
+  void Init_turn_omega_des();
+..\Core\Src\motor.c(198): warning:  #550-D: variable "success"  was set but never used
+          uint8_t success = 0;
+..\Core\Src\motor.c: 2 warnings, 0 errors
+compiling gait.c...
+../Core/Inc/gait.h(79): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
+  void Init_turn_omega_des();
+..\Core\Src\gait.c(1370): warning:  #550-D: variable "temp"  was set but never used
+      uint8_t temp = 0;
+..\Core\Src\gait.c(1302): warning:  #177-D: variable "front_skip_Pitch"  was declared but never referenced
+      float front_skip_Pitch = 100.0f; // 前空翻时身体前倾的角度
+..\Core\Src\gait.c(1304): warning:  #177-D: variable "skip_Height"  was declared but never referenced
+      float skip_Height = 35.0f; // 前空翻时蹬地的高�?
+..\Core\Src\gait.c(1307): warning:  #177-D: variable "front_support_angle_max"  was declared but never referenced
+  	float front_support_angle_max = 60.0f; // 前脚蹬地的最大角�?
+..\Core\Src\gait.c(1331): warning:  #177-D: variable "start_h2_alpha2"  was declared but never referenced
+      float start_h2_alpha2 = hposition2.alpha; // 后推蹬地的坐标（3�?17）对应的角度  
+..\Core\Src\gait.c(1332): warning:  #177-D: variable "start_h2_beta2"  was declared but never referenced
+      float start_h2_beta2 = hposition2.beta;
+..\Core\Src\gait.c(1333): warning:  #177-D: variable "start_h3_alpha2"  was declared but never referenced
+      float start_h3_alpha2 = hposition3.alpha;
+..\Core\Src\gait.c(1334): warning:  #177-D: variable "start_h3_beta2"  was declared but never referenced
+      float start_h3_beta2 = hposition3.beta;
+..\Core\Src\gait.c(1346): warning:  #177-D: variable "start_h1_alpha3"  was declared but never referenced
+      float start_h1_alpha3 = hposition1.alpha;
+..\Core\Src\gait.c(1347): warning:  #177-D: variable "start_h1_beta3"  was declared but never referenced
+      float start_h1_beta3 = hposition1.beta;
+..\Core\Src\gait.c(1348): warning:  #177-D: variable "start_h2_alpha3"  was declared but never referenced
+      float start_h2_alpha3 = hposition2.alpha;
+..\Core\Src\gait.c(1349): warning:  #177-D: variable "start_h2_beta3"  was declared but never referenced
+      float start_h2_beta3 = hposition2.beta;
+..\Core\Src\gait.c(1350): warning:  #177-D: variable "start_h3_alpha3"  was declared but never referenced
+      float start_h3_alpha3 = hposition3.alpha;
+..\Core\Src\gait.c(1351): warning:  #177-D: variable "start_h3_beta3"  was declared but never referenced
+      float start_h3_beta3 = hposition3.beta;
+..\Core\Src\gait.c(1352): warning:  #177-D: variable "start_h4_alpha3"  was declared but never referenced
+      float start_h4_alpha3 = hposition4.alpha;
+..\Core\Src\gait.c(1353): warning:  #177-D: variable "start_h4_beta3"  was declared but never referenced
+      float start_h4_beta3 = hposition4.beta;
+..\Core\Src\gait.c: 17 warnings, 0 errors
+compiling usart_demo.c...
+../Core/Inc/gait.h(79): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
+  void Init_turn_omega_des();
+..\Core\Src\usart_demo.c(64): warning:  #550-D: variable "last_rx_tick"  was set but never used
+  static uint32_t last_rx_tick = 0;
+..\Core\Src\usart_demo.c: 2 warnings, 0 errors
+compiling kinematic.c...
+../Core/Inc/gait.h(79): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
+  void Init_turn_omega_des();
+..\Core\Src\kinematic.c(245): warning:  #1-D: last line of file ends without a newline
+  }
+..\Core\Src\kinematic.c: 2 warnings, 0 errors
 compiling main.c...
-../Core/Inc/gait.h(78): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
+../Core/Inc/gait.h(79): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
   void Init_turn_omega_des();
 ../Core/Inc/motor_4310.h(51): warning:  #1-D: last line of file ends without a newline
   #endif // __MOTOR_4310_H
 ../Core/Inc/robot_arm_control.h(9): warning:  #47-D: incompatible redefinition of macro "PI"  (declared at line 8 of "../Core/Inc/motor.h")
    #define PI 3.1415926535f
-../Core/Inc/robot_arm_control.h(28): warning:  #1-D: last line of file ends without a newline
+../Core/Inc/robot_arm_control.h(35): warning:  #1-D: last line of file ends without a newline
    
-../Core/Src/main.c(425): warning:  #550-D: variable "prev_temp_state"  was set but never used
-  	    static uint8_t prev_temp_state = 0;  /* 上一帧的状态，用于检测切�? */
-../Core/Src/main.c(418): warning:  #177-D: variable "control_omega"  was declared but never referenced
+../Core/Src/main.c(464): warning:  #111-D: statement is unreachable
+  if (rcData.sw8 == 0xFCE0){ emergency_stop = 1;} // 侧翻急停关闭�?
+../Core/Src/main.c(506): warning:  #550-D: variable "prev_temp_state"  was set but never used
+  	    static uint8_t prev_temp_state = 0;  /* 上一帧的状态，用于检测切�? */
+../Core/Src/main.c(499): warning:  #177-D: variable "control_omega"  was declared but never referenced
   	float control_omega = 0.0f;
 ../Core/Src/main.c(210): warning:  #177-D: variable "GyroZ_filtered"  was declared but never referenced
   float GyroZ_filtered = 0.0f;
 ../Core/Src/main.c(212): warning:  #177-D: variable "alpha"  was declared but never referenced
   float alpha = 0.008f;
-../Core/Src/main.c: 8 warnings, 0 errors
+../Core/Src/main.c: 9 warnings, 0 errors
+compiling tim.c...
+../Core/Inc/gait.h(79): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
+  void Init_turn_omega_des();
+../Core/Src/tim.c(457): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				if(fabsf(rcData.R_x)<0.05) rcData.R_x=0;
+../Core/Src/tim.c: 2 warnings, 0 errors
 linking...
-Program Size: Code=41644 RO-data=1868 RW-data=516 ZI-data=4716  
+Program Size: Code=24272 RO-data=1548 RW-data=500 ZI-data=5068  
 FromELF: creating hex file...
-"1\1.axf" - 0 Error(s), 8 Warning(s).
+"1\1.axf" - 0 Error(s), 34 Warning(s).
 
 <h2>Software Packages used:</h2>
 
 Package Vendor: ARM
-                http://www.keil.com/pack/ARM.CMSIS.5.0.1.pack
-                ARM.CMSIS.5.0.1
-                CMSIS (Cortex Microcontroller Software Interface Standard)
-   * Component: CORE Version: 5.0.1
+                https://www.keil.com/pack/ARM.CMSIS.6.2.0.pack
+                ARM.CMSIS.6.2.0
+                CMSIS (Common Microcontroller Software Interface Standard)
+   * Component: CORE Version: 6.1.1
 
 Package Vendor: Keil
-                https://www.keil.com/pack/Keil.STM32F4xx_DFP.2.17.0.pack
-                Keil.STM32F4xx_DFP.2.17.0
-                STMicroelectronics STM32F4 Series Device Support, Drivers and Examples
+                https://www.keil.com/pack/Keil.STM32F4xx_DFP.3.1.1.pack
+                Keil.STM32F4xx_DFP.3.1.1
+                STMicroelectronics STM32F4 Series Device Support
 
 <h2>Collection of Component include folders:</h2>
-  .\RTE\_1
-  D:\keil5\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include
-  D:\keil5\ARM\PACK\Keil\STM32F4xx_DFP\2.17.0\Drivers\CMSIS\Device\ST\STM32F4xx\Include
+  ./RTE/_1
+  D:/Keil_v5/ARM/PACK/ARM/CMSIS/6.2.0/CMSIS/Core/Include
 
 <h2>Collection of Component Files used:</h2>
 
-   * Component: ARM::CMSIS:CORE:5.0.1
-Build Time Elapsed:  00:00:02
+   * Component: ARM::CMSIS:CORE:6.1.1
+      Include file:  CMSIS/Core/Include/tz_context.h
+Build Time Elapsed:  00:00:05
 </pre>
 </body>
 </html>
