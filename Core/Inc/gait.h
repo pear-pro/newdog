@@ -4,6 +4,7 @@
 #define Ts 1.00f    // 控制周期
 #define Ts_crawl 1.00f   
 #include "stm32f4xx.h"
+#include "motor.h"
 
 /*某只脚的两个电机驱动的角度，alpha和beta*/
 typedef struct

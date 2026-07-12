@@ -11,6 +11,7 @@
 #include "imu.h"
 #include "tim.h"
 #include "motor.h"
+#include "motor_feedback.h"
 #include "stm32f427xx.h"
 #include "stm32f4xx_hal_rcc.h"
 #include <stdint.h>
@@ -38,7 +39,7 @@ float Forward_freq = 0.01394f; // 0.004
 #define up_down_freq 0.004f
 #define crawl_freq 0.002f
 
-float support_Kp = 0.7f; // 0.6/0.7,0.25/0.3
+float support_Kp = 0.7f; // 0.5(队友)
 float swing_Kp = 0.3f;
 float Expect_kw = 0.01f;  // 直接用来初始化
 float support_tau_ff = 0.00f; // 0.10
@@ -421,7 +422,7 @@ void motion_Forward(float height, float step_height, float stride)
 */
 
 uint8_t Flag=1;
-void motion_Mix(float height, float step_height, float stride)
+void motion_Mix(float height, float step_height, float stride, float turn_stride)
 {    
     tau += Forward_freq;  
     if(tau >= 1.0f) { tau -= 1.0f; }

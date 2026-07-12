@@ -21,7 +21,6 @@ float float_to_uint(float x, float x_min, float x_max, int bits)
 
 void Set_dm_mit(CAN_HandleTypeDef* hcan,int16_t ID)
 {
-	uint32_t tx_mailbox;
 	uint16_t pos_tmp,vel_tmp,kp_tmp,kd_tmp,tor_tmp;
   CAN_TxHeaderTypeDef can1TxMsg;
   uint8_t             can1TxData[8] = {0};
