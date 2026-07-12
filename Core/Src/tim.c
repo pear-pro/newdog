@@ -450,12 +450,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 			Vofa_JustFloat(diag_buf, 33);
 		}
 		
-		if(rcData.sw8==0x0320&& rcData.sw7 ==0x0320 )
+		if(rcData.sw8==0x0320&& rcData.sw7 ==0x0320 )//遥控
 		{
-			if(fabs(deta_angle)<22.5f){
-				if(fabs(rcData.R_x)<0.35) rcData.R_x=0;
-			turn_omega_des-=0.25*rcData.R_x;
+			
+			if(fabsf(deta_angle)<30.0f){
+				if(fabsf(rcData.R_x)<0.05) rcData.R_x=0;
+			turn_omega_des-=0.35f*rcData.R_x;
 			}
+			
+//			float R_x1 = -0.5f;
+//			if(fabs(deta_angle)<22.5f){
+//				if(fabs(R_x1)<0.35) R_x1=0;
+//			turn_omega_des-=0.25*R_x1;
+//			}
 			if(turn_omega_des>180.0f) 
 			{
 				turn_omega_des=-180.0f;
@@ -466,14 +473,33 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 				turn_omega_des=180.0f;
 				if(turn_omega_des>=body_yaw&&(fabs(rcData.R_x)>0.35))turn_omega_des=body_yaw-22.0f;
 			}
+			
+//				if(stay_state==1){
+//					accum_v += AccX;
+//	
+//			    accum_x += accum_v;
+//				if(accum_x >10.0f) accum_x=10.0f;
+//				if(accum_x<-10.0f) accum_x=-10.0f;	
+//			}
+
+			
 		}
 		
        if(rcData.sw8== 0x0320&& rcData.sw7 == 0xFCE0)//树莓派
 		{
-			if(fabs(deta_angle)<22.5f){
+			
+			if(fabs(deta_angle)<30.0f){
 				if(fabs(turn_omega)<0.1f) turn_omega=0;
-			turn_omega_des-=0.15*turn_omega;
+			turn_omega_des+=0.35f*turn_omega;
 			}
+			
+			
+//			float turn_omega1 = 0.1f;
+//			if(fabs(deta_angle)<30.0f){
+//				if(fabs(turn_omega1)<0.1f) turn_omega1=0;
+//			turn_omega_des+=0.35*turn_omega1;
+//			}
+			
 			if(turn_omega_des>180.0f) 
 			{
 				turn_omega_des=-180.0f;
@@ -484,7 +510,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 				turn_omega_des=180.0f;
 				if(turn_omega_des>=body_yaw&&(fabs(turn_omega)>0.1))turn_omega_des=body_yaw-22.0f;
 			}
-		}		
+		}
+		
+//		if(stay_state==1){
+//		
+//		accum_x += 0.01f*AccX; if(accum_x >10.0f) accum_x=10.0f;
+//		accum_y += 0.01f*AccY; if(accum_y >10.0f) accum_y=10.0f;
+//		}
+		
+		
+		
+		
 	}
 }
 
