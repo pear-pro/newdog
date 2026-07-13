@@ -11,6 +11,7 @@
 #include "imu.h"
 #include "tim.h"
 #include "motor.h"
+#include "motor_feedback.h"
 #include "stm32f427xx.h"
 #include "stm32f4xx_hal_rcc.h"
 #include <stdint.h>
@@ -35,10 +36,12 @@ uint8_t stay_state=1;
 
 
 float Forward_freq = 0.01394f; // 0.004 
+//float Forward_freq = 0.01394f; // 0.004 
 #define up_down_freq 0.004f
 #define crawl_freq 0.002f
 
-float support_Kp = 1.0f; // 0.6/0.7,0.25/0.3
+float support_Kp = 0.7f; // 0.5(队友)
+//float support_Kp = 1.0f; // 0.6/0.7,0.25/0.3
 float swing_Kp = 0.3f;
 float Expect_kw = 0.01f;  // 直接用来初始化
 float support_tau_ff = 0.00f; // 0.10
@@ -80,10 +83,13 @@ float stride_max = 20.0f;
 // float motor8_kp_offset = 0.50f;
 
 float motor1_kp_offset = 0.6f;
+//float motor1_kp_offset = 0.6f;
 float motor2_kp_offset = 0.0f;
 float motor3_kp_offset = 0.1f;
-float motor4_kp_offset = 0.0f;
+//float motor4_kp_offset = 0.0f;
 float motor5_kp_offset = 0.0f;
+float motor4_kp_offset = 0.0f;
+//float motor5_kp_offset = 0.0f;
 float motor6_kp_offset = 0.0f;
 float motor7_kp_offset = 0.4f;
 float motor8_kp_offset = 0.0f;
@@ -257,6 +263,54 @@ GaitPhasesPoints  crawl_gaitGenerator(int state, float height, float step_height
   phaseState.ySupport = height;
   return phaseState;
 }
+GaitPhasesPoints crawl_gaitGenerator_new(float t, float height, float step_height, float stride, float x_pos)
+{
+	GaitPhasesPoints phaseState;
+
+	// 确保 t 在 [0, Ts) 区间内（容错，正常由调用方保证）
+	if (t >= Ts) t -= Ts;
+	if (t < 0.0f) t += Ts;
+
+	float swing_end = 0.25f * Ts;   // 摆动相结束时刻 = 25% 周期处
+
+	if (t < swing_end)  // ======== 摆动相 (25%·Ts) ========
+	{
+		// sigma 从 0 → 2π，完成一次完整的摆线运动
+		phaseState.sigma = 2.0f * pi * t / swing_end;
+
+		// 摆动水平：从后向前跨一步（modified sine 轨迹）
+		phaseState.xSwing = stride * ((phaseState.sigma - sinf(phaseState.sigma)) / (2.0f * pi))
+		                    - stride / 2.0f + x_pos;
+		// 摆动垂直：抬腿→放下（cos 曲线）
+		phaseState.ySwing = height - step_height * (1.0f - cosf(phaseState.sigma)) / 2.0f;
+
+		// 支撑相字段置零（该腿在摆动，不使用支撑值）
+		phaseState.xSupport = 0.0f;
+		phaseState.ySupport = 0.0f;
+	}
+	else  // ======== 支撑相 (75%·Ts) ========
+	{
+		// support_t 从 0 → 1，表示支撑进度
+		float support_duration = Ts - swing_end;   // 0.75f * Ts
+		float support_t = (t - swing_end) / support_duration;
+
+		// 支撑水平：摆线轨迹，起点终点速度为零，与摆动相平滑衔接
+		float support_sigma = support_t * 2.0f * pi;
+		phaseState.sigma = support_sigma;
+		phaseState.xSupport = stride / 2.0f - stride * ((support_sigma - sinf(support_sigma)) / (2.0f * pi)) + x_pos;
+		// 支撑垂直：保持触地高度
+		phaseState.ySupport = height;
+
+		// 摆动相字段置零
+		phaseState.xSwing = 0.0f;
+		phaseState.ySwing = 0.0f;
+	}
+
+	return phaseState;
+}
+ 
+ 
+ 
 
 // 把运动曲线赋值给每个足   height:支撑脚离电机轴心高度  step_height:摆动高度  stride:步幅
 void motion_Forward(float height, float step_height, float stride)
@@ -298,69 +352,69 @@ void motion_Forward(float height, float step_height, float stride)
     Motor_SendCmd_AllAngle();  
 }
 
-void motion_Crawl(float step_height, float stride){
-    tau += crawl_freq; // 步频
-    if(tau >= 1.0f) { tau = 0.0f; }
+//void motion_Crawl(float step_height, float stride){
+//    tau += crawl_freq; // 步频
+//    if(tau >= 1.0f) { tau = 0.0f; }
 
-  motor1_kp_offset = 0.35f;
-  motor2_kp_offset = 0.45f;
-  motor3_kp_offset = 0.2f;
-  motor4_kp_offset = 0.15f;
-  motor5_kp_offset = 0.17f;
-  motor6_kp_offset = 0.32f;
-  motor7_kp_offset = 0.47f;
-  motor8_kp_offset = 0.60f;
+//  motor1_kp_offset = 0.35f;
+//  motor2_kp_offset = 0.45f;
+//  motor3_kp_offset = 0.2f;
+//  motor4_kp_offset = 0.15f;
+//  motor5_kp_offset = 0.17f;
+//  motor6_kp_offset = 0.32f;
+//  motor7_kp_offset = 0.47f;
+//  motor8_kp_offset = 0.60f;
 
-    float Crawl_height = 13.5f; // y轴方向上电机轴心到地面的距离14.5 - 足底高度4.0
-    float front_pivot_x = 13.5f + 0.5f*stride; // 前摆线方程原点=x方向上离电机轴心最近的距离+步幅的一半
-	//                    12.5
-    if (tau <= 0.5f)
-    {
-        GaitPhasesPoints FrontRightState = crawl_gaitGenerator(0, Crawl_height, step_height, stride, front_pivot_x);
-        GaitPhasesPoints FrontLeftState = crawl_gaitGenerator(0, Crawl_height, step_height, stride, front_pivot_x);
-        GaitPhasesPoints BackRightState = crawl_gaitGenerator(0, Crawl_height, step_height, stride+rcData.R_y*3.0f, -front_pivot_x);
-        GaitPhasesPoints BackLeftState = crawl_gaitGenerator(0, Crawl_height, step_height, stride+rcData.R_y*3.0f, -front_pivot_x);
+//    float Crawl_height = 13.5f; // y轴方向上电机轴心到地面的距离14.5 - 足底高度4.0
+//    float front_pivot_x = 13.5f + 0.5f*stride; // 前摆线方程原点=x方向上离电机轴心最近的距离+步幅的一半
+//	//                    12.5
+//    if (tau <= 0.5f)
+//    {
+//        GaitPhasesPoints FrontRightState = crawl_gaitGenerator(0, Crawl_height, step_height, stride, front_pivot_x);
+//        GaitPhasesPoints FrontLeftState = crawl_gaitGenerator(0, Crawl_height, step_height, stride, front_pivot_x);
+//        GaitPhasesPoints BackRightState = crawl_gaitGenerator(0, Crawl_height, step_height, stride+rcData.R_y*3.0f, -front_pivot_x);
+//        GaitPhasesPoints BackLeftState = crawl_gaitGenerator(0, Crawl_height, step_height, stride+rcData.R_y*3.0f, -front_pivot_x);
 
-        hposition1.B_y  = FrontRightState.ySwing;
-        hposition1.B_x  =  FrontRightState.xSwing; 
-        hposition2.B_y  = BackRightState.ySupport;
-        hposition2.B_x  =  BackRightState.xSupport; 
-        hposition3.B_y  = BackLeftState.ySwing ;
-        hposition3.B_x  =  BackLeftState.xSwing; 
-        hposition4.B_y  = FrontLeftState.ySupport;
-        hposition4.B_x  =  FrontLeftState.xSupport; 
-        set_Motor_Kp(1,1,1,1);
-    }
-    else if (tau > 0.5f && tau <= 1.0f)
-    {
-        GaitPhasesPoints FrontRightState = crawl_gaitGenerator(1, Crawl_height, step_height, stride, front_pivot_x);
-        GaitPhasesPoints FrontLeftState = crawl_gaitGenerator(1, Crawl_height, step_height, stride, front_pivot_x);
-        GaitPhasesPoints BackRightState = crawl_gaitGenerator(1, Crawl_height, step_height, stride+rcData.R_y*3.0f, -front_pivot_x);
-        GaitPhasesPoints BackLeftState = crawl_gaitGenerator(1, Crawl_height, step_height, stride+rcData.R_y*3.0f, -front_pivot_x);
+//        hposition1.B_y  = FrontRightState.ySwing;
+//        hposition1.B_x  =  FrontRightState.xSwing; 
+//        hposition2.B_y  = BackRightState.ySupport;
+//        hposition2.B_x  =  BackRightState.xSupport; 
+//        hposition3.B_y  = BackLeftState.ySwing ;
+//        hposition3.B_x  =  BackLeftState.xSwing; 
+//        hposition4.B_y  = FrontLeftState.ySupport;
+//        hposition4.B_x  =  FrontLeftState.xSupport; 
+//        set_Motor_Kp(1,1,1,1);
+//    }
+//    else if (tau > 0.5f && tau <= 1.0f)
+//    {
+//        GaitPhasesPoints FrontRightState = crawl_gaitGenerator(1, Crawl_height, step_height, stride, front_pivot_x);
+//        GaitPhasesPoints FrontLeftState = crawl_gaitGenerator(1, Crawl_height, step_height, stride, front_pivot_x);
+//        GaitPhasesPoints BackRightState = crawl_gaitGenerator(1, Crawl_height, step_height, stride+rcData.R_y*3.0f, -front_pivot_x);
+//        GaitPhasesPoints BackLeftState = crawl_gaitGenerator(1, Crawl_height, step_height, stride+rcData.R_y*3.0f, -front_pivot_x);
 
-        hposition1.B_y  = FrontRightState.ySupport;
-        hposition1.B_x  =  FrontRightState.xSupport; 
-        hposition2.B_y  = BackRightState.ySwing;
-        hposition2.B_x  =  BackRightState.xSwing;
-        hposition3.B_y  = BackLeftState.ySupport;
-        hposition3.B_x  =  BackLeftState.xSupport;
-        hposition4.B_y  = FrontLeftState.ySwing;
-        hposition4.B_x  =  FrontLeftState.xSwing;
-        set_Motor_Kp(1,1,1,1);
-    }
-	
-	crawl_inverseKinematic_All();
-    Motor_SendCmd_AllAngle();  
-	
-  motor1_kp_offset = 0.25f;
-  motor2_kp_offset = 0.15f;
-  motor3_kp_offset = 0.3f;
-  motor4_kp_offset = 0.2f;
-  motor5_kp_offset = 0.17f;
-  motor6_kp_offset = 0.32f;
-  motor7_kp_offset = 0.37f;
-  motor8_kp_offset = 0.50f;
-}
+//        hposition1.B_y  = FrontRightState.ySupport;
+//        hposition1.B_x  =  FrontRightState.xSupport; 
+//        hposition2.B_y  = BackRightState.ySwing;
+//        hposition2.B_x  =  BackRightState.xSwing;
+//        hposition3.B_y  = BackLeftState.ySupport;
+//        hposition3.B_x  =  BackLeftState.xSupport;
+//        hposition4.B_y  = FrontLeftState.ySwing;
+//        hposition4.B_x  =  FrontLeftState.xSwing;
+//        set_Motor_Kp(1,1,1,1);
+//    }
+//	
+//	crawl_inverseKinematic_All();
+//    Motor_SendCmd_AllAngle();  
+//	
+//  motor1_kp_offset = 0.25f;
+//  motor2_kp_offset = 0.15f;
+//  motor3_kp_offset = 0.3f;
+//  motor4_kp_offset = 0.2f;
+//  motor5_kp_offset = 0.17f;
+//  motor6_kp_offset = 0.32f;
+//  motor7_kp_offset = 0.37f;
+//  motor8_kp_offset = 0.50f;
+//}
 
 /* 参数说明：
 * stride：步幅，参数范围（-max_stride 到 max_stride）
@@ -368,7 +422,7 @@ void motion_Crawl(float step_height, float stride){
 */
 
 uint8_t Flag=1;
-void motion_Mix(float height, float step_height, float stride)
+void motion_Mix(float height, float step_height, float stride, float turn_stride)
 {    
     tau += Forward_freq;  
     if(tau >= 1.0f) { tau -= 1.0f; }
@@ -381,7 +435,6 @@ void motion_Mix(float height, float step_height, float stride)
 	
 	  float R_stride = stride;
      float L_stride = stride;
-
 	
 	
 	if((fabs(rcData.R_y)<0.15f)&&(fabs(rcData.R_x)<0.15f)&&Flag==0)
@@ -458,7 +511,18 @@ void motion_Mix(float height, float step_height, float stride)
 //			R_stride = stride * (1.0f + 1.0f * turn_stride);
 //			L_stride = stride;
 //		}
+//	else if((fabs(rcData.R_y)>0.15f)&&(fabs(rcData.R_x)>0.15f))//前进转弯
+//	{
+//		Flag=0;
+//		if (turn_stride > 0.005f){
+//			R_stride = stride ;
+//			L_stride = stride* (1.0f - 1.0f * turn_stride);
+//		}else if (turn_stride < -0.005f){
+//			R_stride = stride * (1.0f + 1.0f * turn_stride);
+//			L_stride = stride;
+//		}
 
+//	}
 //	}
   
 	
@@ -499,6 +563,10 @@ void motion_Mix(float height, float step_height, float stride)
     Motor_SendCmd_AllAngle();  
 	
 }
+
+
+
+
 
 
 
@@ -650,12 +718,17 @@ void motion_mix6(float height, float step_height, float velo){//树莓派
 	static float L_stride = 0.0f;
     static float R_stride = 0.0f;
 
+
 	
+	if((fabsf(turn_omega)<0.05f)&&Flag==0)
 	if((fabsf(turn_omega)<0.05f)&&Flag==0)
 	{
 		Init_turn_omega_des();
 		Flag=1;
 //		turn_omega_integral=0;
+	}
+	if(fabsf(turn_omega)>0.05f){
+		Flag=0;
 	}
 	if(fabsf(turn_omega)>0.05f){
 		Flag=0;
@@ -943,6 +1016,7 @@ void motion_mix7(float height, float step_height, float velo){//遥控
     Motor_SendCmd_AllAngle();  
 	
 }
+
 
 
 void motion_StandBy(float height)

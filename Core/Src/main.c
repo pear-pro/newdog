@@ -142,7 +142,7 @@ void SystemClock_Config(void);
   * @retval int
   */
 int main(void)
-{
+	{
 
   /* USER CODE BEGIN 1 */
 
@@ -275,16 +275,97 @@ while (1)
 //	  HAL_Delay(1);
 //  }
   // --------------循环配置----------------
-    UART8_Demo_Process(); // 处理 UART8 接收的树莓派数据，更新 rcData 结构体
+//    UART8_Demo_Process(); // 处理 UART8 接收的树莓派数据，更新 rcData 结构体
 
-	  stab_roll = 0.0f;// 平衡角度归零
-  
+//	  stab_roll = 0.0f;// 平衡角度归零
+//  
     // -------------急停模式调试------------------
 //  if (motor_release_flag == 1){
 //	motor_release_flag=0;
 //	init_motor_parameters();
 //  }
+//while(1){
+	//	hmotor10.Kw =0.1f;
+//	hmotor10.Kp =0.1f;
+////	gimbal_send_unitree(0.0f); // 发送云台控制指令，参数为期望的云台角度
+//		gimbal_send_unitree(80.0f);
+	//	gimbal_send_unitree(50.0f);// motor_release();
+//    Set_DM_Motor(1, -10);//大臂调节零点
+//	Set_DM_Motor(0,110);//小臂调节零点
+		
+	//	Arm_Move_Smooth(0, 0, 75.629,50);	
+	//   Arm_Move_Smooth(41,0-10,34.629+12.8-2.8,10);
+	// Hal_Delay(10);
+	// 	Arm_Move_Smooth(41,0-10,34.629+12.8-2.8,10);
+	// Hal_Delay(10);
+  // 	Arm_Move_Smooth(41,0-10,34.629+12.8-2.8,10);
+	// Hal_Delay(10);
+  // 	Arm_Move_Smooth(41,0-10,34.629+12.8-2.8,10);
+	// Hal_Delay(10);
+  // 	Arm_Move_Smooth(41,0-10,34.629+12.8-2.8,10);
+	// Hal_Delay(10);
+		//	Arm_Move_Smooth(41,0-20,34.629+12.8-2.8,10);
+	//	Arm_Move_Smooth(41,0-30,34.629+12.8-2.8-10,20);
+	//		Arm_Move_Smooth(41,0,34.629+12.8-2.8,10);
+		
+	//		Arm_Move_Smooth(0,-41,34.629+12.8-2.8,50);
 
+//    初始状态
+//    Arm_Move_To_Start(0, 0, 60.629);
+//    Arm_Move_To(x,y,z);//到达位置
+//    Arm_Move_To();//平衡位置
+//    Arm_Move_To(x,y,z);//到达位置
+//    Arm_Move_To();//平衡位置
+//			Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 10.0f);//直 y
+//
+//		HAL_Delay(3000);
+//		Arm_Move_Smooth(-35.0,0,34.629+12.8,5);
+//		HAL_Delay(3000);
+//		Arm_Move_Smooth(-44.0+7.5,6.0f,34.629+12.8-2.8,50);
+//		Arm_Move_Smooth(-9.629,0,50.0+12.8,5);//平衡位置
+//		HAL_Delay(5000);
+	//	Arm_Move_Smooth(-35,0,34.629+10+12.8,5);//吸取状态
+//		HAL_Delay(5000);
+//		Arm_Move_To(40,0,0);//
+//		Arm_Move_To(0,0,69.629);//完全竖直	
+//		Arm_Move_To(-35,0,34.629+12.8);
+//		PWM_Set(PWM_IN);//吸
+//		HAL_Delay(1000);
+//		Arm_Move_To(-9.629,0,50.0+12.8);//平衡位置
+	//	HAL_Delay(10000);
+//Arm_Move_To(-35,0,40.629+10+12.8);
+//HAL_Delay(10000);
+//		HAL_Delay(1000);
+//  	HAL_Delay(10);
+		
+		//摄像机舵机给值
+//		    Set_Camera_Servo_Angle_TIM8(TIM_CHANNEL_1,90.0f);//w下面
+//        Set_Camera_Servo_Angle_TIM8(TIM_CHANNEL_2, 90.0f);//x上面
+//	
+//		    Set_Camera_Servo_Angle_TIM8(TIM_CHANNEL_1,180.0f);//w下面
+//		 
+//		//吸盘舵机
+//		Set_Sucker_Servo_Angle_TIM8(TIM_CHANNEL_3, 10.0f);//垂直 y
+//    HAL_Delay(1000);
+//    Set_Sucker_Servo_Angle_TIM8(TIM_CHANNEL_3, 100.0f);//垂直 y
+//	  HAL_Delay(1500);
+////		Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 170.0f);//直线
+////				Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 45.0f);//向上
+////		Set_Servo_Angle_TIM8(TIM_CHANNEL_3, 90.0f);
+//		
+////		//吸盘
+////		PWM_Set(PWM_OUT);//放
+//		HAL_Delay(2000);
+//		
+//		PWM_Set(PWM_IN);//吸
+//		HAL_Delay(2000);
+////		
+////		PWM_Set(PWM_IDLE);//错误，都不进行
+
+//		HAL_Delay(1000);
+//	
+//	
+//}
     // -------------机械臂调试（注释保留）------------------
 //	hmotor10.Kp =0.8f;
 //	gimbal_send_unitree(10.0f);
@@ -484,7 +565,8 @@ if (emergency_stop==1){
 			
         break;   
           
-        case 5:
+        case 5://小跳
+// 		motion_LeanJump();
 
         break;
                    
@@ -494,10 +576,12 @@ if (emergency_stop==1){
 //			    }
 //			motion_Crawl(5.0f,12.0f);
 //				motion_Jump(15.0f);
+//		motion_LeanJump();
         break;     
 
-        case 7:// 前空翻
-			motion_Frontflip();
+        case 7:// 大跳
+//			motion_Frontflip();
+//				motion_Jump(15.0f);
 
         break; 
 
@@ -506,7 +590,7 @@ if (emergency_stop==1){
         break; 
 
 	    	case 12: // RPi 超时自动站立
-            motion_Mix(walk_height, 0.0000001f, 0.0f);
+            motion_Mix(walk_height, 0.0000001f, 0.0f, 0.0f);
         break;
 
         default:

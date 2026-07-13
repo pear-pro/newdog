@@ -339,6 +339,8 @@ void gimbal_send_unitree(float angel){
     hmotor10.Theta_des = motor10_bias / 6.33f + 6.28f * angel / 360.0f;
 	Motor_SendCmd(&hmotor10);
 	MY_delay_us(TRANSNIT_DELAY);
+	Motor_Feedback_Process();
+	Motor_Feedback_TimeoutTask();
 }
 
 /*

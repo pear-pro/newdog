@@ -15,14 +15,14 @@ Motor_Feedback_t motor_fb[MOTOR_NUM];
 
 
 
-/* -------- �?形缓冲区 -------- */
-#define RX_BUF_SIZE 128
+/* -------- 环形缓冲区 -------- */
+#define RX_BUF_SIZE 256
 
 static uint8_t rx_buf[RX_BUF_SIZE];
-static uint16_t rx_head = 0;
-static uint16_t rx_tail = 0;
+static volatile uint16_t rx_head = 0;  // volatile: ISR写，主循环读
+static volatile uint16_t rx_tail = 0;  // volatile: 主循环写，ISR读
 
-#define DMA_BUF_SIZE 64    // DMA硬件缓冲区
+#define DMA_BUF_SIZE 256   // DMA硬件缓冲区（原来64，扩大到256匹配usart_demo）
 static uint8_t dma_buf[DMA_BUF_SIZE];
 static uint16_t last_dma_cnt = 0;  // 记录上次DMA位置
 
@@ -30,6 +30,9 @@ static uint16_t last_dma_cnt = 0;  // 记录上次DMA位置
 static uint8_t  frame[MOTOR_FB_LEN];
 static uint8_t  idx = 0;
 static uint8_t  state = 0;
+
+/* -------- 离线计数器（文件作用域，Motor_ParseFrame 需要访问） -------- */
+static uint32_t offline_cnt[MOTOR_NUM] = {0};
 
 /* -------- 私有函数 -------- */
 static void Motor_ParseFrame(uint8_t *f);
@@ -50,9 +53,49 @@ void Motor_Feedback_Init(void)
 }
 
 
-void USART6_RestartRxDMA(void)//用于motor.c
+// USART6 DMA 接收重启（参考 usart_demo.c UART8_Demo_RestartRx）
+// 完整执行 16 步恢复序列，确保从任何 UART 错误中恢复
+void USART6_RestartRxDMA(void)
 {
+    // 1. 停掉旧的 DMA 接收
+    HAL_UART_DMAStop(&huart6);
+
+    // 2. 清除所有 UART 错误标志
+    __HAL_UART_CLEAR_OREFLAG(&huart6);
+    __HAL_UART_CLEAR_FEFLAG(&huart6);
+    __HAL_UART_CLEAR_NEFLAG(&huart6);
+    __HAL_UART_CLEAR_PEFLAG(&huart6);
+    __HAL_UART_CLEAR_IDLEFLAG(&huart6);
+
+    // 3. 恢复 HAL 状态
+    huart6.ErrorCode = HAL_UART_ERROR_NONE;
+    huart6.RxState = HAL_UART_STATE_READY;
+    huart6.Lock = HAL_UNLOCKED;
+
+    // 4. 清空环形缓冲区和解析器状态
+    rx_head = 0;
+    rx_tail = 0;
+    last_dma_cnt = 0;
+    state = 0;
+    idx = 0;
+
+    // 5. 重置所有电机离线状态
+    memset(offline_cnt, 0, sizeof(offline_cnt));
+    for (int i = 0; i < MOTOR_NUM; i++) {
+        motor_fb[i].online = 0;
+    }
+
+    // 6. 清空 DMA 缓冲区
+    memset(dma_buf, 0, DMA_BUF_SIZE);
+
+    // 7. 强制 DMA 为 Circular 模式（防止被 HAL 错误流程改回 Normal）
+    HAL_DMA_Init(huart6.hdmarx);
+
+    // 8. 重新启动 DMA 接收
     HAL_UART_Receive_DMA(&huart6, dma_buf, DMA_BUF_SIZE);
+
+    // 9. 重新使能 IDLE 中断
+    __HAL_UART_ENABLE_IT(&huart6, UART_IT_IDLE);
 }
 
 
@@ -69,12 +112,14 @@ void DMA_CopyToRingBuf(void)
     else
         new_len = DMA_BUF_SIZE - curr_cnt + last_dma_cnt;
 
-    // 拷贝数据到环形缓冲
+    // 拷贝数据到环形缓冲（带溢出保护）
     for (uint16_t i = 0; i < new_len; i++)
     {
+        uint16_t next_head = (rx_head + 1) % RX_BUF_SIZE;
+        if (next_head == rx_tail) break;  // 缓冲满，丢弃剩余数据
         uint16_t dma_idx = (last_dma_cnt + i) % DMA_BUF_SIZE;
-        rx_buf[rx_head++] = dma_buf[dma_idx];
-        if (rx_head >= RX_BUF_SIZE) rx_head = 0;
+        rx_buf[rx_head] = dma_buf[dma_idx];
+        rx_head = next_head;
     }
 
     last_dma_cnt = curr_cnt;
@@ -85,9 +130,7 @@ void DMA_CopyToRingBuf(void)
 
 void Motor_Feedback_TimeoutTask(void)
 {
-    static uint32_t offline_cnt[MOTOR_NUM] = {0};
-
-    for (uint8_t i = 2; i < MOTOR_NUM; i++)
+    for (uint8_t i = 0; i < MOTOR_NUM; i++)
     {
         if (motor_fb[i].online)
         {
@@ -104,6 +147,23 @@ void Motor_Feedback_TimeoutTask(void)
 
 void Motor_Feedback_Process(void)
 {
+    // UART 错误自动检测和恢复（参考 usart_demo.c）
+    // 情况 1：UART 硬件出错（ORE/FE/NE/PE）
+    if (huart6.ErrorCode != HAL_UART_ERROR_NONE) {
+        USART6_RestartRxDMA();
+        return;
+    }
+    // 情况 2：DMA 接收位被 HAL/错误流程关闭
+    if ((huart6.Instance->CR3 & USART_CR3_DMAR) == 0u) {
+        USART6_RestartRxDMA();
+        return;
+    }
+    // 情况 3：RxState 不是 BUSY_RX（HAL 状态机异常）
+    if (huart6.RxState != HAL_UART_STATE_BUSY_RX) {
+        USART6_RestartRxDMA();
+        return;
+    }
+
     while (rx_tail != rx_head)
     {
         uint8_t b = rx_buf[rx_tail++]; 
@@ -185,4 +245,5 @@ static void Motor_ParseFrame(uint8_t *f)
     fb->force = ((f[12] >> 3) & 0x1F) | ((uint16_t)f[13] << 5);
 
     fb->online = 1;
+    offline_cnt[id] = 0;  // 喂狗：收到有效帧，重置离线计数器
 }
