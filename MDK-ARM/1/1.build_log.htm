@@ -27,14 +27,14 @@ Project File Date:  07/13/2026
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\keil5\ARM\ARMCC\Bin'
 Build target '1'
-compiling vmc.c...
-../Core/Inc/gait.h(78): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
+compiling motor.c...
+../Core/Inc/gait.h(92): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
   void Init_turn_omega_des();
-../Core/Inc/vmc.h(10): warning:  #1-D: last line of file ends without a newline
-  #endif
-..\Core\Src\vmc.c: 2 warnings, 0 errors
+..\Core\Src\motor.c(198): warning:  #550-D: variable "success"  was set but never used
+          uint8_t success = 0;
+..\Core\Src\motor.c: 2 warnings, 0 errors
 linking...
-Program Size: Code=44156 RO-data=1868 RW-data=488 ZI-data=4712  
+Program Size: Code=29096 RO-data=1580 RW-data=488 ZI-data=4840  
 FromELF: creating hex file...
 "1\1.axf" - 0 Error(s), 2 Warning(s).
 
@@ -59,7 +59,7 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE@5.6.0
       Include file:  CMSIS/Core/Include/tz_context.h
-Build Time Elapsed:  00:00:03
+Build Time Elapsed:  00:00:05
 </pre>
 </body>
 </html>

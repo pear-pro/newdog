@@ -412,13 +412,13 @@ void Motor_SendCmd_AllAngle()
     */
    // 写入角度 系数不确定 加偏置还是减
     hposition1.alpha_fb = (motor_fb[5].theta/6.33f-motor1_bias / 6.33f)*360.0f/6.28f;
-    hposition1.beta_fb = (motor_fb[4].theta/6.33f-motor4_bias / 6.33f)*360.0f/6.28f;
-    hposition2.alpha_fb = (motor_fb[6].theta/6.33f-motor6_bias / 6.33f)*360.0f/6.28f;
-    hposition2.beta_fb = (motor_fb[3].theta/6.33f-motor3_bias / 6.33f)*360.0f/6.28f;
-    hposition3.alpha_fb = (motor_fb[9].theta/6.33f-motor9_bias / 6.33f)*360.0f/6.28f;
-    hposition3.beta_fb = (motor_fb[8].theta/6.33f-motor8_bias / 6.33f)*360.0f/6.28f;
-    hposition4.alpha_fb = (motor_fb[2].theta/6.33f-motor2_bias / 6.33f)*360.0f/6.28f;
-    hposition4.beta_fb = (motor_fb[1].theta/6.33f-motor1_bias / 6.33f)*360.0f/6.28f;
+    hposition1.beta_fb = (motor_fb[4].theta/6.33f-motor2_bias / 6.33f)*360.0f/6.28f;
+    hposition2.alpha_fb = (motor_fb[6].theta/6.33f-motor3_bias / 6.33f)*360.0f/6.28f;
+    hposition2.beta_fb = (motor_fb[3].theta/6.33f-motor4_bias / 6.33f)*360.0f/6.28f;
+    hposition3.alpha_fb = (motor_fb[9].theta/6.33f-motor5_bias / 6.33f)*360.0f/6.28f;
+    hposition3.beta_fb = (motor_fb[8].theta/6.33f-motor6_bias / 6.33f)*360.0f/6.28f;
+    hposition4.alpha_fb = (motor_fb[2].theta/6.33f-motor7_bias / 6.33f)*360.0f/6.28f;
+    hposition4.beta_fb = (motor_fb[1].theta/6.33f-motor8_bias / 6.33f)*360.0f/6.28f;
 
     // 写入角速度 alpha_dot就是alpha的角速度， 系数不确定， 暂定单位用度每秒
     hposition1.alpha_dot_fb = motor_fb[5].omega;
