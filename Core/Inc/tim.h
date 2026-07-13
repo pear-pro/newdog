@@ -54,6 +54,8 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 /* USER CODE BEGIN Prototypes */
 void MY_delay_us(uint16_t time);
 extern uint8_t emergency_stop;
+extern uint8_t grap_flag;
+extern int grap_cnt;
 
 /* USER CODE END Prototypes */
 

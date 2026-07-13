@@ -210,14 +210,43 @@ int main(void)
 float GyroZ_filtered = 0.0f;
 // 滤波系数，0~1，越小越平滑，也越滞后
 float alpha = 0.008f;
+//		volatile  float accum_x = 0.0f;
+//		volatile  float accum_y = 0.0f;
+
+
+
+//	hmotor1.Theta_des = 0.0f;
+//	hmotor2.Theta_des = 0.0f;
+//	hmotor3.Theta_des = 0.0f;
+//	hmotor4.Theta_des = 0.0f;
+//	hmotor5.Theta_des = 0.0f;
+//	hmotor6.Theta_des = 0.0f;
+//	hmotor7.Theta_des = 0.0f;
+//	hmotor8.Theta_des = 0.0f;		  
+//	Motor_SendCmd_AllAngle(); 
 
 while (1)
   {  
-		//电机接收
-	  Motor_Feedback_Process();    
-    Motor_Feedback_TimeoutTask();
+//	  while(1){
+//		//电机接收
+//	  Motor_Feedback_Process();    
+//    Motor_Feedback_TimeoutTask();
+//	hmotor1.Theta_des = 0.0f;
+//	hmotor2.Theta_des = 0.0f;
+//	hmotor3.Theta_des = 0.0f;
+//	hmotor4.Theta_des = 0.0f;
+//	hmotor5.Theta_des = 0.0f;
+//	hmotor6.Theta_des = 0.0f;
+//	hmotor7.Theta_des = 0.0f;
+//	hmotor8.Theta_des = 0.0f;		  
+//	Motor_SendCmd_AllAngle(); 
+//  
+//		  
+//	  }
 		
-		
+//		float f[4]={AccY,AccX,accum_y,accum_x};
+//		Vofa_JustFloat(f,4);
+	  
 // 		
 //		for(int i=2;i<10;i++){
 //			uint8_t err  = motor_fb[i].error;
@@ -349,10 +378,31 @@ while (1)
 if (rcData.sw8 == 0xFCE0){ emergency_stop = 1;} // 侧翻急停关闭版
   else{ emergency_stop = 0;}
 
-//  if (rcData.sw8 == 0x0000 && rcData.sw7 == 0xFCE0){ temp_state=6;} // 跳跃，注意是非状态机函数
-	if (rcData.sw8 == 0x0000){ temp_state=4;}	// 站立
+  if (rcData.sw8 == 0x0000 && rcData.sw7 == 0xFCE0){ temp_state=6;} // 跳跃，注意是非状态机函数
+	if (rcData.sw8 == 0x0000&& rcData.sw7 == 0x0320){ temp_state=4;}	// 站立
 
   if (rcData.sw8 == 0x0320&& rcData.sw7 == 0x0320 ){ temp_state=1;} // 遥控控制
+   if (rcData.sw8 == 0x0320&& rcData.sw7 == 0xFCE0 ){ temp_state=2;} // 树莓派控制
+   
+ 			if((fabsf(rcData.R_x)<0.05f)&&(fabsf(rcData.R_y)<0.05f)) {
+//				state_cnt++;
+//				if(state_cnt>=300){
+				stay_state=1;
+				Init_turn_omega_des();
+//					state_cnt=0;
+	//			}
+				
+//				grap_cnt++;
+//				if(grap_cnt==300){
+//					grap_cnt =0;
+//				}
+							
+			}
+			else{
+				stay_state=0;
+			}
+		
+
 
 
   // -------------一些未用上的功能------------------
@@ -375,7 +425,10 @@ if (rcData.sw8 == 0xFCE0){ emergency_stop = 1;} // 侧翻急停关闭版
 
 
 	// -----------状态机函数----------------
-	//temp_state=1;
+//	temp_state=1;
+	
+	float control_omega = 0.0f;
+
 	
 	flip_offset = 0.0f;
 if (emergency_stop==1){
@@ -386,13 +439,36 @@ if (emergency_stop==1){
     {
         case 1:
         // 遥控控制行走
-		if(fabs(rcData.R_y)<0.35) rcData.R_y=0.0f;
-		    motion_Mix(walk_height, 5.5f, -max_stride*rcData.R_y);
+//		if(fabs(rcData.R_y)<0.35) rcData.R_y=0.0f;
+		if(stay_state==0){
+			if(fabsf(rcData.R_x)<0.05f){
+		    motion_mix7(walk_height, 7.0f, -(rcData.R_y+0.1582f));
+			}
+			else{
+		    motion_mix5(walk_height, 7.0f, -rcData.R_y,-rcData.R_x);
+			}
+		}
+		else if(stay_state==1){
+			motion_StandBy(walk_height);
+		}
+//		
+//		    motion_mix7(walk_height, 7.5f, -(rcData.R_y+0.1582f));
+		
         break;
                 
         case 2:
         // 树莓派控制行走
-		    motion_Mix2(walk_height, 7.0f, -max_stride*front_speed);
+//			control_omega = powf(fabs(turn_omega),0.2);
+//			control_omega *= turn_omega/fabs(turn_omega);
+//		    motion_mix5(walk_height, 7.0f, -front_speed,control_omega);
+			if(stay_state==0){
+		    motion_mix6(walk_height, 7.5f, -front_speed);
+			}
+			else if(stay_state==1){
+				motion_StandBy(walk_height);
+			}
+//           motion_mix6(walk_height, 7.5f, -(front_speed+0.1f));
+
         break;
 
         case 3: // 跳跃
@@ -401,8 +477,10 @@ if (emergency_stop==1){
         break;
                 
         case 4: // 站立
-		    motion_Mix(walk_height, 0.0000001f, 0.0f);
-		Init_turn_omega_des();
+			
+		motion_StandBy(walk_height);
+		   // motion_Mix(walk_height, 0.0000001f, 0.0f);
+		//Init_turn_omega_des();
 			
         break;   
           

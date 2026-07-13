@@ -27,7 +27,11 @@ extern float support_tau_ff;
 extern float swing_tau_ff;
 extern float turn_omega_des;
 extern float deta_angle;
+extern float accum_x;
+extern float accum_y;
+extern float accum_v;
 
+extern uint8_t stay_state;
 typedef struct 
 {
   float xSwing;    // 前半周期生成的摆动相的x坐标
@@ -72,6 +76,10 @@ void motion_Frontflip(void);
 void test_circle(void);
  void motion_Crawl1(float step_height, float stride);
 void Init_turn_omega_des();
+void motion_Mix4(float height, float step_height, float stride);
+void motion_mix5(float height, float step_height, float velo, float omega);
+void motion_mix6(float height, float step_height, float velo);
+void motion_mix7(float height, float step_height, float velo);//遥控
 
 
 #endif

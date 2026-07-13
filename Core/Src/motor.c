@@ -11,6 +11,8 @@
 #include "gait.h"
 #include "string.h"
 #include "kinematic.h"
+#include "motor_feedback.h"
+
 
 #define TRANSNIT_DELAY 500
  
@@ -24,14 +26,14 @@
 //float motor8_bias = 3.00f;
 //float motor10_bias = 3.10f;// 云台偏置
 
-float motor1_bias = 6.15f;
-float motor2_bias = 0.25f;
-float motor3_bias = 4.77f;
-float motor4_bias = 2.2f;
-float motor5_bias = 2.10f;
-float motor6_bias = 5.38f;
-float motor7_bias = -2.65f;
-float motor8_bias = 2.50f;
+float motor1_bias = 0.54438f;
+float motor2_bias = 1.08243f;
+float motor3_bias = 4.43733f;
+float motor4_bias = 1.69644f;
+float motor5_bias = 2.63328f;
+float motor6_bias = 5.45163f;
+float motor7_bias = 3.25362f;
+float motor8_bias = 2.42439f;
 float motor10_bias = 3.10f;// 云台偏置
 
 
@@ -382,6 +384,11 @@ void Motor_SendCmd_AllAngle()
 	MY_delay_us(TRANSNIT_DELAY);
 	Motor_SendCmd(&hmotor5);
 	MY_delay_us(TRANSNIT_DELAY);
+	
+	HAL_Delay(1);
+	
+	Motor_Feedback_Process();    
+    Motor_Feedback_TimeoutTask();
 }
 
 // ---------4310控制代码开始------------
