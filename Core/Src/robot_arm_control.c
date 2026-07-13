@@ -5,6 +5,7 @@
 #include "motor_4310.h"
 #include "motor_feedback.h"
 #include "global_var.h"
+#include <math.h>
 
 /*
 说明：

@@ -215,6 +215,7 @@ int main(void)
 float GyroZ_filtered = 0.0f;
 // 滤波系数，0~1，越小越平滑，也越滞后
 float alpha = 0.008f;
+Arm_Base_Move( 11, 0, 200); //先发底盘为零度，防止第一次调用函数是跳变
 
 
 
@@ -230,18 +231,18 @@ Set_dm_zeropoint(&hcan1,1);
 	damiao[1].KP=2.0f;   // KP 小值：软保持，手动可推动
 	damiao[1].KD = 0.9f;
 	damiao[1].tor = 0.0f;
-	
-	PWM_Set(PWM_OUT);//吸
-Arm_Move_Smooth(10, 10 , 40, 400);
-HAL_Delay(5000);
-Arm_Move_Smooth(20, 23 , 40, 400);
-HAL_Delay(5000);
-Arm_Move_Smooth(20, 23 , 12, 400);
-HAL_Delay(5000);
-Arm_Move_Smooth(20, 23 , 50, 400);
-HAL_Delay(5000);
-Arm_Move_Smooth(10, 10 , 50, 400);
-HAL_Delay(5000);
+//	
+//	PWM_Set(PWM_OUT);//吸
+//Arm_Move_Smooth(10, 10 , 40, 400);
+//HAL_Delay(5000);
+//Arm_Move_Smooth(20, 23 , 40, 400);
+//HAL_Delay(5000);
+//Arm_Move_Smooth(20, 23 , 12, 400);
+//HAL_Delay(5000);
+//Arm_Move_Smooth(20, 23 , 50, 400);
+//HAL_Delay(5000);
+//Arm_Move_Smooth(10, 10 , 50, 400);
+//HAL_Delay(5000);
 //	float kp_value = 0.1f;
 //	float kw_value = 0.01f;
 //	
