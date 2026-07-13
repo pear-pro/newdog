@@ -2,6 +2,7 @@
 #include "gait.h"
 #include "global_var.h"
 #include <math.h>
+#include <stdint.h>
 
 #define L1 12.5f
 #define L2 26.0f
@@ -15,6 +16,46 @@
 #define Y_max 9.52f 
 // y的最大值，由最小半径方程和经过挡板坐标的切线方程联立求得。意思是向下半边的扇形的顶点的y轴值
 
+// debug 临时用,影响性能
+static volatile float err_count = 0;
+static volatile float B_x_debug = 0.0f;
+static volatile float B_y_debug = 0.0f;
+
+
+typedef struct {
+    float x;
+    float y;
+} Vec2;
+
+typedef struct {
+    float J11;   // vx 对 alpha_dot 的系数
+    float J12;   // vx 对 beta_dot 的系数
+    float J21;   // vy 对 alpha_dot 的系数
+    float J22;   // vy 对 beta_dot 的系数
+} Jacobian2D;
+
+typedef struct {
+    float Kpx;
+    float Kpy;
+    float Kdx;
+    float Kdy;
+    float Fx_max;
+    float Fy_max;
+    float Tau_max;
+} VMCParam;
+
+
+static float limit_float(float x, float min_value, float max_value)
+{
+    if (x > max_value) return max_value;
+    if (x < min_value) return min_value;
+    return x;
+}
+
+Jacobian2D jac;
+
+
+// -------------------------------------------------------------
 
 void normalize_angle_deg(float* angle)
 { 
@@ -243,3 +284,122 @@ void crawl_inverseKinematic_All(){
 	crawl_inverseKinematic(&hposition3,BACK);
 	crawl_inverseKinematic(&hposition4,FRONT);
 }
+
+
+/*-------------- 正解算 ---------------*/
+// 输入: alpha_fb, beta_fb, 输出: B_x_real, B_y_real
+void FK(Position_HandleTypeDef *hposition){
+	
+	float alpha_rad = hposition->alpha_fb * pi / 180.0f+pi/2.0f;
+	float beta_rad = pi/2.0f - hposition->beta_fb * pi / 180.0f;
+
+	// 计算a c点的实际坐标
+	float xa = L1 * cosf(alpha_rad);
+	float ya = L1 * sinf(alpha_rad);
+	float xc = L4 * cosf(beta_rad);
+	float yc = L4 * sinf(beta_rad);
+
+	// 计算求解theta的中间变量
+	float Lac = sqrtf((xa-xc)*(xa-xc) + (ya-yc)*(ya-yc));
+	float a = 2*L2*(xa-xc);
+	float b = 2*L2*(ya-yc);
+	float c = Lac*Lac + L2*L2 - L3*L3;
+
+	// 计算theta1, 符号不太确定，不知道有两个还是四个解
+	float theta1_1 = 2.0f*atan2f(b + sqrtf(a*a + b*b - c*c), a + c);
+	float theta1_2 = 2.0f*atan2f(b - sqrtf(a*a + b*b - c*c), a + c);
+
+	// 计算B点的实际坐标
+	float B_x1 = L1*cosf(alpha_rad) + L2*cosf(theta1_1);
+	float B_y1 = L1*sinf(alpha_rad) + L2*sinf(theta1_1);
+	float B_x2 = L1*cosf(alpha_rad) + L2*cosf(theta1_2);
+	float B_y2 = L1*sinf(alpha_rad) + L2*sinf(theta1_2);
+
+	// 排除物理不可达点
+	if (B_y1>0.0f&&B_y2<0.0f){
+		hposition->B_x_real = B_x1;
+		hposition->B_y_real = B_y1;
+		B_x_debug = B_x1;
+		B_y_debug = B_y1;
+		return;
+	}else if (B_y1<0.0f&&B_y2>0.0f){
+		hposition->B_x_real = B_x2;
+		hposition->B_y_real = B_y2;
+		B_x_debug = B_x2;
+		B_y_debug = B_y2;
+		return;
+	}else {
+		err_count++; // 错误情况，两个解的y都大于0或者都小于0
+		B_x_debug = -1.0f;
+		B_y_debug = -1.0f;
+		return;
+	}
+}
+
+void FK_All(){
+	FK(&hposition1);
+	FK(&hposition2);
+	FK(&hposition3);
+	FK(&hposition4);
+}
+
+// ----------- 雅可比矩阵 -------------
+
+void calc_Jacobian( Position_HandleTypeDef *hposition)
+{
+	float alpha_rad = hposition->alpha_fb * pi / 180.0f+pi/2.0f;
+	float beta_rad = pi/2.0f - hposition->beta_fb * pi / 180.0f;
+
+// 先计算theta1
+	// 计算a c点的实际坐标
+	float xa = L1 * cosf(alpha_rad);
+	float ya = L1 * sinf(alpha_rad);
+	float xc = L4 * cosf(beta_rad);
+	float yc = L4 * sinf(beta_rad);
+
+	// 计算求解theta的中间变量
+	float Lac = sqrtf((xa-xc)*(xa-xc) + (ya-yc)*(ya-yc));
+	float a1 = 2*L2*(xa-xc);
+	float b1 = 2*L2*(ya-yc);
+	float c1 = Lac*Lac + L2*L2 - L3*L3;
+
+	// 计算theta1, 符号不太确定，不知道有两个还是四个解
+	float theta1_1 = 2.0f*atan2f(b1 + sqrtf(a1*a1 + b1*b1 - c1*c1), a1 + c1);
+	float theta1_2 = 2.0f*atan2f(b1 - sqrtf(a1*a1 + b1*b1 - c1*c1), a1 + c1);
+
+	// 计算B点的实际坐标
+	float B_y1_1 = L1*sinf(alpha_rad) + L2*sinf(theta1_1);
+	float B_y1_2 = L1*sinf(alpha_rad) + L2*sinf(theta1_2);
+
+	// 取正确的theta1
+	float jac_theta1 = 0.0f;
+	if (B_y1_1>0.0f&&B_y1_2<0.0f){
+		jac_theta1 = theta1_1;
+		return;
+	}else if (B_y1_1<0.0f&&B_y1_2>0.0f){
+		jac_theta1 = theta1_2;		
+		return;
+	}
+
+// 再计算theta2
+
+	// 计算求解theta2的中间变量
+	float a2 = 2*L3*(xc-xa);
+	float b2 = 2*L3*(yc-ya);
+	float c2 = L2*L2 - Lac*Lac - L3*L3;
+
+	// 计算theta2, 符号不太确定，不知道有两个还是四个解
+	float theta2_1 = 2.0f*atan2f(b2 + sqrtf(a2*a2 + b2*b2 - c2*c2), a2 + c2);
+	float theta2_2 = 2.0f*atan2f(b2 - sqrtf(a2*a2 + b2*b2 - c2*c2), a2 + c2);
+
+}
+
+
+
+
+
+
+
+
+
+

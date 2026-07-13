@@ -8,10 +8,24 @@
 /*某只脚的两个电机驱动的角度，alpha和beta*/
 typedef struct
 {
-	float alpha;
-	float beta;
-	float B_x;  // B点的x坐标
-	float B_y;  // B点的y坐标
+  // 目标值
+	float alpha; // 目标alpha角度
+	float beta;  // 目标beta角度
+	float B_x;  // B点的目标x坐标
+	float B_y;  // B点的目标y坐标
+
+  // 实际值
+    // 直接反馈得
+  float alpha_fb; // 反馈alpha角度
+  float beta_fb;  // 反馈beta角度
+  float alpha_dot_fb; // 反馈alpha角速度
+  float beta_dot_fb;  // 反馈beta角速度
+  float tau_alpha_fb; // alpha电机的反馈力矩
+  float tau_beta_fb;  // beta电机的反馈力矩
+    // 逆解得
+  float B_x_real;  // B点的实际x坐标
+  float B_y_real;  // B点的实际y坐标
+
 
 }Position_HandleTypeDef;
 

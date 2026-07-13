@@ -227,6 +227,45 @@ float alpha = 0.008f;
 
 while (1)
   {  
+
+
+// 7/13 力控测试
+while(1){
+   hmotor1.Tau_ff = 0.0f;
+   hmotor1.Kp = 0.0f;
+   hmotor1.Kw = 0.0f;	
+   hmotor2.Tau_ff = 0.0f;
+   hmotor2.Kp = 0.0f;
+   hmotor2.Kw = 0.0f;	
+   hmotor3.Tau_ff = 0.0f;
+   hmotor3.Kp = 0.0f;
+   hmotor3.Kw = 0.0f;	
+   hmotor4.Tau_ff = 0.0f;
+   hmotor4.Kp = 0.0f;
+   hmotor4.Kw = 0.0f;
+   hmotor5.Tau_ff = 0.0f;
+   hmotor5.Kp = 0.0f;
+   hmotor5.Kw = 0.0f;	
+   hmotor6.Tau_ff = 0.0f;
+   hmotor6.Kp = 0.0f;
+   hmotor6.Kw = 0.0f;	
+   hmotor7.Tau_ff = 0.0f;
+   hmotor7.Kp = 0.0f;
+   hmotor7.Kw = 0.0f;	
+   hmotor8.Tau_ff = 0.0f;
+   hmotor8.Kp = 0.0f;
+   hmotor8.Kw = 0.0f;
+   Motor_SendCmd_AllAngle();  
+// ---------- 测试1：正确读取反馈值 ---------
+    // 读hposition1~4的六个反馈数据，跟实际对比
+
+// ---------- 测试2：正解测试 --------------
+    FK_All();
+    // 手动拨腿的位置，进debug读kinematic.c的hposition1~4的B_x_real和B_y_real和err_count，跟实际对比
+
+// ---------- 测试3：雅可比矩阵测试-----------
+  
+}
 //	  while(1){
 //		//电机接收
 //	  Motor_Feedback_Process();    
@@ -243,18 +282,6 @@ while (1)
 //  
 //		  
 //	  }
-		
-//		float f[4]={AccY,AccX,accum_y,accum_x};
-//		Vofa_JustFloat(f,4);
-	  
-// 		
-//		for(int i=2;i<10;i++){
-//			uint8_t err  = motor_fb[i].error;
-//			if(err!=0){
-//			motor_release();
-//				while(1){}
-//			}
-//		}
 		
 		
 	  //      滤波测试
