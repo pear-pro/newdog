@@ -182,7 +182,8 @@ static void Motor_ParseFrame(uint8_t *f)
     fb->temp  = (int8_t)f[11];
     fb->error = f[12] & 0x07;
 
-    fb->force = ((f[12] >> 3) & 0x1F) | ((uint16_t)f[13] << 5);
+    //fb->force = ((f[12] >> 3) & 0x1F) | ((uint16_t)f[13] << 5);
+    fb->force = (((f[12] >> 3) & 0x1F) << 7) | (f[13] & 0x7F);
 
     fb->online = 1;
 }
