@@ -15,7 +15,7 @@
 // #define offset3 (-90.0f / 2)//?????
  #define offset2 0.0f
  #define offset3 0.0f
- #define offset1  80.0f
+ #define offset1  0.0f
 
  /**
   * 达妙4310电机反馈角度读取宏（Watch窗口使用）

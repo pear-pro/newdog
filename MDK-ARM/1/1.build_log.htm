@@ -36,17 +36,19 @@ compiling main.c...
    #define PI 3.1415926535f
 ../Core/Inc/robot_arm_control.h(73): warning:  #1-D: last line of file ends without a newline
    
-../Core/Src/main.c(648): warning:  #111-D: statement is unreachable
+../Core/Src/main.c(366): warning:  #128-D: loop is not reachable
+  	while(1){
+../Core/Src/main.c(715): warning:  #111-D: statement is unreachable
   	if (rcData.sw5 == 0xFCE0){ emergency_stop = 1;} // 侧翻急停关闭�?
 ../Core/Src/main.c(215): warning:  #177-D: variable "GyroZ_filtered"  was declared but never referenced
   float GyroZ_filtered = 0.0f;
 ../Core/Src/main.c(217): warning:  #177-D: variable "alpha"  was declared but never referenced
   float alpha = 0.008f;
-../Core/Src/main.c: 7 warnings, 0 errors
+../Core/Src/main.c: 8 warnings, 0 errors
 linking...
-Program Size: Code=32398 RO-data=1794 RW-data=504 ZI-data=5328  
+Program Size: Code=32398 RO-data=1794 RW-data=492 ZI-data=4996  
 FromELF: creating hex file...
-"1\1.axf" - 0 Error(s), 7 Warning(s).
+"1\1.axf" - 0 Error(s), 8 Warning(s).
 
 <h2>Software Packages used:</h2>
 

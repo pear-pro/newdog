@@ -216,6 +216,8 @@ float GyroZ_filtered = 0.0f;
 // 滤波系数，0~1，越小越平滑，也越滞后
 float alpha = 0.008f;
 
+
+
 Set_dm_enable(&hcan1,0);
 Set_dm_enable(&hcan1,1);
 
@@ -229,6 +231,17 @@ Set_dm_zeropoint(&hcan1,1);
 	damiao[1].KD = 0.9f;
 	damiao[1].tor = 0.0f;
 	
+	PWM_Set(PWM_OUT);//吸
+Arm_Move_Smooth(10, 10 , 40, 400);
+HAL_Delay(5000);
+Arm_Move_Smooth(20, 23 , 40, 400);
+HAL_Delay(5000);
+Arm_Move_Smooth(20, 23 , 12, 400);
+HAL_Delay(5000);
+Arm_Move_Smooth(20, 23 , 50, 400);
+HAL_Delay(5000);
+Arm_Move_Smooth(10, 10 , 50, 400);
+HAL_Delay(5000);
 //	float kp_value = 0.1f;
 //	float kw_value = 0.01f;
 //	
@@ -252,8 +265,8 @@ Set_dm_zeropoint(&hcan1,1);
 		
 		while (1)
   {  
-
-//		while(1){
+Arm_Base_Move( 11, 0, 200); 
+		while(1){
 //		//电机接收
 //	  Motor_Feedback_Process();    
 //    Motor_Feedback_TimeoutTask();
@@ -268,10 +281,15 @@ Set_dm_zeropoint(&hcan1,1);
 //	Motor_SendCmd_AllAngle(); 
 //  
 //		  
-//	  }
+  }
 //		
 //		while(1){
-//		motor_release();
+//		
+//		hmotor10.Tau_ff = 0.0f;
+//    hmotor10.Kp = 0.0f;
+//    hmotor10.Kw = 0.0f;
+//			Motor_SendCmd(&hmotor10);
+//			HAL_Delay(1);
 //		Motor_Feedback_Process();    
 //    Motor_Feedback_TimeoutTask();
 //		}
@@ -405,8 +423,57 @@ Set_dm_zeropoint(&hcan1,1);
 ////gimbal_send_unitree(0.0f);
 //}
 
+//Arm_Move_Smooth(30, 30 , 50, 400);
+//HAL_Delay(5000);
+//Arm_Move_Smooth(30, 30 , 40, 400);
+//HAL_Delay(5000);
+//Arm_Move_Smooth(30, 30 , 35, 400);
+//HAL_Delay(5000);
+//Arm_Move_Smooth(30, 30 , 30, 400);
+//HAL_Delay(10000);
 
-Arm_Base_Move( 11, 0, 200); 
+
+//Arm_Move_Smooth(30, 30 , 20, 400);
+//HAL_Delay(5000);
+//Arm_Move_Smooth(30, 25 , 20, 400);
+//HAL_Delay(5000);
+Arm_Move_Smooth(15, 15 , 40, 400);
+HAL_Delay(5000);
+Arm_Move_Smooth(20, 30 , 40, 400);
+HAL_Delay(5000);
+Arm_Move_Smooth(20, 30 , 20, 400);
+HAL_Delay(5000);
+Arm_Move_Smooth(20, 30 , 40, 400);
+HAL_Delay(5000);
+Arm_Move_Smooth(15, 15 , 40, 400);
+HAL_Delay(5000);
+//Arm_Move_Smooth(25, 20 , 20, 400);
+//HAL_Delay(5000);
+//Arm_Move_Smooth(20, 20 , 20, 400);
+//HAL_Delay(10000);
+
+
+//Arm_Base_Move( 49.29, -29.58, 200); 
+//Arm_Move_Smooth(49.29, -29.58 , 40, 500);
+////HAL_Delay(5000);
+//Arm_Move_Smooth(20 , 15 , 25, 500);
+//HAL_Delay(40000);
+//Arm_Base_Move( 30, 15, 200); 
+//Arm_Move_Smooth(30 , 15 , 25, 500);
+//HAL_Delay(40000);
+//Arm_Base_Move( 20, 25, 200); 
+//Arm_Move_Smooth(20 , 25 , 25, 500);
+//HAL_Delay(40000);
+//Arm_Base_Move( -9, 0, 200); 
+//Arm_Move_Smooth(10 , 15 , 40, 500);
+//HAL_Delay(30000); 
+//Arm_Base_Move( 11, 20, 200); 
+//Arm_Move_Smooth(10 , 15 , 40, 500);
+//HAL_Delay(30000); 
+
+
+
+
 ////Arm_Move_Smooth(10 , 10 , 40, 100);
 ////HAL_Delay(2000);  
 ////Arm_Base_Move( 0, 1, 200);
@@ -420,8 +487,8 @@ Arm_Base_Move( 11, 0, 200);
 //////Arm_Move_Smooth(x , y , z, 100);  
 //////Arm_Base_Move( x, y, 200);
 ////	
-Arm_Move_Smooth(20 , 15 , 40, 500);
-HAL_Delay(2000);  
+//Arm_Move_Smooth(20 , 15 , 40, 500);
+//HAL_Delay(2000);  
 //Arm_Base_Move( 0, 1, 200);
 //HAL_Delay(2000);
 //Arm_Base_Move( 1, 0, 200);

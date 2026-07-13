@@ -260,7 +260,10 @@ void motor_release()
     hmotor8.Tau_ff = 0.0f;
     hmotor8.Kp = 0.0f;
     hmotor8.Kw = 0.0f;
-	
+//	  hmotor10.Tau_ff = 0.0f;
+//    hmotor10.Kp = 0.0f;
+//    hmotor10.Kw = 0.0f;
+//	
   //  inverseKinematic_All();
     Motor_SendCmd_AllAngle();  
 

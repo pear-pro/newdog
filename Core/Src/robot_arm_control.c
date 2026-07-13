@@ -89,51 +89,39 @@ if (D > L2 + L3 + eps_work || D < fabs(L2 - L3) - eps_work) {
         need_step = 0;
     }
 		    // 计算关节角 theta2
+
+	
     double cos_theta2 = (L2*L2 + L3*L3 - D*D) / (2 * L2 * L3);
     if (cos_theta2 >  1.0) cos_theta2 =  1.0;
     if (cos_theta2 < -1.0) cos_theta2 = -1.0;
     theta2 = acos(cos_theta2);
-
+	  float ture_theta2 = PI-theta2;
+		if((ture_theta2)<=0){
+		ture_theta2=0.0f;
+		}
+if(delta_z >=0){
     // 计算关节角 theta1（肘部向上姿态）
-    double alpha = atan2(R, delta_z);
+ 	 double alpha = atan2(delta_z, R);
     double cos_gamma = (L2*L2 + D*D - L3*L3) / (2 * L2 * D);
     if (cos_gamma >  1.0) cos_gamma =  1.0;
     if (cos_gamma < -1.0) cos_gamma = -1.0;
     double gamma = acos(cos_gamma);
 
-    theta1 = alpha - gamma;
-//}
-//if(has_solution ==1){
+    theta1 = PI/2.0f-alpha - gamma;
+	}
+else{
+    delta_z = L1 - targetZ;
+	double alpha = atan2(R, delta_z);
+	double cos_gamma = (L2*L2 + D*D - L3*L3) / (2 * L2 * D);
+    if (cos_gamma >  1.0) cos_gamma =  1.0;
+    if (cos_gamma < -1.0) cos_gamma = -1.0;
+    double gamma = acos(cos_gamma);
+    theta1 = PI-alpha - gamma;
+	  
+}
 double targetTheta2 = theta1/PI*180.0f;
-double targetTheta3 = -(PI-theta2)*2.0f/PI*180.0f;
+double targetTheta3 = -(ture_theta2)*2.0f/PI*180.0f;//负号是电机方向
 
-
-// has_solution = 1 时，theta1、theta2 即为有效结果（单位：弧度）
-
-//    // ===== 几何逆解（仅大臂、小臂） =====
-//    float z_new = targetZ - 12.8f;
-//    float s = sqrtf(targetX * targetX + targetY * targetY);
-//    float h = z_new - L1;
-//    float dist = sqrtf(s * s + h * h);
-
-//    // 工作空间钳位
-//    if (dist > L2 + L3 - 0.01f) dist = L2 + L3 - 0.01f;
-//    else if (dist < fabsf(L2 - L3) + 0.01f) dist = fabsf(L2 - L3) + 0.01f;
-
-//    float cos_alpha = CLAMP_COS((L2*L2 + L3*L3 - dist*dist) / (2*L2*L3));
-//    float alpha = acosf(cos_alpha) * 180.0f / PI;
-//    float phi = atan2f(h, s) * 180.0f / PI;
-//    float cos_beta = CLAMP_COS((L3*L3 + dist*dist - L2*L2) / (2*L3*dist));
-//    float beta = acosf(cos_beta) * 180.0f / PI;
-
-//    float targetTheta2 = 90.0f - (phi + beta) + offset2;
-//    float targetTheta3 = -(180.0f - alpha) + offset3;
-
-//    // 关节限幅
-//    if (targetTheta2 > 60.5f) targetTheta2 = 60.0f;
-//    else if (targetTheta2 < -73.5f) targetTheta2 = -73.5f;
-//    if (targetTheta3 > 131.5f) targetTheta3 = 131.5f;
-//    else if (targetTheta3 < -143.0f) targetTheta3 = -143.0f;
 
     // ===== 执行运动 =====
     if (need_step) {
@@ -224,63 +212,110 @@ double targetTheta3 = -(PI-theta2)*2.0f/PI*180.0f;
 //    // 最终精准到位
 //    gimbal_send_unitree(targetTheta1 + offset1);
 //}
-void Arm_Base_Move(float targetX, float targetY, uint16_t steps)
+//void Arm_Base_Move(float targetX, float targetY, uint16_t steps)//闭环的
+//{
+//    static float last_target_X = 0.0f;
+//    static float last_target_Y = 0.0f;
+//    static float current_theta = 0.0f;          // 当前实际角度（不含offset1，单位：度）
+//    static int first_call = 1;
+//    const float eps = 0.01f;
+
+//    // 1. 目标无变化则返回
+//    if (fabsf(targetX - last_target_X) < eps && fabsf(targetY - last_target_Y) < eps) {
+//        return;
+//    }
+//    last_target_X = targetX;
+//    last_target_Y = targetY;
+
+//    // 2. 计算目标底座角度（相对于基座坐标系）
+//    float targetTheta1 = atan2f(targetY, targetX) * 180.0f / PI;
+//    // 限幅
+//    if (targetTheta1 <= -90.0f) targetTheta1 = -90.0f;
+//    if (targetTheta1 >=  90.0f) targetTheta1 =  90.0f;
+
+//    // 3. 首次调用时，从实际反馈初始化 current_theta（注意去掉 offset1）
+//    if (first_call) {
+//        Motor_Feedback_Process();
+//        Motor_Feedback_TimeoutTask();
+//        // 假设 motor_fb[6].theta 是原始编码器值，转换为度后加上 offset1 为实际角度
+//        // 但我们要存储不带 offset1 的机械角度，因为后续发送会统一加 offset1
+//        // 若 offset1 是机械零位偏移，则实际角度 = raw * scale + offset1，
+//        // 但发送函数要求的是 raw * scale 还是 raw * scale + offset1 需明确。
+//        // 这里推荐统一：current_theta 存储“发送指令值”（即电机期望接收的值），
+//        // 而 targetTheta1 也转换成相同量纲。为了减少混淆，统一用法：
+//        // 令 offset1 仅为反馈计算用，发送时不加 offset1，直接发送 targetTheta1。
+//        // 但原代码发送加了 offset1，所以我们这里保持兼容：
+//        // current_theta = motor_fb[6].theta / 39.7524f * 360.0f + offset1; // 这是原反馈值
+//        // 但由于发送时也加 offset1，所以实际起点应减去 offset1 以匹配目标不带 offset1 的计算。
+//        // 最简单：让 current_theta 存储不带 offset1 的值，同时修改发送，去掉多余偏移。
+//        // 我建议修改发送方式：发送 (ctrl) 即可，不再加 offset1。
+//        // 但为了最小改动，你需确认 offset1 用途。以下为推荐修改（发送不加 offset1）：
+//        current_theta = motor_fb[10].theta / 39.7524f * 360.0f; // 原始编码器角度
+//        first_call = 0;
+//    }
+
+//    // 4. 从 current_theta 插值到 targetTheta1（两者都不加 offset1）
+//    float delta = (targetTheta1 - current_theta) / steps;
+//    float ctrl = current_theta;
+//    for (uint16_t i = 0; i < steps; i++) {
+//        ctrl += delta;
+//        // 发送指令时不再额外加 offset1（如果发送函数期望原始编码器角度）
+//        // 若你确认发送函数需要 offset1，请保留，但务必与 current_theta 的量纲一致。
+//        gimbal_send_unitree(ctrl);   // 注意：这里不再加 offset1
+//        HAL_Delay(10);
+//    }
+//    // 最终精准到位
+//    gimbal_send_unitree(targetTheta1);
+
+//    // 5. 更新当前位置为本次目标，供下次作为起点
+//    current_theta = targetTheta1;
+//}
+
+
+
+
+
+/**
+ * @brief 底座开环步进到目标XY对应的角度（不依赖反馈）
+ * @param targetX  目标 X 坐标（任意单位）
+ * @param targetY  目标 Y 坐标（任意单位）
+ * @param steps    插值步数（必须 > 0）
+ */
+void Arm_Base_Move(float targetX, float targetY, uint16_t steps)//开环的，读不到反馈值时用
 {
-    static float last_target_X = 0.0f;
-    static float last_target_Y = 0.0f;
-    static float current_theta = 0.0f;          // 当前实际角度（不含offset1，单位：度）
-    static int first_call = 1;
+    // 静态变量记录当前实际角度（物理角度，单位度），初始为0（机械零点）
+    static float current_angle = 0.0f;
     const float eps = 0.01f;
 
-    // 1. 目标无变化则返回
-    if (fabsf(targetX - last_target_X) < eps && fabsf(targetY - last_target_Y) < eps) {
+    // 1. 计算目标角度（物理角度，单位度）
+    float target_angle = atan2f(targetY, targetX) * 180.0f / PI;
+
+    // 2. 角度限幅（-90° ~ 90°）
+    if (target_angle < -90.0f) target_angle = -90.0f;
+    if (target_angle >  90.0f) target_angle =  90.0f;
+
+    // 3. 如果目标与当前角度几乎相同，直接返回（避免无效步进）
+    if (fabsf(target_angle - current_angle) < eps) {
         return;
     }
-    last_target_X = targetX;
-    last_target_Y = targetY;
 
-    // 2. 计算目标底座角度（相对于基座坐标系）
-    float targetTheta1 = atan2f(targetY, targetX) * 180.0f / PI;
-    // 限幅
-    if (targetTheta1 <= -90.0f) targetTheta1 = -90.0f;
-    if (targetTheta1 >=  90.0f) targetTheta1 =  90.0f;
+    // 4. 步进参数保护（防止除零）
+    if (steps == 0) steps = 1;
 
-    // 3. 首次调用时，从实际反馈初始化 current_theta（注意去掉 offset1）
-    if (first_call) {
-        Motor_Feedback_Process();
-        Motor_Feedback_TimeoutTask();
-        // 假设 motor_fb[6].theta 是原始编码器值，转换为度后加上 offset1 为实际角度
-        // 但我们要存储不带 offset1 的机械角度，因为后续发送会统一加 offset1
-        // 若 offset1 是机械零位偏移，则实际角度 = raw * scale + offset1，
-        // 但发送函数要求的是 raw * scale 还是 raw * scale + offset1 需明确。
-        // 这里推荐统一：current_theta 存储“发送指令值”（即电机期望接收的值），
-        // 而 targetTheta1 也转换成相同量纲。为了减少混淆，统一用法：
-        // 令 offset1 仅为反馈计算用，发送时不加 offset1，直接发送 targetTheta1。
-        // 但原代码发送加了 offset1，所以我们这里保持兼容：
-        // current_theta = motor_fb[6].theta / 39.7524f * 360.0f + offset1; // 这是原反馈值
-        // 但由于发送时也加 offset1，所以实际起点应减去 offset1 以匹配目标不带 offset1 的计算。
-        // 最简单：让 current_theta 存储不带 offset1 的值，同时修改发送，去掉多余偏移。
-        // 我建议修改发送方式：发送 (ctrl) 即可，不再加 offset1。
-        // 但为了最小改动，你需确认 offset1 用途。以下为推荐修改（发送不加 offset1）：
-        current_theta = motor_fb[10].theta / 39.7524f * 360.0f; // 原始编码器角度
-        first_call = 0;
-    }
-
-    // 4. 从 current_theta 插值到 targetTheta1（两者都不加 offset1）
-    float delta = (targetTheta1 - current_theta) / steps;
-    float ctrl = current_theta;
+    // 5. 开环插值：从 current_angle 逐步移动到 target_angle
+    float delta = (target_angle - current_angle) / steps;
+    float cmd = current_angle;
     for (uint16_t i = 0; i < steps; i++) {
-        ctrl += delta;
-        // 发送指令时不再额外加 offset1（如果发送函数期望原始编码器角度）
-        // 若你确认发送函数需要 offset1，请保留，但务必与 current_theta 的量纲一致。
-        gimbal_send_unitree(ctrl);   // 注意：这里不再加 offset1
-        HAL_Delay(10);
+        cmd += delta;
+        gimbal_send_unitree(cmd);   // 直接发送实际角度（不加偏移）
+        HAL_Delay(10);              // 可根据需要调整步进间隔
     }
-    // 最终精准到位
-    gimbal_send_unitree(targetTheta1);
 
-    // 5. 更新当前位置为本次目标，供下次作为起点
-    current_theta = targetTheta1;
+    // 6. 最终精准到位
+    gimbal_send_unitree(target_angle);
+
+    // 7. 更新记录为本次终点（供下次调用作为起点）
+    current_angle = target_angle;
 }
 
 //舵机
