@@ -48,6 +48,9 @@ void Set_Sucker_Servo_Angle_TIM8(uint32_t Channel, float angle);
 void Arm_Base_Move(float targetX, float targetY, uint16_t steps);
 void Set_Servo_Angle_TIM8(uint32_t Channel, float angle);
 void Arm_Forward_Kinematics(float *x, float *y, float *z);
+void Wait_xy(void);
+void Catch_up(float x,float y);
+void Put_down(float x,float y);
 
 /**
  * 正运动学函数

@@ -5,6 +5,7 @@
 #include "motor_4310.h"
 #include "motor_feedback.h"
 #include "global_var.h"
+#include "pwm_app.h"
 #include <math.h>
 
 /*
@@ -170,49 +171,7 @@ double targetTheta3 = -(ture_theta2)*2.0f/PI*180.0f;//负号是电机方向
  * @note   内部用静态变量记录上一次目标，只有当 XY 变化时才执行运动，
  *         否则立即返回（不重复发送指令，节省通信且避免抖动）。
  */
-//void Arm_Base_Move(float targetX, float targetY, uint16_t steps)
-//{
-//    static float last_base_X = 0.0f;
-//    static float last_base_Y = 0.0f;
-//    const float eps = 0.01f;
 
-//    // 1. 如果 XY 没有明显变化，不做任何事，直接返回
-//    if (fabsf(targetX - last_base_X) < eps && fabsf(targetY - last_base_Y) < eps) {
-//        return;
-//    }
-
-//    // 2. 记录本次目标，供下次比较
-//    last_base_X = targetX;
-//    last_base_Y = targetY;
-
-//    // 3. 计算目标底座角度（修正：用当前 targetX, targetY）
-//    float targetTheta1 = atan2f(targetY, targetX) * 180.0f / PI;
-
-//    // 4. 底座角度限幅（-90°~90°）
-//    if (targetTheta1 < -90.0f || targetTheta1 > 90.0f) {
-//        // 可以根据需要钳位或直接返回，这里选择钳位
-//        targetTheta1 = (targetTheta1 < -90.0f) ? -90.0f : 90.0f;
-//    }
-
-//    // 5. 读取当前底座实际角度（用于步进起点）
-//    Motor_Feedback_Process();
-//    Motor_Feedback_TimeoutTask();
-//    float currentTheta1 = motor_fb[6].theta / 39.7524f * 360.0f + offset1;
-
-//    // 6. 步进模式：插值发送底座角度（与非步进统一处理，简单起见直接用步进）
-//    float delta = (targetTheta1 - currentTheta1) / steps;
-//    float ctrl = currentTheta1;
-//    for (uint16_t i = 0; i < steps; i++) {
-//        ctrl += delta;
-//        float gimbal_deg = ctrl + offset1;          // 使用 offset1 统一偏移
-//        hmotor3.Kp = 0.2f;
-//        hmotor3.Kw = 0.01f;
-//        gimbal_send_unitree(gimbal_deg);
-//        HAL_Delay(10);
-//    }
-//    // 最终精准到位
-//    gimbal_send_unitree(targetTheta1 + offset1);
-//}
 //void Arm_Base_Move(float targetX, float targetY, uint16_t steps)//闭环的
 //{
 //    static float last_target_X = 0.0f;
@@ -426,3 +385,57 @@ void Arm_Forward_Kinematics_New(float big_arm_angle_deg, float small_arm_angle_d
 //		if(currentTheta1)
 //	}
 //}
+
+void Wait_xy(void)//等待摄像机识别坐标
+{
+Arm_Move_Smooth(30,0,45,300);
+Set_Sucker_Servo_Angle_TIM8(TIM_CHANNEL_3, 110.0f);
+Arm_Base_Move(30,0,300);
+
+HAL_Delay(2000);
+
+
+}
+
+
+void Catch_up(float x,float y)//机械臂抓取
+{
+PWM_Set(PWM_OUT);//吸
+Arm_Base_Move(30,0,300);
+Arm_Move_Smooth(30,0,45,300);
+
+Arm_Base_Move(30,0,300);
+Set_Sucker_Servo_Angle_TIM8(TIM_CHANNEL_3, 45.0f);	
+Arm_Move_Smooth(30,0,10,300);
+HAL_Delay(2000);
+
+Arm_Move_Smooth(0,20,60,300);
+Set_Sucker_Servo_Angle_TIM8(TIM_CHANNEL_3, 130.0f);
+Arm_Base_Move(0,10,300);
+
+
+
+
+
+}
+
+
+void Put_down(float x,float y)//机械臂放下
+{
+
+Arm_Base_Move(30,0,300);
+Arm_Move_Smooth(30,0,30,300);
+//	
+////Arm_Base_Move(30+x,0+y,300);
+Set_Sucker_Servo_Angle_TIM8(TIM_CHANNEL_3, 45.0f);
+Arm_Move_Smooth(30,5,10,300);
+PWM_Set(PWM_IN);//放
+HAL_Delay(2000);
+	
+Arm_Move_Smooth(30,0,30,300);
+Arm_Base_Move( 0, 1, 200);//云台转+90度，机械臂收回到狗身上
+Arm_Move_Smooth(3, 0 , 50, 400);//将机械臂收起来
+
+
+
+}

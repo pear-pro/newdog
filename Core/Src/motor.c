@@ -24,7 +24,7 @@ float motor5_bias = 0.416f;
 float motor6_bias = 0.699f;
 float motor7_bias = 0.514f;
 float motor8_bias = 0.383f;
-float motor10_bias = 1.1595f;// 云台偏置   //  motor10_bias=   2*PI*motor_fb[10].theta/6.33/6.28
+float motor10_bias = 0.299f;// 云台偏置   //  motor10_bias=   2*PI*motor_fb[10].theta/6.33/6.28
 
 
 float flip_offset = 0.0f; // 3.165f 狗腿翻身对应的电机反转角度
