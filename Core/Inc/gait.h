@@ -8,6 +8,9 @@
 /*某只脚的两个电机驱动的角度，alpha和beta*/
 typedef struct
 {
+  // 腿的编号
+  uint8_t leg_id; // 1-4
+
   // 目标值
 	float alpha; // 目标alpha角度
 	float beta;  // 目标beta角度

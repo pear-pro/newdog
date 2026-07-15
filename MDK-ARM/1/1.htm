@@ -3,7 +3,7 @@
 <title>Static Call Graph - [1\1.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image 1\1.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060528: Last Updated: Mon Jul 13 16:56:51 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060528: Last Updated: Tue Jul 14 03:38:06 2026
 <BR><P>
 <H3>Maximum Stack Usage =        292 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -577,7 +577,7 @@ Global Symbols
 <LI><a href="#[10b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SystemClock_Config
 </UL>
 
-<P><STRONG><a name="[7b]"></a>FK</STRONG> (Thumb, 626 bytes, Stack size 80 bytes, kinematic.o(i.FK))
+<P><STRONG><a name="[7b]"></a>FK</STRONG> (Thumb, 830 bytes, Stack size 80 bytes, kinematic.o(i.FK))
 <BR><BR>[Stack]<UL><LI>Max Depth = 116<LI>Call Chain = FK &rArr; __hardfp_sinf &rArr; __mathlib_rredf2
 </UL>
 <BR>[Calls]<UL><LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__hardfp_sqrtf
@@ -1457,7 +1457,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[102]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_SendCmd_AllAngle
 </UL>
 
-<P><STRONG><a name="[102]"></a>Motor_SendCmd_AllAngle</STRONG> (Thumb, 1320 bytes, Stack size 8 bytes, motor.o(i.Motor_SendCmd_AllAngle))
+<P><STRONG><a name="[102]"></a>Motor_SendCmd_AllAngle</STRONG> (Thumb, 1710 bytes, Stack size 8 bytes, motor.o(i.Motor_SendCmd_AllAngle))
 <BR><BR>[Stack]<UL><LI>Max Depth = 88<LI>Call Chain = Motor_SendCmd_AllAngle &rArr; Motor_Feedback_Process &rArr; Motor_ParseFrame &rArr; CRC16_CCITT_Check &rArr; crc_ccitt
 </UL>
 <BR>[Calls]<UL><LI><a href="#[104]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Feedback_TimeoutTask
@@ -1746,7 +1746,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_EXTI_Callback
 </UL>
 
-<P><STRONG><a name="[63]"></a>main</STRONG> (Thumb, 370 bytes, Stack size 0 bytes, main.o(i.main))
+<P><STRONG><a name="[63]"></a>main</STRONG> (Thumb, 394 bytes, Stack size 0 bytes, main.o(i.main))
 <BR><BR>[Stack]<UL><LI>Max Depth = 168<LI>Call Chain = main &rArr; SystemClock_Config &rArr; HAL_RCC_ClockConfig &rArr; HAL_RCC_GetSysClockFreq &rArr; __aeabi_uldivmod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FK_All
@@ -1755,6 +1755,7 @@ Global Symbols
 <LI><a href="#[127]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;remap_motor_ids
 <LI><a href="#[121]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_motor_parameters
 <LI><a href="#[102]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_SendCmd_AllAngle
+<LI><a href="#[10c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART8_Demo_Init
 <LI><a href="#[fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Feedback_Init
 <LI><a href="#[107]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Set_dm_enable
 <LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sbus_remote_control_init
@@ -1776,7 +1777,6 @@ Global Symbols
 <LI><a href="#[125]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start
 <LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_Init
 <LI><a href="#[10b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SystemClock_Config
-<LI><a href="#[10c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART8_Demo_Init
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> entry9a.o(.ARM.Collect$$$$0000000B)
 </UL>

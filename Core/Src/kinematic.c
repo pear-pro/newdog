@@ -289,9 +289,23 @@ void crawl_inverseKinematic_All(){
 /*-------------- 正解算 ---------------*/
 // 输入: alpha_fb, beta_fb, 输出: B_x_real, B_y_real
 void FK(Position_HandleTypeDef *hposition){
-	
-	float alpha_rad = hposition->alpha_fb * pi / 180.0f+pi/2.0f;
-	float beta_rad = pi/2.0f - hposition->beta_fb * pi / 180.0f;
+	float alpha_rad = 0.0f;
+	float beta_rad = 0.0f;
+
+	// 前腿机械装反了
+	if (hposition->leg_id == 1){// 上顺异号，ab换了
+		alpha_rad = -hposition->beta_fb * pi / 180.0f+pi/2.0f;
+		beta_rad = pi/2.0f + hposition->alpha_fb * pi / 180.0f;
+	}else if (hposition->leg_id == 2){// 上逆同号，ab没换
+		alpha_rad = hposition->alpha_fb * pi / 180.0f+pi/2.0f;
+		beta_rad = pi/2.0f - hposition->beta_fb * pi / 180.0f;
+	}else if (hposition->leg_id == 3){// 上顺异号，ab没换
+		alpha_rad = -hposition->alpha_fb * pi / 180.0f+pi/2.0f;
+		beta_rad = pi/2.0f + hposition->beta_fb * pi / 180.0f;
+	}else{// 上逆同号，ab换了
+		alpha_rad = hposition->beta_fb * pi / 180.0f+pi/2.0f;
+		beta_rad = pi/2.0f - hposition->alpha_fb * pi / 180.0f;
+	}
 
 	// 计算a c点的实际坐标
 	float xa = L1 * cosf(alpha_rad);
@@ -303,7 +317,7 @@ void FK(Position_HandleTypeDef *hposition){
 	float Lac = sqrtf((xa-xc)*(xa-xc) + (ya-yc)*(ya-yc));
 	float a = 2*L2*(xa-xc);
 	float b = 2*L2*(ya-yc);
-	float c = Lac*Lac + L2*L2 - L3*L3;
+	float c = L3*L3 - Lac*Lac - L2*L2;
 
 	// 计算theta1, 符号不太确定，不知道有两个还是四个解
 	float theta1_1 = 2.0f*atan2f(b + sqrtf(a*a + b*b - c*c), a + c);
@@ -347,8 +361,23 @@ void FK_All(){
 
 void calc_Jacobian( Position_HandleTypeDef *hposition)
 {
-	float alpha_rad = hposition->alpha_fb * pi / 180.0f+pi/2.0f;
-	float beta_rad = pi/2.0f - hposition->beta_fb * pi / 180.0f;
+	float alpha_rad = 0.0f;
+	float beta_rad = 0.0f;
+
+	// 前腿机械装反了
+	if (hposition->leg_id == 1){// 上顺异号，ab换了
+		alpha_rad = -hposition->beta_fb * pi / 180.0f+pi/2.0f;
+		beta_rad = pi/2.0f + hposition->alpha_fb * pi / 180.0f;
+	}else if (hposition->leg_id == 2){// 上逆同号，ab没换
+		alpha_rad = hposition->alpha_fb * pi / 180.0f+pi/2.0f;
+		beta_rad = pi/2.0f - hposition->beta_fb * pi / 180.0f;
+	}else if (hposition->leg_id == 3){// 上顺异号，ab没换
+		alpha_rad = -hposition->alpha_fb * pi / 180.0f+pi/2.0f;
+		beta_rad = pi/2.0f + hposition->beta_fb * pi / 180.0f;
+	}else{// 上逆同号，ab换了
+		alpha_rad = hposition->beta_fb * pi / 180.0f+pi/2.0f;
+		beta_rad = pi/2.0f - hposition->alpha_fb * pi / 180.0f;
+	}
 
 // 先计算theta1
 	// 计算a c点的实际坐标
@@ -361,7 +390,7 @@ void calc_Jacobian( Position_HandleTypeDef *hposition)
 	float Lac = sqrtf((xa-xc)*(xa-xc) + (ya-yc)*(ya-yc));
 	float a1 = 2*L2*(xa-xc);
 	float b1 = 2*L2*(ya-yc);
-	float c1 = Lac*Lac + L2*L2 - L3*L3;
+	float c1 = L3*L3 - Lac*Lac - L2*L2;
 
 	// 计算theta1, 符号不太确定，不知道有两个还是四个解
 	float theta1_1 = 2.0f*atan2f(b1 + sqrtf(a1*a1 + b1*b1 - c1*c1), a1 + c1);
@@ -375,10 +404,8 @@ void calc_Jacobian( Position_HandleTypeDef *hposition)
 	float jac_theta1 = 0.0f;
 	if (B_y1_1>0.0f&&B_y1_2<0.0f){
 		jac_theta1 = theta1_1;
-		return;
 	}else if (B_y1_1<0.0f&&B_y1_2>0.0f){
 		jac_theta1 = theta1_2;		
-		return;
 	}
 
 // 再计算theta2
@@ -392,8 +419,25 @@ void calc_Jacobian( Position_HandleTypeDef *hposition)
 	float theta2_1 = 2.0f*atan2f(b2 + sqrtf(a2*a2 + b2*b2 - c2*c2), a2 + c2);
 	float theta2_2 = 2.0f*atan2f(b2 - sqrtf(a2*a2 + b2*b2 - c2*c2), a2 + c2);
 
-}
+	// 计算B点的实际坐标
+	float B_y2_1 = L1*sinf(alpha_rad) + L2*sinf(theta2_1);
+	float B_y2_2 = L1*sinf(alpha_rad) + L2*sinf(theta2_2);
 
+	// 取正确的theta2
+	float jac_theta2 = 0.0f;
+	if (B_y2_1>0.0f&&B_y2_2<0.0f){
+		jac_theta2 = theta2_1;
+	}else if (B_y2_1<0.0f&&B_y2_2>0.0f){
+		jac_theta2 = theta2_2;		
+	}
+
+// 计算雅可比矩阵 不确定能否正确赋值
+	jac.J11 = L1*sinf(jac_theta2)*sinf(alpha_rad-jac_theta1)/sinf(jac_theta1-jac_theta2);
+	jac.J12 = -L4*sinf(jac_theta1)*sinf(beta_rad-jac_theta2)/sinf(jac_theta1-jac_theta2);
+	jac.J21 = -L1*cosf(jac_theta2)*sinf(alpha_rad-jac_theta1)/sinf(jac_theta1-jac_theta2);
+	jac.J22 = L4*cosf(jac_theta1)*sinf(beta_rad-jac_theta2)/sinf(jac_theta1-jac_theta2);
+
+}
 
 
 

@@ -183,6 +183,11 @@ int main(void)
 	HAL_TIM_Base_Start(&htim9);
 	PWM_Init(); 
 	
+	hposition1.leg_id = 1;
+hposition2.leg_id = 2;
+hposition3.leg_id = 3;
+hposition4.leg_id = 4;
+
 
 	//remote_control_init(); // 初始化遥控器
 	sbus_remote_control_init(); // 初始化遥控器hot rc
@@ -226,11 +231,7 @@ float alpha = 0.008f;
 //	Motor_SendCmd_AllAngle(); 
 
 while (1)
-  {  
-
-
-// 7/13 力控测试
-while(1){
+  {     
    hmotor1.Tau_ff = 0.0f;
    hmotor1.Kp = 0.0f;
    hmotor1.Kw = 0.0f;	
@@ -256,16 +257,60 @@ while(1){
    hmotor8.Kp = 0.0f;
    hmotor8.Kw = 0.0f;
    Motor_SendCmd_AllAngle();  
-// ---------- 测试1：正确读取反馈值 ---------
+
+
+// 7/13 力控测试一
+while(1){
+
+    // ---------- 测试1：正确读取反馈值 ---------
     // 读hposition1~4的六个反馈数据，跟实际对比
 
-// ---------- 测试2：正解测试 --------------
+    // ---------- 测试2：正解测试 --------------
     FK_All();
     // 手动拨腿的位置，进debug读kinematic.c的hposition1~4的B_x_real和B_y_real和err_count，跟实际对比
+	
+	// ----------- 测试3：单点发送 -----------
+//   hmotor1.Kp = 0.3f;
+//   hmotor1.Kw = 0.01f;	
+//   hmotor2.Kp = 0.1f;
+//   hmotor2.Kw = 0.01f;	
+//     float x = 0.0f;
+//     float y =25.0f;
+//     hposition1.B_y = y;
+//     hposition1.B_x = x; 
+////     hposition2.B_y = y;
+////     hposition2.B_x = x; 
+////     hposition3.B_y = y;
+////     hposition3.B_x = x; 
+////     hposition4.B_y = y;
+////     hposition4.B_x = x;
+//     inverseKinematic_All();
+//     Motor_SendCmd_AllAngle(); 
 
-// ---------- 测试3：雅可比矩阵测试-----------
-  
+    // ---------- 测试3：雅可比矩阵测试-----------
+
 }
+
+// 7/13 力控测试二
+    // ---------- 测试1：发送单点-----------------
+// while(1){
+//     float x = 0.0f;
+//     float y =25.0f;
+//     hposition1.B_y = y;
+//     hposition1.B_x = x; 
+//     hposition2.B_y = y;
+//     hposition2.B_x = x; 
+//     hposition3.B_y = y;
+//     hposition3.B_x = x; 
+//     hposition4.B_y = y;
+//     hposition4.B_x = x;
+//     inverseKinematic_All();
+//     Motor_SendCmd_AllAngle(); 
+//     HAL_Delay(10);
+//     FK_All(); // 发送单点（逆解算得关节角度，发送角度） |  读取单点（读取当前角度，正解得单点）
+//               // 若对的上，说明正解对
+//   }
+
 //	  while(1){
 //		//电机接收
 //	  Motor_Feedback_Process();    

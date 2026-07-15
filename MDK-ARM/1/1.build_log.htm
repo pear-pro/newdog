@@ -27,16 +27,30 @@ Project File Date:  07/13/2026
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\keil5\ARM\ARMCC\Bin'
 Build target '1'
-compiling motor.c...
-../Core/Inc/gait.h(92): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
+compiling main.c...
+../Core/Inc/gait.h(95): warning:  #1295-D: Deprecated declaration Init_turn_omega_des - give arg types
   void Init_turn_omega_des();
-..\Core\Src\motor.c(198): warning:  #550-D: variable "success"  was set but never used
-          uint8_t success = 0;
-..\Core\Src\motor.c: 2 warnings, 0 errors
+../Core/Inc/motor_4310.h(51): warning:  #1-D: last line of file ends without a newline
+  #endif // __MOTOR_4310_H
+../Core/Inc/robot_arm_control.h(9): warning:  #47-D: incompatible redefinition of macro "PI"  (declared at line 8 of "../Core/Inc/motor.h")
+   #define PI 3.1415926535f
+../Core/Inc/robot_arm_control.h(28): warning:  #1-D: last line of file ends without a newline
+   
+../Core/Src/main.c(350): warning:  #111-D: statement is unreachable
+      UART8_Demo_Process(); // 处理 UART8 接收的树莓派数据，更�? rcData 结构�?
+../Core/Src/main.c(490): warning:  #550-D: variable "prev_temp_state"  was set but never used
+  	    static uint8_t prev_temp_state = 0;  /* 上一帧的状态，用于检测切�? */
+../Core/Src/main.c(483): warning:  #177-D: variable "control_omega"  was declared but never referenced
+  	float control_omega = 0.0f;
+../Core/Src/main.c(215): warning:  #177-D: variable "GyroZ_filtered"  was declared but never referenced
+  float GyroZ_filtered = 0.0f;
+../Core/Src/main.c(217): warning:  #177-D: variable "alpha"  was declared but never referenced
+  float alpha = 0.008f;
+../Core/Src/main.c: 9 warnings, 0 errors
 linking...
-Program Size: Code=29096 RO-data=1580 RW-data=488 ZI-data=4840  
+Program Size: Code=29752 RO-data=1580 RW-data=488 ZI-data=4856  
 FromELF: creating hex file...
-"1\1.axf" - 0 Error(s), 2 Warning(s).
+"1\1.axf" - 0 Error(s), 9 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -59,7 +73,7 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE@5.6.0
       Include file:  CMSIS/Core/Include/tz_context.h
-Build Time Elapsed:  00:00:05
+Build Time Elapsed:  00:00:03
 </pre>
 </body>
 </html>
