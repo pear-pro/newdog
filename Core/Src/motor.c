@@ -14,16 +14,15 @@
 
 #define TRANSNIT_DELAY 500
  
-float motor1_bias = 5.00f;
-float motor2_bias = 0.15f;
-float motor3_bias = 5.12f;
-float motor4_bias = 3.0f;
-float motor5_bias = 1.90f;
-float motor6_bias = 4.53f;
-float motor7_bias = -1.60f;
-float motor8_bias = 3.00f;
+float motor1_bias = 0.54438f;
+float motor2_bias = 1.08243f;
+float motor3_bias = 4.43733f;
+float motor4_bias = 1.69644f;
+float motor5_bias = 2.63328f;
+float motor6_bias = 5.45163f;
+float motor7_bias = 3.25362f;
+float motor8_bias = 2.42439f;
 float motor10_bias = 3.10f;// 云台偏置
-
 
 float flip_offset = 0.0f; // 3.165f 狗腿翻身对应的电机反转角度
 

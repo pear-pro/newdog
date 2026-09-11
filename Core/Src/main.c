@@ -47,6 +47,7 @@
 #include "filter.h"
 
 #include "usart_demo.h"
+#include "vmc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -341,6 +342,9 @@ if (rcData.sw8 == 0xFCE0){ emergency_stop = 1;} // 侧翻急停关闭版
 
   if (rcData.sw8 == 0x0320 ){ temp_state=1;} // 遥控控制
 
+  /* ── VMC 力矩前馈仅在常规步态/站立下生效；跳跃(6)等爆发动作关闭 ── */
+  vmc_active = (temp_state == 6) ? 0 : 1;
+
 
   // -------------一些未用上的功能------------------
 // 捡箱子功能
@@ -395,17 +399,16 @@ if (emergency_stop==1){
         break;
                    
         case 6: // 匍匐，过限高杆
-//			    if (prev_temp_state != 6) {
-//			        motion_Crawl_Reset();  /* 刚进入匍匐，触发缓慢下蹲 */
-//			    }
-//			motion_Crawl(5.0f,12.0f);
-			//	motion_Jump(15.0f);
-			//	motion_TripodWalk(22.0f, 12.0f);
-				motion_SmallJump();
+
+				  motion_SmallJump();//过于垂直
+  		  //  motion_LeanJump	();//每次一块砖
+				//motion_SlopeJump();
         break;     
 
         case 7:// 前空翻
-			motion_Frontflip();
+			//motion_Frontflip();
+			//motion_LeanJump	();
+				
 
         break; 
 

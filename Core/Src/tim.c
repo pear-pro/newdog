@@ -28,6 +28,7 @@
 #include "ht_10a_remote_control.h"
 #include "debug_uart.h"
 #include "motor_feedback.h"
+#include "vmc.h"
 
 #include "math.h"
 /*
@@ -310,6 +311,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		}else{
 			emergency_stop = 0;
 		}
+		/* ── VMC 力矩前馈更新（100Hz 固定周期，只写 Tau_ff）── */
+		VMC_Update();
 		/* ── VOFA 电机诊断: 4Hz (100Hz / 25, offset=2) ── */
 		static uint8_t diag_div = 2;
 		if (++diag_div >= 25) {

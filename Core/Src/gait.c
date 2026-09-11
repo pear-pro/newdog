@@ -11,6 +11,7 @@
 #include "imu.h"
 #include "tim.h"
 #include "motor.h"
+#include "vmc.h"
 #include "stm32f427xx.h"
 #include "stm32f4xx_hal_rcc.h"
 #include <stdint.h>
@@ -43,9 +44,21 @@ float Frontflip_freq3 = 0.004f; //
 #define jump_freq3 0.039f   // 0.07  0.0372
 #define jump_freq4 0.005f   // 0.01  0.005
 #define jump_freq5 0.003f   // 0.01
+#define smjump_freq 1.0f     // 小跳统一频率，1.0=原速，>1加速，<1减速
+
+/* ── 斜面跳跃参数（侧坡：左侧低、右侧高，身体水平）── */
+#define SLOPE_ANGLE_DEG  10.0f   // 侧坡角度（度）
+#define BODY_HALF_WIDTH  10.0f   // 左右髋关节间距的一半 (cm)，需实测调整
 
 float walk_height = 22.0f; //32.0   // 步高，直接影响通过性，过大可能过不了，过小可能容易绊倒
 float max_stride = 13.0f;// 13.0f  // 步幅，直接影响速度，过大可能打滑，过小可能慢
+
+/* ── 前倾跳跃参数（极坐标：R=腿长, θ=腿与竖直夹角）── */
+float lean_angle_deg = 6.0f;    // 前倾角(度)
+float lean_crouch_R  = 16.0f;   // 蹬腿起始腿长(下蹲)
+float lean_push_R    = 32.0f;   // 蹬腿终止腿长(蹬直)
+float lean_kp_boost  = 4.5f;    // 蹬腿Kp
+float land_slope_ofs  = 6.0f;    // 落地斜坡补偿: 右腿额外伸长(cm)
 
 float tau = 0.0f;
 float t = 0.0f;    
@@ -75,6 +88,11 @@ float motor6_kp_offset = 0.0f;
 float motor7_kp_offset = 0.0f;
 float motor8_kp_offset = 0.0f;
 
+/* ── 跳跃电机独立增益（1-based，[1]=motor1 … [8]=motor8）── */
+/* 默认1.0=不额外增强，>1增强，<1减弱。[0] 闲置。
+ * 每个跳跃函数内部自行设置，结束后恢复为1.0。                   */
+float motor_jump_boost[9] = {0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+
 void Init_turn_omega_des(){
 	turn_omega_des = body_yaw;
 }
@@ -82,6 +100,12 @@ void Init_turn_omega_des(){
 // state == 1 支撑相 ; state == 0 摆动相
 void set_Motor_Kp(int hposition1_state, int hposition2_state, int hposition3_state, int hposition4_state)
 {
+    // 记录4腿支撑/摆动状态供 VMC 使用（腿序与 hposition1..4 一致）
+    vmc_leg_state[0] = hposition1_state;
+    vmc_leg_state[1] = hposition2_state;
+    vmc_leg_state[2] = hposition3_state;
+    vmc_leg_state[3] = hposition4_state;
+
     static int last_state = -1;
 
     int current_state = (hposition1_state << 0) | 
@@ -166,10 +190,33 @@ void quick_set_kp(float kp_value,float kw_value)
     hmotor2.Kp = kp_value * (1.0f + motor2_kp_offset);
     hmotor3.Kp = kp_value* (1.0f + motor3_kp_offset);
     hmotor4.Kp = kp_value * (1.0f + motor4_kp_offset);
-    hmotor5.Kp = kp_value* (1.0f + motor5_kp_offset);
-    hmotor6.Kp = kp_value * (1.0f + motor6_kp_offset);
+    hmotor5.Kp = kp_value* (0.6f + motor5_kp_offset);
+    hmotor6.Kp = kp_value * (0.6f + motor6_kp_offset);
     hmotor7.Kp = kp_value* (1.0f + motor7_kp_offset);
     hmotor8.Kp = kp_value * (1.0f + motor8_kp_offset);
+
+    hmotor1.Kw = kw_value;
+    hmotor2.Kw = kw_value;
+    hmotor3.Kw = kw_value;
+    hmotor4.Kw = kw_value;
+    hmotor5.Kw = kw_value;
+    hmotor6.Kw = kw_value;
+    hmotor7.Kw = kw_value;
+    hmotor8.Kw = kw_value;
+}
+
+/* ── 带独立电机增益的快速Kp设置（用于跳跃蹬腿阶段）── */
+/* 与 quick_set_kp 的区别：额外乘以 motor_jump_boost[1..8] 逐电机增益  */
+void quick_set_kp_boosted(float base_kp, float kw_value)
+{
+    hmotor1.Kp = base_kp * (1.0f + motor1_kp_offset) * motor_jump_boost[1];
+    hmotor2.Kp = base_kp * (1.0f + motor2_kp_offset) * motor_jump_boost[2];
+    hmotor3.Kp = base_kp * (1.0f + motor3_kp_offset) * motor_jump_boost[3];
+    hmotor4.Kp = base_kp * (1.0f + motor4_kp_offset) * motor_jump_boost[4];
+    hmotor5.Kp = base_kp * (1.0f + motor5_kp_offset) * motor_jump_boost[5];
+    hmotor6.Kp = base_kp * (1.0f + motor6_kp_offset) * motor_jump_boost[6];
+    hmotor7.Kp = base_kp * (1.0f + motor7_kp_offset) * motor_jump_boost[7];
+    hmotor8.Kp = base_kp * (1.0f + motor8_kp_offset) * motor_jump_boost[8];
 
     hmotor1.Kw = kw_value;
     hmotor2.Kw = kw_value;
@@ -819,11 +866,34 @@ void motion_Down(float start, float des)
 }
 
 
-// 往前跳, 15.5f~37.0f 
+/* ── IMU 加速度落地冲击检测 ── */
+/*
+ * 原理：空中自由落体阶段合加速度接近 0g，
+ *       落地瞬间产生明显加速度尖峰（>阈值），
+ *       落地后回归 ~1g。
+ * 使用场景：在跳跃空中阶段（摆线）的循环中每帧调用，
+ *         检测到尖峰说明足端已触地，可提前结束空中轨迹。
+ * 阈值建议：硬地面 2.5~3.5g，软地面 1.8~2.5g
+ * 注意：收腿动作可能产生小幅加速度变化，
+ *       建议在摆线循环的前几次迭代（~8帧）后才启用检测。
+ */
+uint8_t imu_check_landing_impact(void)
+{
+    float acc_mag = sqrtf(AccX * AccX + AccY * AccY + AccZ * AccZ);
+    if (acc_mag > 2.5f) {
+        return 1;
+    }
+    return 0;
+}
+
+// 往前跳, 15.5f~37.0f
 void motion_Jump(float stride)
 {
     float height_des = 38.5f; // 蹬地腿长
     float jump_step_height = height_des - 13.0f; // 抬腿高度,参考点为轴心
+
+    /* 侧坡补偿：左侧低→腿更长，右侧高→腿更短，保持身体水平 */
+    float slope_offset = BODY_HALF_WIDTH * tanf(SLOPE_ANGLE_DEG * pi / 180.0f);
 
     float forward_prep_step = 8.0f; // 起跳前水平准备距离
     float k0 = (15.5f - walk_height) / (forward_prep_step); // 斜率
@@ -831,19 +901,20 @@ void motion_Jump(float stride)
     float x_stop0 = forward_prep_step;
 	
 	// state0蹲下  (0,walk_height) → (forward_prep_step,15.5)
+	// 侧坡补偿：右侧(高)+6-slope_offset, 左侧(低)+slope_offset
     for (float x = x_start0; x <= x_stop0; x += jump_freq0){
 		if (emergency_stop==1){return;}
         float y = k0 * x + walk_height;
-        hposition1.B_y = y+6;
-        hposition1.B_x = x; 
-        hposition2.B_y = y+6;
-        hposition2.B_x = x; 
-        hposition3.B_y = y;
-        hposition3.B_x = x; 
-        hposition4.B_y = y;
+        hposition1.B_y = y + 6 - slope_offset;
+        hposition1.B_x = x;
+        hposition2.B_y = y + 6 - slope_offset;
+        hposition2.B_x = x;
+        hposition3.B_y = y + slope_offset;
+        hposition3.B_x = x;
+        hposition4.B_y = y + slope_offset;
         hposition4.B_x = x;
         inverseKinematic_All();
-        Motor_SendCmd_AllAngle(); 
+        Motor_SendCmd_AllAngle();
     }
 	
 	// state1水平运腿 (9.0,15.5) → (9.0,-stride / 2.0f)
@@ -855,13 +926,13 @@ void motion_Jump(float stride)
 		
         float x = forward_prep_step + (-x_start2 - forward_prep_step) * i*i;
         float y = 15.5f;
-        hposition1.B_y = y+6;
-        hposition1.B_x = x; 
-        hposition2.B_y = y+6;
-        hposition2.B_x = x; 
-        hposition3.B_y = y;
-        hposition3.B_x = x; 
-        hposition4.B_y = y;
+        hposition1.B_y = y + 6 - slope_offset;
+        hposition1.B_x = x;
+        hposition2.B_y = y + 6 - slope_offset;
+        hposition2.B_x = x;
+        hposition3.B_y = y + slope_offset;
+        hposition3.B_x = x;
+        hposition4.B_y = y + slope_offset;
         hposition4.B_x = x;
         inverseKinematic_All();
         Motor_SendCmd_AllAngle(); 
@@ -885,14 +956,14 @@ void motion_Jump(float stride)
 	if (emergency_stop==1){return;}
 	
 	 float y = k2 * x;
-	 hposition1.B_y = y+6;
-	 hposition1.B_x = -x; 
-	 hposition2.B_y = y+6;
-	 hposition2.B_x = -x; 
-	 hposition3.B_y = y;
-	 hposition3.B_x = -x; 
-	 hposition4.B_y = y;
-	 hposition4.B_x = -x; 
+	 hposition1.B_y = y + 6 - slope_offset;
+	 hposition1.B_x = -x;
+	 hposition2.B_y = y + 6 - slope_offset;
+	 hposition2.B_x = -x;
+	 hposition3.B_y = y + slope_offset;
+	 hposition3.B_x = -x;
+	 hposition4.B_y = y + slope_offset;
+	 hposition4.B_x = -x;
 
 	 inverseKinematic_All();
 	 Motor_SendCmd_AllAngle(); 
@@ -914,17 +985,18 @@ void motion_Jump(float stride)
 	 for (float angle = 0.0f;angle <=pi; angle += jump_freq3 * pi){
 		if (emergency_stop==1){return;}
 
+		float fade = 1.0f - angle / pi;
 		float x = stride * ((angle - sinf(angle)) / (2 * pi)) - stride / 2;
 		float y = height_des - jump_step_height * (1 - cos(angle)) / 2;
 		y *= 0.9f;
 
-		hposition1.B_y = y;
+		hposition1.B_y = y + 6 - fade * slope_offset;
 		hposition1.B_x = x; 
-		hposition2.B_y = y;
+		hposition2.B_y = y + 6 - fade * slope_offset;
 		hposition2.B_x = x; 
-		hposition3.B_y = y;
+		hposition3.B_y = y + fade * slope_offset;
 		hposition3.B_x = x; 
-		hposition4.B_y = y;
+		hposition4.B_y = y + fade * slope_offset;
 		hposition4.B_x = x;
 
 		inverseKinematic_All();
@@ -988,18 +1060,20 @@ void motion_Jump(float stride)
  *   PUSH_H          蹬直腿长（不要到机械极限 38.5）
  *   SMALL_STRIDE    水平跨度（越小越垂直，越大越往前窜）
  *   KP_BOOST        蹬腿时 Kp 基础值（越大越猛，过大会震荡/过流）
+ *   Forward_freq    全局步频，控制整体速度
  */
 void motion_SmallJump(void)
 {
+    
     /* ======== 可调参数 ======== */
     const float STEP_HEIGHT   = 10.0f;   // 台阶高差 (cm)
     const float SAFETY_MARGIN = 5.0f;    // 跳高余量 → 目标抬升 ≈15cm
-    const float CROUCH_H      = 18.0f;   // 下蹲腿长 (< walk_height=22)
-    const float PUSH_H        = 30.0f;   // 蹬直腿长 (< 机械极限 38.5)
-    const float SMALL_STRIDE  = 12.0f;   // 水平"虚拟步幅"，越小=越垂直
+    const float CROUCH_H      = 16.0f;   // 下蹲腿长 (< walk_height=22)
+    const float PUSH_H        = 35.0f;   // 蹬直腿长 (< 机械极限 38.5)
+    const float SMALL_STRIDE  = 3.0f;    // 水平"虚拟步幅"，越小=越垂直
     const float KP_BOOST      = 5.5f;    // 蹬腿时基础 Kp（越大越猛）
 
-    float forward_prep = 4.0f;           // 下蹲时脚前移量
+    float forward_prep = 0.0f;           // 下蹲时脚前移量（0=不前移，蹬地更垂直）
 
     /* 预计算蹬地方向（共用，避免多处重复算） */
     float k2       = 2.0f * PUSH_H / SMALL_STRIDE;
@@ -1009,66 +1083,272 @@ void motion_SmallJump(void)
     float x_start  = sqrtf(CROUCH_H * CROUCH_H / k2_sq_p1); // 在 CROUCH_H 腿长时
     float x_stop   = sqrtf(PUSH_H   * PUSH_H   / k2_sq_p1); // 在 PUSH_H   腿长时
 
-    /* 空中摆线峰值：两段摆线在 θ=π 处的衔接高度
-     * STEP_HEIGHT + SAFETY_MARGIN ≈ 15cm 是目标净抬升量，由
-     * "蹬腿产生的身体上升 + 腿伸展量" 共同提供。
-     * 这里取 PUSH_H 作为峰值，保证腿部有足够伸展余量。 */
-    float peak_y = PUSH_H;
+    float freq = 100.0f * Forward_freq;   // 速度因子
 
-    /* ======== State 0: 下蹲蓄力 ======== */
-    /* (0, walk_height)  →  (forward_prep, CROUCH_H)                     */
+    /* ======== State 0: 下蹲蓄力（含 roll 稳定 + 后腿 Kp 增强） ======== */
+    /* (0, walk_height)  →  (forward_prep, CROUCH_H)，四足统一向后       */
+    /* 修复：加入 roll 补偿 + 后腿 Kp boost，防止下蹲时侧翻               */
     {
-        float k0 = (CROUCH_H - walk_height) / forward_prep;
-        for (float x = 0.0f; x <= forward_prep; x += 0.06f) {
-            if (emergency_stop == 1) return;
-            float y = k0 * x + walk_height;
-            hposition1.B_y = y;  hposition1.B_x = x;
-            hposition2.B_y = y;  hposition2.B_x = x;
-            hposition3.B_y = y;  hposition3.B_x = x;
-            hposition4.B_y = y;  hposition4.B_x = x;
-            inverseKinematic_All();
-            Motor_SendCmd_AllAngle();
-        }
-    }
+        motor_jump_boost[3] = 1.35f;  // BR α — 后腿增强
+        motor_jump_boost[4] = 1.35f;  // BR β
+        motor_jump_boost[5] = 1.35f;  // BL α
+        motor_jump_boost[6] = 1.50f;  // BL β — offset=0，多补
+        quick_set_kp_boosted(support_Kp * 2.5f, Expect_kw);
 
-    /* ======== State 1: 水平收腿到起跳位 ======== */
+        if (forward_prep > 0.01f) {
+            float k0 = (CROUCH_H - walk_height) / forward_prep;
+            for (float x = 0.0f; x <= forward_prep; x += 0.06f * freq) {
+                if (emergency_stop == 1) goto state0_done;
+                Body_Roll_Stabilizer();
+                float y = k0 * x + walk_height;
+                float roll_f = tanf(pi * stab_roll / 180.0f);
+                hposition1.B_y = y * (1.0f + roll_f);  hposition1.B_x = x;
+                hposition2.B_y = y * (1.0f + roll_f);  hposition2.B_x = x;
+                hposition3.B_y = y * (1.0f - roll_f);  hposition3.B_x = x;
+                hposition4.B_y = y * (1.0f - roll_f);  hposition4.B_x = x;
+                inverseKinematic_All();
+                Motor_SendCmd_AllAngle();
+            }
+        } else {
+            /* forward_prep≈0, 原地垂直下蹲，不水平移脚 */
+            float r = (walk_height - CROUCH_H) / 2.0f;
+            float center_y = (walk_height + CROUCH_H) / 2.0f;
+            for (float t = 0.0f; t <= 1.0f; t += 0.015f * freq) {
+                if (emergency_stop == 1) goto state0_done;
+                Body_Roll_Stabilizer();
+                float y = r * cosf(pi * t) + center_y;
+                float roll_f = tanf(pi * stab_roll / 180.0f);
+                hposition1.B_y = y * (1.0f + roll_f);  hposition1.B_x = 0.0f;
+                hposition2.B_y = y * (1.0f + roll_f);  hposition2.B_x = 0.0f;
+                hposition3.B_y = y * (1.0f - roll_f);  hposition3.B_x = 0.0f;
+                hposition4.B_y = y * (1.0f - roll_f);  hposition4.B_x = 0.0f;
+                inverseKinematic_All();
+                Motor_SendCmd_AllAngle();
+            }
+        }
+    state0_done:
+        for (int i = 1; i <= 8; i++) motor_jump_boost[i] = 1.0f;
+        quick_set_kp(support_Kp, Expect_kw);
+    }
+    if (emergency_stop == 1) return;
+
+    /* ======== State 1: 水平收腿到起跳位（含 roll 稳定） ======== */
     /* 保持 CROUCH_H，二次插值平滑收腿至蹬地起点 (x = +x_start)          */
     {
-        for (float i = 0.0f; i <= 1.0f; i += 0.015f) {
-            if (emergency_stop == 1) return;
+        /* 后腿收腿时继续保持略高 Kp 以跟踪水平运动                       */
+        motor_jump_boost[3] = 1.25f;
+        motor_jump_boost[4] = 1.25f;
+        motor_jump_boost[5] = 1.25f;
+        motor_jump_boost[6] = 1.40f;
+        quick_set_kp_boosted(support_Kp * 2.5f, Expect_kw);
+
+        for (float i = 0.0f; i <= 1.0f; i += 0.015f * freq) {
+            if (emergency_stop == 1) goto state1_done;
+            Body_Roll_Stabilizer();
             float x = forward_prep + (x_start - forward_prep) * i * i;
             float y = CROUCH_H;
-            hposition1.B_y = y;  hposition1.B_x = x;
-            hposition2.B_y = y;  hposition2.B_x = x;
-            hposition3.B_y = y;  hposition3.B_x = x;
-            hposition4.B_y = y;  hposition4.B_x = x;
+            float roll_f = tanf(pi * stab_roll / 180.0f);
+            hposition1.B_y = y * (1.0f + roll_f);  hposition1.B_x = x;
+            hposition2.B_y = y * (1.0f + roll_f);  hposition2.B_x = x;
+            hposition3.B_y = y * (1.0f - roll_f);  hposition3.B_x = x;
+            hposition4.B_y = y * (1.0f - roll_f);  hposition4.B_x = x;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+    state1_done:
+        for (int i = 1; i <= 8; i++) motor_jump_boost[i] = 1.0f;
+        quick_set_kp(support_Kp, Expect_kw);
+    }
+    if (emergency_stop == 1) return;
+
+    /* ======== State 2: 蹬腿起跳（含 roll 稳定 + 对称 boost） ======== */
+    /* 沿 y = k2*x 直线蹬直，四足统一向后蹬，大幅提高 Kp 以产生爆发力   */
+    {
+        /* 8电机独立跳跃增益，左右对称化（修复侧翻）                       */
+        /*         [FRα,  FRβ,  BRα,  BRβ,  BLα,  BLβ,  FLα,  FLβ ]     */
+        motor_jump_boost[1] = 1.35f;  // motor1 (FR α) — 对称
+        motor_jump_boost[2] = 1.20f;  // motor2 (FR β)
+        motor_jump_boost[3] = 1.15f;  // motor3 (BR α) — 后腿参与蹬地
+        motor_jump_boost[4] = 1.15f;  // motor4 (BR β)
+        motor_jump_boost[5] = 1.15f;  // motor5 (BL α)
+        motor_jump_boost[6] = 1.30f;  // motor6 (BL β) — offset=0，补足
+        motor_jump_boost[7] = 1.35f;  // motor7 (FL α) — 与 FR 对称
+        motor_jump_boost[8] = 1.25f;  // motor8 (FL β)
+        quick_set_kp_boosted(KP_BOOST, 0.0f);
+
+        float range = fabsf(x_start - x_stop);
+        for (float x = x_start; x < x_stop; x += 0.08f * range * freq) {
+            if (emergency_stop == 1) goto restore_kp;
+            Body_Roll_Stabilizer();
+            float y = k2 * x;
+            float roll_f = tanf(pi * stab_roll / 180.0f);
+            hposition1.B_y = y * (1.0f + roll_f);  hposition1.B_x = x;
+            hposition2.B_y = y * (1.0f + roll_f);  hposition2.B_x = x;
+            hposition3.B_y = y * (1.0f - roll_f);  hposition3.B_x = x;
+            hposition4.B_y = y * (1.0f - roll_f);  hposition4.B_x = x;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+        HAL_Delay(60);   // 等待蹬直
+
+    restore_kp:
+        /* 清除跳跃增益，恢复默认 Kp */
+        for (int i = 1; i <= 8; i++) motor_jump_boost[i] = 1.0f;
+        quick_set_kp(1.0f, Expect_kw);
+    }
+    /* 急停检查：goto 过来的话 KP 已恢复，直接退出 */
+    if (emergency_stop == 1) return;
+
+    /* ======== State 3: 空中收腿前摆（前半段摆线，0→π，含 IMU 落地检测） ======== */
+    /* B_x = -cx（取反，参照 LeanJump），y: PUSH_H → CROUCH_H（收腿）    */
+    {
+        uint16_t air_iter = 0;
+        uint8_t  landed_early = 0;
+
+        for (float a = 0.0f; a <= pi; a += 0.035f * pi * freq) {
+            if (emergency_stop == 1) return;
+            float cx = SMALL_STRIDE * ((a - sinf(a)) / (2.0f * pi))
+                       - SMALL_STRIDE / 2.0f;
+            float cy = PUSH_H - (PUSH_H - CROUCH_H) * (1.0f - cosf(a)) / 2.0f;
+
+            hposition1.B_y = cy;  hposition1.B_x = -cx;
+            hposition2.B_y = cy;  hposition2.B_x = -cx;
+            hposition3.B_y = cy;  hposition3.B_x = -cx;
+            hposition4.B_y = cy;  hposition4.B_x = -cx;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+
+            /* 跳过前 8 帧，之后检测落地冲击 */
+            if (++air_iter > 8 && imu_check_landing_impact()) {
+                landed_early = 1;
+                break;
+            }
+        }
+
+        if (!landed_early) {
+            /* ======== State 4: 落腿着地（后半段摆线，π→2π） ======== */
+            quick_set_kp(0.3f, Expect_kw);   // 落地时低 Kp，软着陆
+            for (float a = pi; a <= 2.0f * pi; a += 0.006f * pi * freq) {
+                if (emergency_stop == 1) return;
+                float cx = SMALL_STRIDE * ((a - sinf(a)) / (2.0f * pi))
+                           - SMALL_STRIDE / 2.0f;
+                float cy = CROUCH_H + (walk_height - CROUCH_H) * (1.0f + cosf(a)) / 2.0f;
+
+                hposition1.B_y = cy;  hposition1.B_x = -cx;
+                hposition2.B_y = cy;  hposition2.B_x = -cx;
+                hposition3.B_y = cy;  hposition3.B_x = -cx;
+                hposition4.B_y = cy;  hposition4.B_x = -cx;
+                inverseKinematic_All();
+                Motor_SendCmd_AllAngle();
+            }
+        }
+        /* landed_early 时跳过 State 4 摆线放腿，State 5 会直接慢速伸腿 */
+    }
+
+    /* ======== State 5 (原 State 5): 水平回收，站稳 ======== */
+    {
+        for (float x = SMALL_STRIDE / 2.0f; x > 0.0f; x -= 0.005f * SMALL_STRIDE * freq) {
+            if (emergency_stop == 1) return;
+            float y = walk_height;
+            hposition1.B_y = y;  hposition1.B_x = -x;
+            hposition2.B_y = y;  hposition2.B_x = -x;
+            hposition3.B_y = y;  hposition3.B_x = -x;
+            hposition4.B_y = y;  hposition4.B_x = -x;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+        quick_set_kp(support_Kp, Expect_kw);  // 恢复默认 Kp
+        inverseKinematic_All();
+        Motor_SendCmd_AllAngle();
+    }
+}
+
+/*
+ * motion_LeanJump - 前倾小跳（极坐标版），平地→平地
+ * 设计：Phase1 身体前倾(脚转至身后) → Phase2 沿斜线蹬腿 → Phase3 空中摆线 → Phase4 落地回站立
+ *
+ * 调参（全局变量，可在 main.c 或遥控中动态调节）：
+ *   lean_angle_deg  前倾角(度), 腿与竖直方向夹角
+ *   lean_crouch_R   蹬腿起始腿长(下蹲深度)
+ *   lean_push_R     蹬腿终止腿长(蹬直长度, < 机械极限 38.5)
+ *   lean_kp_boost   蹬腿时 Kp 基础值
+ */
+void motion_LeanJump(void)
+{
+    float theta     = lean_angle_deg * pi / 180.0f;
+    float stride    = 2.0f * lean_push_R * sinf(theta);
+    float push_end_y = lean_push_R * cosf(theta);
+    float freq      = 100.0f * Forward_freq;
+
+    /* ===== Phase 1: 前倾 ===== */
+    /* R=walk_height 不变, theta: 0→lean_angle, 脚转到身后 */
+    {
+        for (float t = 0.0f; t <= 1.0f; t += 0.015f * freq) {
+            if (emergency_stop == 1) return;
+            float a  = theta * t;
+            float Bx = walk_height * sinf(a);
+            float By = walk_height * cosf(a);
+            hposition1.B_y = By;  hposition1.B_x = +Bx;
+            hposition2.B_y = By;  hposition2.B_x = +Bx;
+            hposition3.B_y = By;  hposition3.B_x = +Bx;
+            hposition4.B_y = By;  hposition4.B_x = +Bx;
             inverseKinematic_All();
             Motor_SendCmd_AllAngle();
         }
     }
 
-    /* ======== State 2: 蹬腿起跳 ======== */
-    /* 沿 y = k2*x 直线蹬直，大幅提高 Kp 以产生爆发力                    */
+    /* ===== Phase 2: 蹬腿 ===== */
+    /* ===== Phase 2: 蹬腿 ===== */
+    /* 2a: 下蹲 R: walk_height→crouch_R, theta不变 */
+    /* 2b: 蹬直 R: crouch_R→push_R,   theta不变, 高Kp */
     {
-        /* 保存原始 KP */
-        float saved[4] = {motor1_kp_offset, motor2_kp_offset,
-                          motor7_kp_offset, motor8_kp_offset};
+        /* -- 2a 下蹲 -- */
+        for (float R = walk_height; R > lean_crouch_R; R -= 0.06f * freq) {
+            if (emergency_stop == 1) return;
+            float Bx = R * sinf(theta);
+            float By = R * cosf(theta);
+            hposition1.B_y = By;  hposition1.B_x = +Bx;
+            hposition2.B_y = By;  hposition2.B_x = +Bx;
+            hposition3.B_y = By;  hposition3.B_x = +Bx;
+            hposition4.B_y = By;  hposition4.B_x = +Bx;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
 
-        /* 提升 KP */
+        /* -- 2b Kp boost + 蹬直 -- */
+        float saved[8] = {motor1_kp_offset, motor2_kp_offset,
+					                motor3_kp_offset, motor4_kp_offset,
+					                motor5_kp_offset, motor6_kp_offset,
+                          motor7_kp_offset, motor8_kp_offset};
         motor1_kp_offset *= 1.3f;
         motor2_kp_offset *= 1.2f;
+				motor4_kp_offset *= 1.5f;		
+			  motor5_kp_offset *= 1.0f;
+				motor6_kp_offset *= 1.0f;												
         motor7_kp_offset *= 1.5f;
-        motor8_kp_offset *= 1.5f;
-        quick_set_kp(KP_BOOST, 0.0f);
+        motor8_kp_offset *= 1.0f;
+        quick_set_kp(lean_kp_boost, 0.0f);
 
-        float range = fabsf(x_start - x_stop);
-        for (float x = x_start; x < x_stop; x += 0.35f * range) {
+        float range = lean_push_R - lean_crouch_R;
+        for (float R = lean_crouch_R; R < lean_push_R; R += 0.08f * range * freq) {
             if (emergency_stop == 1) goto restore_kp;
-            float y = k2 * x;
-            hposition1.B_y = y;  hposition1.B_x = x;
-            hposition2.B_y = y;  hposition2.B_x = x;
-            hposition3.B_y = y;  hposition3.B_x = x;
-            hposition4.B_y = y;  hposition4.B_x = x;
+            float Bx = R * sinf(theta);
+            float By = R * cosf(theta);
+            hposition1.B_y = By;  hposition1.B_x = +Bx;
+            hposition2.B_y = By;  hposition2.B_x = +Bx;
+            hposition3.B_y = By;  hposition3.B_x = +Bx;
+            hposition4.B_y = By;  hposition4.B_x = +Bx;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+        /* 精确到达 push_R */
+        {
+            float Bx = lean_push_R * sinf(theta);
+            float By = push_end_y;
+            hposition1.B_y = By;  hposition1.B_x = +Bx;
+            hposition2.B_y = By;  hposition2.B_x = +Bx;
+            hposition3.B_y = By;  hposition3.B_x = +Bx;
+            hposition4.B_y = By;  hposition4.B_x = +Bx;
             inverseKinematic_All();
             Motor_SendCmd_AllAngle();
         }
@@ -1077,63 +1357,274 @@ void motion_SmallJump(void)
     restore_kp:
         motor1_kp_offset = saved[0];
         motor2_kp_offset = saved[1];
-        motor7_kp_offset = saved[2];
-        motor8_kp_offset = saved[3];
+				motor5_kp_offset = saved[4];
+        motor6_kp_offset = saved[5];
+				motor4_kp_offset = saved[3];
+        motor7_kp_offset = saved[6];
+        motor8_kp_offset = saved[7];
         quick_set_kp(1.0f, Expect_kw);
     }
-    /* 急停检查：goto 过来的话 KP 已恢复，直接退出 */
     if (emergency_stop == 1) return;
 
-    /* ======== State 3: 空中收腿前摆（前半段摆线，0→π） ======== */
-    /* y: CROUCH_H  →  peak_y(PUSH_H)，足端抬起清过台阶边缘              */
+    /* ===== Phase 3: 空中摆线 ===== */
+    /* stride自动推导 → P2终点 = P3起点, 无跳变 */
     {
-        for (float angle = 0.0f; angle <= pi; angle += 0.035f * pi) {
-            if (emergency_stop == 1) return;
-            float x = SMALL_STRIDE * ((angle - sinf(angle)) / (2.0f * pi))
-                      - SMALL_STRIDE / 2.0f;
-            float y = CROUCH_H + (peak_y - CROUCH_H) * (1.0f - cosf(angle)) / 2.0f;
+        float start_y = push_end_y;
+        float tuck_y  = lean_crouch_R;
 
-            hposition1.B_y = y;  hposition1.B_x = x;
-            hposition2.B_y = y;  hposition2.B_x = x;
-            hposition3.B_y = y;  hposition3.B_x = x;
-            hposition4.B_y = y;  hposition4.B_x = x;
+        /* -- 前半 0→π: 收腿 (腿长 start_y→tuck_y) -- */
+        for (float a = 0.0f; a <= pi; a += 0.035f * pi * freq) {
+            if (emergency_stop == 1) return;
+            float cx = stride * ((a - sinf(a)) / (2.0f * pi)) - stride / 2.0f;
+            float cy = start_y - (start_y - tuck_y) * (1.0f - cosf(a)) / 2.0f;
+            hposition1.B_y = cy;  hposition1.B_x = -cx;
+            hposition2.B_y = cy;  hposition2.B_x = -cx;
+            hposition3.B_y = cy;  hposition3.B_x = -cx;
+            hposition4.B_y = cy;  hposition4.B_x = -cx;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+
+        /* -- 后半 π→2π: 落地 (腿长 tuck_y→walk_height), 低Kp缓冲 -- */
+        quick_set_kp(0.2f, Expect_kw);
+        for (float a = pi; a <= 2.0f * pi; a += 0.004f * pi * freq) {
+            if (emergency_stop == 1) return;
+            float cx = stride * ((a - sinf(a)) / (2.0f * pi)) - stride / 2.0f;
+            float cy = tuck_y + (walk_height - tuck_y) * (1.0f + cosf(a)) / 2.0f;
+            hposition1.B_y = cy;  hposition1.B_x = -cx;
+            hposition2.B_y = cy;  hposition2.B_x = -cx;
+            hposition3.B_y = cy;  hposition3.B_x = -cx;
+            hposition4.B_y = cy;  hposition4.B_x = -cx;
             inverseKinematic_All();
             Motor_SendCmd_AllAngle();
         }
     }
 
-    /* ======== State 4: 落腿着地（后半段摆线，π→2π） ======== */
-    /* y: peak_y(PUSH_H)  →  walk_height，两段在 θ=π 处连续               */
-    /* 降低 Kp 以缓冲落地冲击                                            */
+    /* ===== Phase 4: 回收站稳（平面） ===== */
     {
-        quick_set_kp(0.3f, Expect_kw);   // 落地时低 Kp，软着陆
-        for (float angle = pi; angle <= 2.0f * pi; angle += 0.006f * pi) {
-            if (emergency_stop == 1) return;
-            float x = SMALL_STRIDE * ((angle - sinf(angle)) / (2.0f * pi))
-                      - SMALL_STRIDE / 2.0f;
-            float y = walk_height + (peak_y - walk_height) * (1.0f - cosf(angle)) / 2.0f;
+        HAL_Delay(80);   // 落地后稳定
 
-            hposition1.B_y = y;  hposition1.B_x = x;
-            hposition2.B_y = y;  hposition2.B_x = x;
-            hposition3.B_y = y;  hposition3.B_x = x;
-            hposition4.B_y = y;  hposition4.B_x = x;
+        float end_x = stride / 2.0f;
+        for (float x = end_x; x > 0.0f; x -= 0.003f * stride * freq) {
+            if (emergency_stop == 1) return;
+            hposition1.B_y = walk_height;  hposition1.B_x = -x;
+            hposition2.B_y = walk_height;  hposition2.B_x = -x;
+            hposition3.B_y = walk_height;  hposition3.B_x = -x;
+            hposition4.B_y = walk_height;  hposition4.B_x = -x;
             inverseKinematic_All();
             Motor_SendCmd_AllAngle();
         }
+        /* 恢复中立位 + 正常 Kp */
+        hposition1.B_x = 0.0f;  hposition1.B_y = walk_height;
+        hposition2.B_x = 0.0f;  hposition2.B_y = walk_height;
+        hposition3.B_x = 0.0f;  hposition3.B_y = walk_height;
+        hposition4.B_x = 0.0f;  hposition4.B_y = walk_height;
+        inverseKinematic_All();
+        Motor_SendCmd_AllAngle();
+        HAL_Delay(50);
+        quick_set_kp(support_Kp, Expect_kw);
+        inverseKinematic_All();
+        Motor_SendCmd_AllAngle();
+    }
+}
+/*
+ * motion_SlopeJump - 斜面→平面小跳（极坐标版）
+ * 设计场景：从侧面斜坡（右侧低、左侧高）起跳，落向水平面
+ * 参数独立于 LeanJump，可单独调校
+ *
+ * 调参入口（全部集中于此）：
+ *   SLOPE_ANGLE  前倾角（越大跳越远，越小越垂直）
+ *   SLOPE_CROUCH  下蹲腿长
+ *   SLOPE_PUSH    蹬直腿长 (< 机械极限 38.5)
+ *   SLOPE_KP      蹬腿 Kp
+ *   land_slope_ofs   起跳面右腿补偿量（全局，与 LeanJump 落地一致）
+ */
+void motion_SlopeJump(void)
+{
+    /* ======== 可调参数 ======== */
+    const float SLOPE_ANGLE  = 28.0f;   // 前倾角(度), 比 LeanJump(8°)大→更前冲
+    const float SLOPE_CROUCH = 16.0f;   // 下蹲腿长
+    const float SLOPE_PUSH   = 28.0f;   // 蹬直腿长 (降低→跳高降低)
+    const float SLOPE_KP      = 5.5f;   // 蹬腿 Kp
+
+    float theta     = SLOPE_ANGLE * pi / 180.0f;
+    float stride    = 2.0f * SLOPE_PUSH * sinf(theta);
+    float push_end_y = SLOPE_PUSH * cosf(theta);
+    float freq      = 100.0f * Forward_freq;
+
+    /* 起跳面 = LeanJump 着陆面：右侧低→右腿长，左侧高→左腿基线 */
+    float slope_ofs = land_slope_ofs;
+
+    /* ===== Phase 1: 前倾（含 roll 稳定 + 后腿 Kp 增强） ===== */
+    /* 起跳面站姿：右低→右腿 +slope_ofs，左高→左腿基线                  */
+    {
+        /* 后腿 boost：前倾时后腿更费力，且斜面加重不对称                  */
+        motor_jump_boost[3] = 1.40f;  // BR α — 后腿增强
+        motor_jump_boost[4] = 1.40f;  // BR β
+        motor_jump_boost[5] = 1.40f;  // BL α
+        motor_jump_boost[6] = 1.60f;  // BL β — offset=0，多补
+        quick_set_kp_boosted(support_Kp * 3.0f, Expect_kw);
+
+        for (float t = 0.0f; t <= 1.0f; t += 0.015f * freq) {
+            if (emergency_stop == 1) goto sl_phase1_done;
+            Body_Roll_Stabilizer();
+            float a  = theta * t;
+            float Bx = walk_height * sinf(a);
+            float By = walk_height * cosf(a);
+            float roll_f = tanf(pi * stab_roll / 180.0f);
+            /* roll 补偿 × 斜面补偿：右腿额外+slope_ofs                     */
+            hposition1.B_y = By * (1.0f + roll_f) + slope_ofs;  hposition1.B_x = +Bx;
+            hposition2.B_y = By * (1.0f + roll_f) + slope_ofs;  hposition2.B_x = +Bx;
+            hposition3.B_y = By * (1.0f - roll_f);              hposition3.B_x = +Bx;
+            hposition4.B_y = By * (1.0f - roll_f);              hposition4.B_x = +Bx;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+    sl_phase1_done:
+        for (int i = 1; i <= 8; i++) motor_jump_boost[i] = 1.0f;
+        quick_set_kp(support_Kp, Expect_kw);
+    }
+    if (emergency_stop == 1) return;
+
+    /* ===== Phase 2: 蹬腿（含 roll 稳定 + 对称 boost） ===== */
+    {
+        /* -- 2a 下蹲（含 roll 稳定 + 后腿 Kp） -- */
+        motor_jump_boost[3] = 1.25f;
+        motor_jump_boost[4] = 1.25f;
+        motor_jump_boost[5] = 1.25f;
+        motor_jump_boost[6] = 1.40f;
+        quick_set_kp_boosted(support_Kp * 2.5f, Expect_kw);
+        for (float R = walk_height; R > SLOPE_CROUCH; R -= 0.06f * freq) {
+            if (emergency_stop == 1) goto restore_kp;
+            Body_Roll_Stabilizer();
+            float Bx = R * sinf(theta);
+            float By = R * cosf(theta);
+            float roll_f = tanf(pi * stab_roll / 180.0f);
+            hposition1.B_y = By * (1.0f + roll_f) + slope_ofs;  hposition1.B_x = +Bx;
+            hposition2.B_y = By * (1.0f + roll_f) + slope_ofs;  hposition2.B_x = +Bx;
+            hposition3.B_y = By * (1.0f - roll_f);              hposition3.B_x = +Bx;
+            hposition4.B_y = By * (1.0f - roll_f);              hposition4.B_x = +Bx;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+
+        /* -- 2b Kp boost + 蹬直（含 roll 稳定 + 斜面渐消 + 对称 boost） -- */
+        /*         [FRα,  FRβ,  BRα,  BRβ,  BLα,  BLβ,  FLα,  FLβ ]     */
+        motor_jump_boost[1] = 1.35f;  // motor1 (FR α) — 对称化
+        motor_jump_boost[2] = 1.20f;  // motor2 (FR β)
+        motor_jump_boost[3] = 1.15f;  // motor3 (BR α) — 后腿参与蹬地
+        motor_jump_boost[4] = 1.15f;  // motor4 (BR β)
+        motor_jump_boost[5] = 1.15f;  // motor5 (BL α)
+        motor_jump_boost[6] = 1.30f;  // motor6 (BL β) — offset=0，补足
+        motor_jump_boost[7] = 1.35f;  // motor7 (FL α) — 与 FR 对称
+        motor_jump_boost[8] = 1.25f;  // motor8 (FL β)
+        quick_set_kp_boosted(SLOPE_KP, 0.0f);
+
+        float range = SLOPE_PUSH - SLOPE_CROUCH;
+        for (float R = SLOPE_CROUCH; R < SLOPE_PUSH; R += 0.06f * range * freq) {
+            if (emergency_stop == 1) goto restore_kp;
+            Body_Roll_Stabilizer();
+            float Bx = R * sinf(theta);
+            float By = R * cosf(theta);
+            float push_progress = (R - SLOPE_CROUCH) / range;   // 0→1
+            float ofs = slope_ofs * (1.0f - push_progress);       // 满补偿→0
+            float roll_f = tanf(pi * stab_roll / 180.0f);
+            hposition1.B_y = By * (1.0f + roll_f) + ofs;  hposition1.B_x = +Bx;
+            hposition2.B_y = By * (1.0f + roll_f) + ofs;  hposition2.B_x = +Bx;
+            hposition3.B_y = By * (1.0f - roll_f);        hposition3.B_x = +Bx;
+            hposition4.B_y = By * (1.0f - roll_f);        hposition4.B_x = +Bx;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+        /* 精确到达 push_R，补偿已消零 */
+        {
+            Body_Roll_Stabilizer();
+            float Bx = SLOPE_PUSH * sinf(theta);
+            float By = push_end_y;
+            float roll_f = tanf(pi * stab_roll / 180.0f);
+            hposition1.B_y = By * (1.0f + roll_f);  hposition1.B_x = +Bx;
+            hposition2.B_y = By * (1.0f + roll_f);  hposition2.B_x = +Bx;
+            hposition3.B_y = By * (1.0f - roll_f);  hposition3.B_x = +Bx;
+            hposition4.B_y = By * (1.0f - roll_f);  hposition4.B_x = +Bx;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+        }
+        HAL_Delay(60);
+
+    restore_kp:
+        /* 清除跳跃增益，恢复默认 Kp */
+        for (int i = 1; i <= 8; i++) motor_jump_boost[i] = 1.0f;
+        quick_set_kp(1.0f, Expect_kw);
+    }
+    if (emergency_stop == 1) return;
+
+    /* ===== Phase 3: 空中摆线（含 IMU 落地检测） ===== */
+    {
+        float start_y = push_end_y;
+        float tuck_y  = SLOPE_CROUCH;
+        uint16_t air_iter = 0;
+        uint8_t  landed_early = 0;
+
+        /* -- 前半 0→π: 收腿，补偿已在蹬腿末端消零，空中保持中立 -- */
+        for (float a = 0.0f; a <= pi; a += 0.035f * pi * freq) {
+            if (emergency_stop == 1) return;
+            float cx = stride * ((a - sinf(a)) / (2.0f * pi)) - stride / 2.0f;
+            float cy = start_y - (start_y - tuck_y) * (1.0f - cosf(a)) / 2.0f;
+            hposition1.B_y = cy;  hposition1.B_x = -cx;
+            hposition2.B_y = cy;  hposition2.B_x = -cx;
+            hposition3.B_y = cy;  hposition3.B_x = -cx;
+            hposition4.B_y = cy;  hposition4.B_x = -cx;
+            inverseKinematic_All();
+            Motor_SendCmd_AllAngle();
+
+            /* 跳过前 8 帧，之后检测落地冲击 */
+            if (++air_iter > 8 && imu_check_landing_impact()) {
+                landed_early = 1;
+                break;
+            }
+        }
+
+        if (!landed_early) {
+            /* -- 后半 π→2π: 落地，四腿统一着地（平面），低Kp缓冲 -- */
+            quick_set_kp(0.03f, Expect_kw);  // 极软落地 Kp，顺应地面
+            for (float a = pi; a <= 2.0f * pi; a += 0.002f * pi * freq) {  // 慢放腿
+                if (emergency_stop == 1) return;
+                float cx = stride * ((a - sinf(a)) / (2.0f * pi)) - stride / 2.0f;
+                float cy = tuck_y + (walk_height - tuck_y) * (1.0f + cosf(a)) / 2.0f;
+                hposition1.B_y = cy;  hposition1.B_x = -cx;
+                hposition2.B_y = cy;  hposition2.B_x = -cx;
+                hposition3.B_y = cy;  hposition3.B_x = -cx;
+                hposition4.B_y = cy;  hposition4.B_x = -cx;
+                inverseKinematic_All();
+                Motor_SendCmd_AllAngle();
+            }
+        }
+        /* landed_early 时跳过 3b 摆线放腿，Phase 4 会直接慢速伸腿 */
     }
 
-    /* ======== State 5: 水平回收，站稳 ======== */
+    /* ===== Phase 4: 平面回收，站稳 ===== */
     {
-        for (float x = SMALL_STRIDE / 2.0f; x > 0.0f; x -= 0.005f * SMALL_STRIDE) {
+        HAL_Delay(150);   // 落地后充分稳定
+
+        float end_x = stride / 2.0f;
+        for (float x = end_x; x > 0.0f; x -= 0.003f * stride * freq) {  // 慢回收
             if (emergency_stop == 1) return;
-            float y = walk_height;
-            hposition1.B_y = y;  hposition1.B_x = x;
-            hposition2.B_y = y;  hposition2.B_x = x;
-            hposition3.B_y = y;  hposition3.B_x = x;
-            hposition4.B_y = y;  hposition4.B_x = x;
+            hposition1.B_y = walk_height;  hposition1.B_x = -x;
+            hposition2.B_y = walk_height;  hposition2.B_x = -x;
+            hposition3.B_y = walk_height;  hposition3.B_x = -x;
+            hposition4.B_y = walk_height;  hposition4.B_x = -x;
             inverseKinematic_All();
             Motor_SendCmd_AllAngle();
         }
+        /* 恢复中立位，保持低 Kp 稳定后再切回正常 Kp */
+        hposition1.B_x = 0.0f;  hposition1.B_y = walk_height;
+        hposition2.B_x = 0.0f;  hposition2.B_y = walk_height;
+        hposition3.B_x = 0.0f;  hposition3.B_y = walk_height;
+        hposition4.B_x = 0.0f;  hposition4.B_y = walk_height;
+        inverseKinematic_All();
+        Motor_SendCmd_AllAngle();
+        HAL_Delay(50);   // 中立位再稳一下
+        quick_set_kp(support_Kp, Expect_kw);
         inverseKinematic_All();
         Motor_SendCmd_AllAngle();
     }

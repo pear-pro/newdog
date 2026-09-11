@@ -52,6 +52,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/motor.c
     Core/Src/gait.c
     Core/Src/kinematic.c
+    Core/Src/vmc.c
     Core/Src/math_utils.c
     Core/Src/crc_ccitt.c
     Core/Src/debug_uart.c

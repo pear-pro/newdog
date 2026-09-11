@@ -19,8 +19,9 @@ typedef struct
 extern float walk_height;
 extern float max_stride;
 extern float Forward_freq;
+extern float smjump_freq;
 
-extern float support_Kp; 
+extern float support_Kp;
 extern float swing_Kp;
 extern float Expect_kw; 
 extern float support_tau_ff; 
@@ -59,7 +60,16 @@ void motion_StandBy(float height);
 void StepInPlace(float height, float step_height);
 void motion_Jump(float stride);
 void motion_SmallJump(void);
+void motion_LeanJump(void);
+void motion_SlopeJump(void);   // 斜面→平面小跳
 void motion_Mix(float height, float step_height, float stride, float turn_stride);
+
+/* ── 跳跃电机独立增益（1-based 索引，与电机编号一致）── */
+/* [1]=motor1(FRα), [2]=motor2(FRβ), [3]=motor3(BRα), [4]=motor4(BRβ),
+ * [5]=motor5(BLα), [6]=motor6(BLβ), [7]=motor7(FLα), [8]=motor8(FLβ)  */
+extern float motor_jump_boost[9];   /* [0] 闲置不用 */
+void quick_set_kp_boosted(float base_kp, float kw_value);
+uint8_t imu_check_landing_impact(void);
 void flip_body(void);
 void motion_Down(float start,float des);
 void motion_Up(float start,float des);
